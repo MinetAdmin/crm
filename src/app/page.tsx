@@ -1,7 +1,6 @@
 import { auth, signOut } from "@/auth";
 
-// Placeholder shell: proves the auth loop end-to-end. The dashboard per
-// doc 07 §2.1 replaces this in the opportunities milestone.
+// Placeholder shell until the dashboard (doc 07 §2.1) lands.
 export default async function Home() {
   const session = await auth();
 
@@ -10,7 +9,7 @@ export default async function Home() {
       <header className="flex items-center justify-between border-b pb-4">
         <div>
           <h1 className="text-xl font-semibold">BD CRM</h1>
-          <p className="text-sm text-neutral-500">Sprint 0 shell — build docs in /docs</p>
+          <p className="text-sm text-neutral-500">Sprint 0 shell. Build docs in /docs.</p>
         </div>
         <form
           action={async () => {
@@ -29,7 +28,7 @@ export default async function Home() {
         </p>
         <p>
           Role: <code>{session?.user?.role || "unknown"}</code> · Unit:{" "}
-          <code>{session?.user?.unitId ?? "—"}</code>
+          <code>{session?.user?.unitId ?? "none"}</code>
         </p>
       </section>
     </main>

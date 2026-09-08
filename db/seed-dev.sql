@@ -1,7 +1,6 @@
--- DEV/STAGING ONLY — fake users and a small realistic book for local work.
--- Never run against prod (the migrate/seed scripts refuse unless NODE_ENV != production).
--- Exercises the Spec §3 edge cases: multi-line schedules, co-owners, an
--- initiative rollup, a tender chain, and hygiene exceptions.
+-- Dev and staging fixtures: fake users and a small book covering the known
+-- edge cases (multi-line schedule, initiative rollup, tender chain, hygiene
+-- exceptions). seed.ts refuses to apply this file in production.
 BEGIN;
 
 INSERT INTO app_user (email, full_name, role, unit_id, capacity_pursuits, availability_pct) VALUES

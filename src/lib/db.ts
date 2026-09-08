@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
-// One PrismaClient per process; Next.js dev hot-reload would otherwise leak
-// connections, so the instance is cached on globalThis outside production.
+// One PrismaClient per process, cached on globalThis outside production so
+// Next.js dev hot reload does not leak connections.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient();

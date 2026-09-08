@@ -1,6 +1,6 @@
--- Production-safe reference data (idempotent). Values from Spec §6, §15 and the
--- controlled-list workshop defaults; the workshop (doc 09 §1) may amend them via
--- the admin UI — this file is the starting state, not a lock.
+-- Production-safe reference data, idempotent. Starting values from Spec §6
+-- and §15; the controlled-list workshop (doc 09 §1) may amend them via the
+-- admin UI.
 BEGIN;
 
 -- Pipeline stages (Spec §6)
@@ -65,8 +65,8 @@ FROM (VALUES
 ) AS v(list_code, code, label, sort_order)
 JOIN ref_list l ON l.code = v.list_code
 ON CONFLICT (list_id, code) DO NOTHING;
--- loss_reason, disqualification_reason, hold_reason, tender_outcome_reason:
--- deliberately unseeded — their values come from the workshop (doc 09 §1, B3).
+-- loss_reason, disqualification_reason, hold_reason and tender_outcome_reason
+-- are unseeded; their values come from the workshop (doc 09 §1, B3).
 
 -- System settings (FR-ADM-03; doc 08 thresholds)
 INSERT INTO system_setting (key, value) VALUES

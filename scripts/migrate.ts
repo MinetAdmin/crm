@@ -1,12 +1,9 @@
 /**
- * Minimal forward-only SQL migration runner (doc 03 §4).
+ * Forward-only SQL migration runner. Applies db/migrations/NNNN_*.sql in
+ * filename order and records each in _migrations. Files manage their own
+ * BEGIN/COMMIT.
  *
- * Applies db/migrations/NNNN_*.sql in filename order, recording each in
- * _migrations. Each file is expected to manage its own BEGIN/COMMIT (all of
- * ours do); the bookkeeping insert runs after the file succeeds.
- *
- * Usage: pnpm db:migrate            (DATABASE_URL from env / .env)
- *        pnpm db:migrate -- --dry   (list pending, apply nothing)
+ * Usage: pnpm db:migrate [-- --dry]
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
