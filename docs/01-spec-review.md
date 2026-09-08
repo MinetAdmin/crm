@@ -1,6 +1,6 @@
 # 01 — Review of the Scoping Document
 
-**Document reviewed:** "BD CRM: Requirements and Data Model, draft v0.1" (`CRM review.pdf`, 21 pages)
+**Document reviewed:** "BD CRM: Requirements and Data Model, draft v0.1" (`CRM review.pdf`, 21 pages, in git history at commit 3ce7f35)
 **Reviewed:** 2026-09-09
 **Verdict:** The Spec is unusually strong for a v0.1 — it is evidence-driven, the data model is
 essentially build-ready, and it is honest about its own open questions. It is, however, a

@@ -6,7 +6,7 @@ snapshots, and workload reporting.
 
 **Start with [`docs/README.md`](docs/README.md)**: the full build pack (requirements,
 architecture, data model, API, RBAC, reports, migration, tests, plan, decision log). The
-source spec is `CRM review.pdf`.
+source spec, `CRM review.pdf`, is kept in git history at commit 3ce7f35.
 
 ## Stack
 

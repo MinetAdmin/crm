@@ -2,7 +2,8 @@
 
 This folder contains everything needed to build the BD CRM from the ground up. It is derived
 from, and traceable to, the scoping document **"BD CRM: Requirements and Data Model, draft v0.1"**
-(`CRM review.pdf` in the repo root), referred to throughout as **the Spec**.
+(`CRM review.pdf`, kept in git history at commit 3ce7f35), referred to
+throughout as **the Spec**.
 
 ## Document map
 
