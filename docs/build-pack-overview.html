@@ -1,0 +1,177 @@
+<title>BD CRM Build Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#FAFAF8; --card:#FFFFFF; --ink:#1C2025; --muted:#5B6470;
+    --line:#E3E2DD; --accent:#C8102E; --accent-soft:#FBEEF0;
+    --steel:#33566E; --steel-soft:#EEF2F5; --ok:#2E6B4F; --ok-soft:#EAF2EE;
+  }
+  :root:not([data-theme="light"]){}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#14171B; --card:#1C2226; --ink:#E8E9E6; --muted:#9AA3AD;
+      --line:#2C333A; --accent:#FF5A66; --accent-soft:#33191E;
+      --steel:#8FB0C7; --steel-soft:#22303A; --ok:#7FC29F; --ok-soft:#1D2E26;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14171B; --card:#1C2226; --ink:#E8E9E6; --muted:#9AA3AD;
+    --line:#2C333A; --accent:#FF5A66; --accent-soft:#33191E;
+    --steel:#8FB0C7; --steel-soft:#22303A; --ok:#7FC29F; --ok-soft:#1D2E26;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Source Serif 4', Georgia, serif; font-size:17px; line-height:1.6;
+  }
+  .wrap{max-width:880px; margin:0 auto; padding:56px 28px 80px}
+  h1,h2,h3{font-family:Archivo,'Helvetica Neue',Arial,sans-serif; text-wrap:balance; line-height:1.15}
+  h1{font-size:2.3rem; font-weight:800; letter-spacing:-.01em; margin:.2em 0 .3em}
+  h2{font-size:1.35rem; font-weight:700; margin:2.6em 0 .7em; padding-top:1.2em; border-top:1px solid var(--line)}
+  h3{font-size:1.02rem; font-weight:600; margin:1.4em 0 .4em}
+  p{margin:.65em 0; max-width:70ch}
+  .eyebrow{
+    font-family:Archivo,sans-serif; font-weight:600; font-size:.78rem;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--steel); margin:0 0 6px;
+  }
+  .lede{font-size:1.12rem; max-width:64ch}
+  .meta{font-family:'IBM Plex Mono',monospace; font-size:.8rem; color:var(--muted); margin-top:10px}
+  code,.id{
+    font-family:'IBM Plex Mono',monospace; font-size:.82em;
+    background:var(--steel-soft); color:var(--steel);
+    padding:1px 6px; border-radius:3px; white-space:nowrap;
+  }
+  .verdict{
+    background:var(--card); border:1px solid var(--line); border-left:4px solid var(--ok);
+    padding:18px 22px; margin:26px 0; border-radius:0 4px 4px 0;
+  }
+  .verdict strong{font-family:Archivo,sans-serif}
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0}
+  @media (max-width:640px){.cols{grid-template-columns:1fr}}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px}
+  .card h3{margin-top:0}
+  .card ul{margin:.4em 0 0; padding-left:1.15em}
+  .card li{margin:.35em 0}
+  table{border-collapse:collapse; width:100%; font-size:.95rem}
+  .scroll{overflow-x:auto; margin:16px 0}
+  th{
+    font-family:Archivo,sans-serif; font-weight:600; font-size:.78rem;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+    text-align:left; padding:8px 12px 6px; border-bottom:2px solid var(--line);
+  }
+  td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  td:first-child{white-space:nowrap; font-family:'IBM Plex Mono',monospace; font-size:.82rem; color:var(--steel)}
+  .num{font-variant-numeric:tabular-nums}
+  .blockers{list-style:none; margin:16px 0; padding:0; display:grid; gap:10px}
+  .blockers li{
+    background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:0 4px 4px 0; padding:12px 16px;
+  }
+  .blockers .q{
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:.85rem;
+    color:var(--accent); margin-right:8px;
+  }
+  .blockers .why{display:block; color:var(--muted); font-size:.9rem; margin-top:2px}
+  .pill{
+    display:inline-block; font-family:Archivo,sans-serif; font-weight:600; font-size:.74rem;
+    letter-spacing:.06em; text-transform:uppercase; padding:2px 10px; border-radius:999px;
+  }
+  .pill.ok{background:var(--ok-soft); color:var(--ok)}
+  .pill.risk{background:var(--accent-soft); color:var(--accent)}
+  .footer{margin-top:56px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:.85rem}
+  a{color:var(--steel)}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Minet Uganda · Business Development</p>
+  <h1>BD CRM Build Pack</h1>
+  <p class="lede">Review of the scoping document <em>“BD CRM: Requirements and Data Model, draft v0.1”</em> and the twelve-document pack produced from it — everything needed to build the custom CRM from the ground up.</p>
+  <p class="meta">Pack v1.0 · 2026-09-09 · 12 documents + runnable PostgreSQL schema · repo: <code>minet/crm/docs/</code></p>
+
+  <div class="verdict">
+    <p><strong>Verdict on the spec:</strong> unusually strong for a v0.1 — evidence-driven, with an essentially build-ready data model (the opportunity / revenue-schedule grain, stage–outcome split, derived-never-typed rollups, and day-one stage history are all correct and are adopted unchanged). What it lacks is everything an engineer needs on day one: architecture, non-functional requirements, API and UI definition, security model, test criteria, and a plan. This pack supplies those.</p>
+    <p style="margin-bottom:0"><span class="pill risk">One dominant risk</span>&nbsp; Question <strong>I1</strong> — must the CRM produce the CEO Summit pack, or only its New Business pipeline? — is a roughly <strong>3× scope swing</strong> and is still open. The pack phases the work so Phase&nbsp;1 is useful either way and the schema already carries Phase-2 landing zones.</p>
+  </div>
+
+  <h2>What the spec settles, and what had to be added</h2>
+  <div class="cols">
+    <div class="card">
+      <h3><span class="pill ok">Adopted unchanged</span></h3>
+      <ul>
+        <li>One pursuit = one Opportunity; money lives in dated <strong>revenue schedule lines</strong> beneath it</li>
+        <li><strong>Stage separated from outcome</strong>, exit criteria per stage, stage-defaulted probability</li>
+        <li>Rollups, gaps and weighted amounts <strong>derived, never typed</strong></li>
+        <li>Month-end <strong>forecast snapshots</strong> and the movement report</li>
+        <li><strong>Stage history from day one</strong> — the one thing that can’t be added retrospectively</li>
+        <li>The §15 corrections: unit ⊃ sector, 50% committed threshold, monthly target phasing, typed support requests, <strong>Tender as its own entity</strong></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="pill risk">Added by this pack</span></h3>
+      <ul>
+        <li>Numbered, testable requirements (<code>FR-*</code>, <code>BR-*</code>, <code>NFR-*</code>)</li>
+        <li>Architecture &amp; stack: TypeScript / Next.js / PostgreSQL on Azure, invite-only Entra SSO, one deployable, solo-dev posture</li>
+        <li>Runnable schema — <strong>validated end-to-end</strong>: constraints reject lost-without-reason, non-numeric amounts, mid-month dates</li>
+        <li>API contract, RBAC matrix &amp; row visibility, field-level audit design</li>
+        <li>Screen inventory, report formulas defined exactly once</li>
+        <li>Migration gates with line-by-line money reconciliation; test plan; ~22-week solo-dev delivery plan</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>The document pack</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Doc</th><th>Title</th><th>What it gives the build</th></tr></thead>
+    <tbody>
+      <tr><td>01</td><td>Spec review</td><td>Strengths, gaps, internal issues, ranked risk register</td></tr>
+      <tr><td>02</td><td>Product requirements</td><td>Scope &amp; phasing, personas, every functional requirement and save-time business rule</td></tr>
+      <tr><td>03</td><td>Architecture &amp; NFRs</td><td>Stack, components, environments, security, backup, the Uganda DPPA 2019 obligations</td></tr>
+      <tr><td>04</td><td>Data model + <code>schema.sql</code></td><td>ER diagram, ~25 tables, how each §3 data defect is made <em>impossible</em>, Phase-2 readiness</td></tr>
+      <tr><td>05</td><td>API specification</td><td>REST contract; stage changes, conversion and closing as guarded endpoints; error contract citing rule IDs</td></tr>
+      <tr><td>06</td><td>RBAC &amp; audit</td><td>Five roles, permission matrix, row visibility, appraisal-caution safeguards</td></tr>
+      <tr><td>07</td><td>UI specification</td><td>Screen inventory, key flows, “insufficient data” rule, mobile-critical subset</td></tr>
+      <tr><td>08</td><td>Reporting specification</td><td>Every measure’s exact formula — forecast bases, movement decomposition, the ten workload signals</td></tr>
+      <tr><td>09</td><td>Migration plan</td><td>Entry/exit gates, controlled-list workshop agenda, scripted rerunnable ETL, sign-off criteria</td></tr>
+      <tr><td>10</td><td>Test plan</td><td>Launch acceptance incl. the three §11 non-negotiables; what is deliberately accepted at month four instead</td></tr>
+      <tr><td>11</td><td>Delivery plan</td><td>Two parallel tracks, ~22 weeks solo to go-live, the I1 scope gate at week 4, run-cost honesty</td></tr>
+      <tr><td>12</td><td>Decision log</td><td>20 provisional decisions with named confirmers + the full open-question register</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Six questions block migration — none block the build</h2>
+  <p>The build track starts now. These need answers before data loads (target: weeks 1–4, at the controlled-list workshop and sponsor session):</p>
+  <ul class="blockers">
+    <li><span class="q">I1</span>Does the CRM produce the CEO pack, or only the New Business pipeline?<span class="why">Decides Phase 2 (~3× scope). Decision gate set at week 4; either answer is safe for Phase 1.</span></li>
+    <li><span class="q">C1</span>Are the amounts brokerage commission or gross written premium?<span class="why">Changes the meaning of every figure; schema isolates the change to one table.</span></li>
+    <li><span class="q">C2</span>What does “Effective Month” actually mean?<span class="why">Inception vs recognition vs payment = three different forecasts from identical data.</span></li>
+    <li><span class="q">F1</span>Which workbook is authoritative — BD RAW DATA.xlsx or _3.xlsx?<span class="why">They disagree (172 vs 157 initiative rows, a lost header, live #REF! errors).</span></li>
+    <li><span class="q">F2</span>Are the repeated client rows one deal or several?<span class="why">The opportunity grain — the one migration decision nobody outside BD can make.</span></li>
+    <li><span class="q">A1</span>Do individual owners carry revenue targets?<span class="why">Decides the target model and whether owner performance is answerable at all.</span></li>
+  </ul>
+
+  <h2>Three things the build must not cut</h2>
+  <p>The spec’s own warning (§11): custom builds usually run out of budget exactly where the spreadsheets failed. All three are therefore <strong>launch acceptance criteria</strong>, not enhancements — descoping any of them requires the sponsor to strike them from the test plan in writing:</p>
+  <div class="scroll"><table>
+    <thead><tr><th></th><th>Non-negotiable</th><th>How the pack protects it</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>Month-end forecast snapshots + movement report</td><td>Immutable copies, no UPDATE/DELETE grants; movement buckets must reconcile exactly; seeded-data proof at launch</td></tr>
+      <tr><td class="num">2</td><td>Field-level audit trail</td><td>Single write path through audit middleware, same transaction; overrides and reassignments surfaced in the UI</td></tr>
+      <tr><td class="num">3</td><td>Role-based visibility</td><td>Server-side scoping on every query from day one; the flippable choices are settings, not code</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Next steps</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>When</th><th>Action</th><th>Who</th></tr></thead>
+    <tbody>
+      <tr><td>Week 1</td><td>Confirm or overturn the 20 provisional decisions (doc 12) — one hour</td><td>Sponsor + BD lead</td></tr>
+      <tr><td>Week 1</td><td>Put I1 to the CEO with the two scope options and cost delta (doc 11 §2)</td><td>Sponsor</td></tr>
+      <tr><td>Weeks 1–2</td><td>Start the build track: Sprint 0 (repo, CI, auth, schema, audit skeleton)</td><td>Engineering</td></tr>
+      <tr><td>Weeks 3–4</td><td>Controlled-list workshop + press the five migration blockers to answers</td><td>Whole BD team</td></tr>
+    </tbody>
+  </table></div>
+
+  <p class="footer">Generated from <code>CRM review.pdf</code> (21 pp) · full pack in <code>docs/</code> in the crm repository · schema validated against PostgreSQL 18.</p>
+</div>
