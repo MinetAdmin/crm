@@ -31,10 +31,15 @@ describe("diffForAudit", () => {
 
   it("ignores bookkeeping columns by default", () => {
     const changes = diffForAudit(
-      { updated_at: new Date("2026-01-01"), stage_id: 1 },
-      { updated_at: new Date("2026-02-01"), stage_id: 1 },
+      { updated_at: new Date("2026-01-01"), last_login_at: null, stage_id: 1 },
+      { updated_at: new Date("2026-02-01"), last_login_at: new Date("2026-02-01"), stage_id: 1 },
     );
     expect(changes).toEqual([]);
+  });
+
+  it("serializes bigint values", () => {
+    const changes = diffForAudit({ owner_id: BigInt(3) }, { owner_id: BigInt(4) });
+    expect(changes).toEqual([{ field: "owner_id", oldValue: "3", newValue: "4" }]);
   });
 
   it("reports fields that only exist on one side", () => {

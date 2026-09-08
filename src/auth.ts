@@ -1,20 +1,18 @@
 /**
- * Invite-only Microsoft Entra ID SSO (doc 03 §2.1, doc 06 §0).
- *
- * Layer 1 (outside this file): the Entra app registration has "Assignment
- * required" on, so unassigned users are refused by Microsoft before we run.
- * Layer 2 (here): a provisioned, active `app_user` row must exist. Lookup is
- * by azure_oid; email is used once, to link the OID on first login, and a
- * relink to a different OID is refused (recycled-email takeover guard).
+ * Invite-only Microsoft Entra ID SSO (doc 03 §2.1, doc 06 §0). Entra refuses
+ * unassigned users first; here a provisioned, active app_user row must also
+ * exist. Lookup is by azure_oid, linked once by email on first login.
  */
-import NextAuth from "next-auth";
+import NextAuth, { type Profile } from "next-auth";
+import type { app_user } from "@prisma/client";
 import { authConfig } from "./auth.config";
+import { withAudit } from "./lib/audit";
 import { prisma } from "./lib/db";
 
 declare module "next-auth" {
   interface Session {
     user: {
-      id: string; // app_user.id
+      id: string;
       email: string;
       name?: string | null;
       role: string;
@@ -23,10 +21,75 @@ declare module "next-auth" {
   }
 }
 
-function maskEmail(email: string | null | undefined): string {
+function maskEmail(email: string | null): string {
   if (!email || !email.includes("@")) return "<none>";
   const [local, domain] = email.split("@");
   return `${local[0] ?? ""}***@${domain}`;
+}
+
+/** Extracts the oid and email claims from an Entra profile. */
+function profileIdentity(profile: Profile | undefined): {
+  oid: string | null;
+  email: string | null;
+} {
+  const oid = typeof profile?.oid === "string" ? profile.oid : null;
+  const raw =
+    typeof profile?.email === "string"
+      ? profile.email
+      : typeof profile?.preferred_username === "string"
+        ? profile.preferred_username
+        : null;
+  return { oid, email: raw?.toLowerCase() ?? null };
+}
+
+/**
+ * First SSO login: links the Azure OID to the provisioned user with that
+ * email. Refused when no active user exists or the record is already linked
+ * to a different OID (recycled-email takeover guard).
+ */
+async function linkFirstLogin(oid: string, email: string): Promise<app_user | null> {
+  const user = await prisma.app_user.findUnique({ where: { email } });
+  if (!user || !user.active) {
+    console.warn(`[auth] unprovisioned sign-in refused, email=${maskEmail(email)}`);
+    return null;
+  }
+  if (user.azure_oid && user.azure_oid !== oid) {
+    console.warn(`[auth] refused relink of linked account, email=${maskEmail(email)}`);
+    return null;
+  }
+  await withAudit(prisma, {
+    entity: "app_user",
+    entityId: user.id,
+    changedBy: user.id,
+    before: { azure_oid: user.azure_oid },
+    mutate: async (tx) => {
+      await tx.app_user.update({ where: { id: user.id }, data: { azure_oid: oid } });
+      return { azure_oid: oid };
+    },
+  });
+  return prisma.app_user.findUniqueOrThrow({ where: { id: user.id } });
+}
+
+/** Resolves a sign-in to an active user: by OID, else by first-login link. */
+async function resolveUser(oid: string, email: string | null): Promise<app_user | null> {
+  const byOid = await prisma.app_user.findUnique({ where: { azure_oid: oid } });
+  if (byOid) return byOid.active ? byOid : null;
+  if (!email) return null;
+  return linkFirstLogin(oid, email);
+}
+
+async function recordLogin(user: app_user): Promise<void> {
+  await withAudit(prisma, {
+    entity: "app_user",
+    entityId: user.id,
+    changedBy: user.id,
+    before: { last_login_at: user.last_login_at },
+    mutate: async (tx) => {
+      const stamp = new Date();
+      await tx.app_user.update({ where: { id: user.id }, data: { last_login_at: stamp } });
+      return { last_login_at: stamp };
+    },
+  });
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -35,58 +98,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig.callbacks,
 
     async signIn({ profile }) {
-      const oid = typeof profile?.oid === "string" ? profile.oid : null;
-      const email =
-        typeof profile?.email === "string"
-          ? profile.email.toLowerCase()
-          : typeof profile?.preferred_username === "string"
-            ? profile.preferred_username.toLowerCase()
-            : null;
+      const { oid, email } = profileIdentity(profile);
       if (!oid) {
         console.warn(`[auth] token without oid claim, email=${maskEmail(email)}`);
         return false;
       }
-
-      // Returning user: OID already linked.
-      const byOid = await prisma.app_user.findUnique({ where: { azure_oid: oid } });
-      if (byOid) return byOid.active;
-
-      // First SSO login: link by provisioned email.
-      if (!email) return false;
-      const byEmail = await prisma.app_user.findUnique({ where: { email } });
-      if (!byEmail) {
-        console.warn(`[auth] unprovisioned sign-in refused, email=${maskEmail(email)}`);
-        return false; // not invited — no app_user record
-      }
-      if (!byEmail.active) return false;
-      if (byEmail.azure_oid && byEmail.azure_oid !== oid) {
-        console.warn(
-          `[auth] refused relink of already-linked account, email=${maskEmail(email)}`,
-        );
-        return false;
-      }
-      await prisma.app_user.update({
-        where: { id: byEmail.id },
-        data: { azure_oid: oid, last_login_at: new Date() },
-      });
+      const user = await resolveUser(oid, email);
+      if (!user) return false;
+      await recordLogin(user);
       return true;
     },
 
     async jwt({ token, profile, trigger }) {
-      // On sign-in, stamp app identity into the JWT so per-request code never
-      // needs a user lookup just to know who is asking.
-      if (trigger === "signIn" && typeof profile?.oid === "string") {
-        const user = await prisma.app_user.findUnique({ where: { azure_oid: profile.oid } });
-        if (user) {
-          token.appUserId = user.id.toString();
-          token.role = user.role;
-          token.unitId = user.unit_id?.toString() ?? null;
-          await prisma.app_user.update({
-            where: { id: user.id },
-            data: { last_login_at: new Date() },
-          });
-        }
-      }
+      if (trigger !== "signIn") return token;
+      const { oid } = profileIdentity(profile);
+      if (!oid) return token;
+      const user = await prisma.app_user.findUnique({ where: { azure_oid: oid } });
+      if (!user) return token;
+      token.appUserId = user.id.toString();
+      token.role = user.role;
+      token.unitId = user.unit_id?.toString() ?? null;
       return token;
     },
 

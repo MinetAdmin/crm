@@ -1,14 +1,11 @@
 /**
- * Field-level audit (FR-AUD-01, doc 06 §4).
- *
- * Rule of the codebase: every mutation of a business entity goes through
- * `withAudit`, in the same transaction as the change. There is no second way
- * to write to the database from the app (doc 03 §3.1).
+ * Field-level audit (FR-AUD-01, doc 06 §4). Every business-entity mutation
+ * goes through withAudit, in the same transaction as the change.
  */
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
-export type AuditableValue = string | number | boolean | Date | null | undefined;
+export type AuditableValue = string | number | bigint | boolean | Date | null | undefined;
 export type AuditableRecord = Record<string, AuditableValue>;
 
 export interface FieldChange {
@@ -24,14 +21,13 @@ function serialize(v: AuditableValue): string | null {
 }
 
 /**
- * Diff two shallow records into audit rows. Fields present in either side are
- * compared by serialized value; unchanged fields produce nothing. `ignore`
- * defaults to bookkeeping columns that would only add noise.
+ * Diffs two shallow records into field changes, compared by serialized value.
+ * `ignore` defaults to bookkeeping columns that would only add noise.
  */
 export function diffForAudit(
   before: AuditableRecord,
   after: AuditableRecord,
-  ignore: string[] = ["updated_at", "created_at"],
+  ignore: string[] = ["updated_at", "created_at", "last_login_at"],
 ): FieldChange[] {
   const fields = new Set([...Object.keys(before), ...Object.keys(after)]);
   const changes: FieldChange[] = [];
@@ -47,8 +43,8 @@ export function diffForAudit(
 type Tx = Prisma.TransactionClient | PrismaClient;
 
 /**
- * Write audit rows for a change, inside the caller's transaction.
- * `requestId` groups every row of one save (doc 04: audit_log.request_id).
+ * Writes audit rows for a change inside the caller's transaction.
+ * `requestId` groups every row of one save.
  */
 export async function writeAudit(
   tx: Tx,
@@ -76,9 +72,9 @@ export async function writeAudit(
 }
 
 /**
- * Convenience wrapper: run `mutate` in a transaction, then diff and record.
- * Callers fetch `before` themselves (they usually already have it for the
- * optimistic-lock check, NFR-DATA-03).
+ * Runs `mutate` in a transaction, then diffs `before` against its return
+ * value and records the changes. Callers pass the same field subset on both
+ * sides.
  */
 export async function withAudit<T extends AuditableRecord>(
   prisma: PrismaClient,
