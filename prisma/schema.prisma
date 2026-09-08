@@ -1,0 +1,649 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model migrations {
+  filename   String   @id
+  applied_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@map("_migrations")
+}
+
+model account {
+  id              BigInt        @id @default(autoincrement())
+  name            String
+  normalized_name String?       @default(dbgenerated("lower(regexp_replace(name, '\\s+'::text, ' '::text, 'g'::text))"))
+  sector_id       BigInt?
+  unit_id         BigInt?
+  country         String        @default("UG") @db.Char(2)
+  operations_ref  String?
+  created_at      DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime      @default(now()) @db.Timestamptz(6)
+  archived_at     DateTime?     @db.Timestamptz(6)
+  sector          sector?       @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit            unit?         @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  activity        activity[]
+  contact         contact[]
+  lead            lead[]
+  opportunity     opportunity[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model activity {
+  id             BigInt          @id @default(autoincrement())
+  activity_type  activity_type_t
+  subject        String
+  lead_id        BigInt?
+  opportunity_id BigInt?
+  account_id     BigInt?
+  owner_id       BigInt
+  due_date       DateTime?       @db.Date
+  completed_at   DateTime?       @db.Timestamptz(6)
+  notes          String?
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime        @default(now()) @db.Timestamptz(6)
+  account        account?        @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lead           lead?           @relation(fields: [lead_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  opportunity    opportunity?    @relation(fields: [opportunity_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user       app_user        @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model app_user {
+  id                                                            BigInt                   @id @default(autoincrement())
+  email                                                         String                   @unique
+  full_name                                                     String
+  role                                                          user_role_t
+  unit_id                                                       BigInt?
+  capacity_pursuits                                             Int?
+  pipeline_split_pct                                            Decimal?                 @db.Decimal(5, 2)
+  availability_pct                                              Decimal                  @default(100) @db.Decimal(5, 2)
+  active                                                        Boolean                  @default(true)
+  created_at                                                    DateTime                 @default(now()) @db.Timestamptz(6)
+  azure_oid                                                     String?                  @unique
+  last_login_at                                                 DateTime?                @db.Timestamptz(6)
+  activity                                                      activity[]
+  unit                                                          unit?                    @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  audit_log                                                     audit_log[]
+  forecast_snapshot                                             forecast_snapshot[]
+  initiative_co_champion                                        initiative_co_champion[]
+  initiative_note                                               initiative_note[]
+  lead                                                          lead[]
+  opportunity_opportunity_created_byToapp_user                  opportunity[]            @relation("opportunity_created_byToapp_user")
+  opportunity_opportunity_owner_idToapp_user                    opportunity[]            @relation("opportunity_owner_idToapp_user")
+  opportunity_opportunity_updated_byToapp_user                  opportunity[]            @relation("opportunity_updated_byToapp_user")
+  opportunity_co_owner                                          opportunity_co_owner[]
+  owner_reassignment_owner_reassignment_decided_byToapp_user    owner_reassignment[]     @relation("owner_reassignment_decided_byToapp_user")
+  owner_reassignment_owner_reassignment_from_owner_idToapp_user owner_reassignment[]     @relation("owner_reassignment_from_owner_idToapp_user")
+  owner_reassignment_owner_reassignment_to_owner_idToapp_user   owner_reassignment[]     @relation("owner_reassignment_to_owner_idToapp_user")
+  revenue_actual                                                revenue_actual[]
+  stage_history                                                 stage_history[]
+  strategic_initiative                                          strategic_initiative[]
+  support_request                                               support_request[]
+  target_target_approved_byToapp_user                           target[]                 @relation("target_approved_byToapp_user")
+  target_target_owner_idToapp_user                              target[]                 @relation("target_owner_idToapp_user")
+  tender                                                        tender[]
+}
+
+model audit_log {
+  id         BigInt   @id @default(autoincrement())
+  entity     String
+  entity_id  BigInt
+  field      String
+  old_value  String?
+  new_value  String?
+  changed_by BigInt
+  changed_at DateTime @default(now()) @db.Timestamptz(6)
+  request_id String?  @db.Uuid
+  app_user   app_user @relation(fields: [changed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([entity, entity_id, changed_at], map: "audit_entity_idx")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model budget_line {
+  id                   BigInt                @id @default(autoincrement())
+  cost_category_id     BigInt
+  unit_id              BigInt
+  period_month         DateTime              @db.Date
+  budgeted_amount      Decimal               @db.Decimal(18, 2)
+  actual_amount        Decimal?              @db.Decimal(18, 2)
+  opportunity_id       BigInt?
+  initiative_id        BigInt?
+  notes                String?
+  created_at           DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime              @default(now()) @db.Timestamptz(6)
+  ref_value            ref_value             @relation(fields: [cost_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  strategic_initiative strategic_initiative? @relation(fields: [initiative_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  opportunity          opportunity?          @relation(fields: [opportunity_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit                 unit                  @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model contact {
+  id                BigInt    @id @default(autoincrement())
+  account_id        BigInt
+  full_name         String
+  role_title        String?
+  email             String?
+  phone             String?
+  is_decision_maker Boolean   @default(false)
+  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime  @default(now()) @db.Timestamptz(6)
+  archived_at       DateTime? @db.Timestamptz(6)
+  account           account   @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model forecast_snapshot {
+  id                     BigInt                   @id @default(autoincrement())
+  snapshot_month         DateTime                 @unique @db.Date
+  taken_at               DateTime                 @default(now()) @db.Timestamptz(6)
+  taken_by               BigInt?
+  app_user               app_user?                @relation(fields: [taken_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  forecast_snapshot_line forecast_snapshot_line[]
+}
+
+model forecast_snapshot_line {
+  id                  BigInt            @id @default(autoincrement())
+  snapshot_id         BigInt
+  opportunity_id      BigInt
+  schedule_line_id    BigInt?
+  account_name        String
+  owner_id            BigInt
+  unit_code           String
+  sector_code         String
+  initiative_id       BigInt?
+  stage_code          String
+  outcome             outcome_t
+  product_code        String?
+  effective_month     DateTime?         @db.Date
+  expected_amount     Decimal?          @db.Decimal(18, 2)
+  probability         Decimal?          @db.Decimal(5, 2)
+  weighted_amount     Decimal?          @db.Decimal(18, 2)
+  expected_close_date DateTime?         @db.Date
+  forecast_snapshot   forecast_snapshot @relation(fields: [snapshot_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([snapshot_id], map: "fsl_snapshot_idx")
+}
+
+model initiative_co_champion {
+  initiative_id        BigInt
+  user_id              BigInt
+  strategic_initiative strategic_initiative @relation(fields: [initiative_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  app_user             app_user             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([initiative_id, user_id])
+}
+
+model initiative_note {
+  id                   BigInt               @id @default(autoincrement())
+  initiative_id        BigInt
+  author_id            BigInt
+  body                 String
+  created_at           DateTime             @default(now()) @db.Timestamptz(6)
+  app_user             app_user             @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  strategic_initiative strategic_initiative @relation(fields: [initiative_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model lead {
+  id                                                     BigInt                  @id @default(autoincrement())
+  company_name                                           String
+  matched_account_id                                     BigInt?
+  contact_name                                           String?
+  contact_email                                          String?
+  contact_phone                                          String?
+  source_id                                              BigInt
+  sector_id                                              BigInt?
+  unit_id                                                BigInt
+  estimated_value                                        Decimal?                @db.Decimal(18, 2)
+  currency                                               String                  @default("UGX") @db.Char(3)
+  owner_id                                               BigInt
+  status                                                 lead_status_t           @default(new)
+  disqualification_reason_id                             BigInt?
+  converted_opportunity_id                               BigInt?
+  created_at                                             DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at                                             DateTime                @default(now()) @db.Timestamptz(6)
+  archived_at                                            DateTime?               @db.Timestamptz(6)
+  activity                                               activity[]
+  opportunity_lead_converted_opportunity_idToopportunity opportunity?            @relation("lead_converted_opportunity_idToopportunity", fields: [converted_opportunity_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "lead_converted_opp_fk")
+  ref_value_lead_disqualification_reason_idToref_value   ref_value?              @relation("lead_disqualification_reason_idToref_value", fields: [disqualification_reason_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account                                                account?                @relation(fields: [matched_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user                                               app_user                @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sector                                                 sector?                 @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ref_value_lead_source_idToref_value                    ref_value               @relation("lead_source_idToref_value", fields: [source_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit                                                   unit                    @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lead_product_interest                                  lead_product_interest[]
+  opportunity_opportunity_source_lead_idTolead           opportunity[]           @relation("opportunity_source_lead_idTolead")
+}
+
+model lead_product_interest {
+  lead_id    BigInt
+  product_id BigInt
+  lead       lead    @relation(fields: [lead_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product    product @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([lead_id, product_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model opportunity {
+  id                                              BigInt                  @id @default(autoincrement())
+  account_id                                      BigInt
+  name                                            String
+  unit_id                                         BigInt
+  sector_id                                       BigInt
+  owner_id                                        BigInt
+  stage_id                                        BigInt
+  outcome                                         outcome_t               @default(open)
+  probability                                     Decimal                 @db.Decimal(5, 2)
+  probability_override_note                       String?
+  expected_close_date                             DateTime                @db.Date
+  close_confidence                                close_confidence_t      @default(estimated)
+  initiative_id                                   BigInt?
+  forecast_category                               forecast_category_t?
+  key_blocker                                     String?
+  loss_reason_id                                  BigInt?
+  loss_reason_text                                String?
+  hold_reason_id                                  BigInt?
+  source_lead_id                                  BigInt?
+  complexity                                      complexity_t            @default(standard)
+  complexity_override_note                        String?
+  stage_entered_at                                DateTime                @default(now()) @db.Timestamptz(6)
+  stage_entry_backfilled                          Boolean                 @default(false)
+  created_by                                      BigInt
+  created_at                                      DateTime                @default(now()) @db.Timestamptz(6)
+  updated_by                                      BigInt?
+  updated_at                                      DateTime                @default(now()) @db.Timestamptz(6)
+  archived_at                                     DateTime?               @db.Timestamptz(6)
+  activity                                        activity[]
+  budget_line                                     budget_line[]
+  lead_lead_converted_opportunity_idToopportunity lead[]                  @relation("lead_converted_opportunity_idToopportunity")
+  account                                         account                 @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user_opportunity_created_byToapp_user       app_user                @relation("opportunity_created_byToapp_user", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ref_value_opportunity_hold_reason_idToref_value ref_value?              @relation("opportunity_hold_reason_idToref_value", fields: [hold_reason_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  strategic_initiative                            strategic_initiative?   @relation(fields: [initiative_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ref_value_opportunity_loss_reason_idToref_value ref_value?              @relation("opportunity_loss_reason_idToref_value", fields: [loss_reason_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user_opportunity_owner_idToapp_user         app_user                @relation("opportunity_owner_idToapp_user", fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sector                                          sector                  @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lead_opportunity_source_lead_idTolead           lead?                   @relation("opportunity_source_lead_idTolead", fields: [source_lead_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pipeline_stage                                  pipeline_stage          @relation(fields: [stage_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit                                            unit                    @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user_opportunity_updated_byToapp_user       app_user?               @relation("opportunity_updated_byToapp_user", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  opportunity_co_owner                            opportunity_co_owner[]
+  owner_reassignment                              owner_reassignment[]
+  revenue_schedule_line                           revenue_schedule_line[]
+  stage_history                                   stage_history[]
+  support_request                                 support_request[]
+  tender                                          tender[]
+
+  @@index([initiative_id], map: "opp_init_idx")
+  @@index([stage_id], map: "opp_stage_idx")
+}
+
+model opportunity_co_owner {
+  opportunity_id BigInt
+  user_id        BigInt
+  opportunity    opportunity @relation(fields: [opportunity_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  app_user       app_user    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([opportunity_id, user_id])
+}
+
+model owner_reassignment {
+  id                                                  BigInt      @id @default(autoincrement())
+  opportunity_id                                      BigInt
+  from_owner_id                                       BigInt
+  to_owner_id                                         BigInt
+  reason                                              String
+  decided_by                                          BigInt
+  created_at                                          DateTime    @default(now()) @db.Timestamptz(6)
+  app_user_owner_reassignment_decided_byToapp_user    app_user    @relation("owner_reassignment_decided_byToapp_user", fields: [decided_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user_owner_reassignment_from_owner_idToapp_user app_user    @relation("owner_reassignment_from_owner_idToapp_user", fields: [from_owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  opportunity                                         opportunity @relation(fields: [opportunity_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user_owner_reassignment_to_owner_idToapp_user   app_user    @relation("owner_reassignment_to_owner_idToapp_user", fields: [to_owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pipeline_stage {
+  id                                                        BigInt          @id @default(autoincrement())
+  code                                                      String          @unique
+  name                                                      String
+  sort_order                                                Int             @unique
+  default_probability                                       Decimal         @db.Decimal(5, 2)
+  exit_criterion                                            String
+  active                                                    Boolean         @default(true)
+  opportunity                                               opportunity[]
+  stage_history_stage_history_from_stage_idTopipeline_stage stage_history[] @relation("stage_history_from_stage_idTopipeline_stage")
+  stage_history_stage_history_to_stage_idTopipeline_stage   stage_history[] @relation("stage_history_to_stage_idTopipeline_stage")
+}
+
+model product {
+  id                    BigInt                  @id @default(autoincrement())
+  code                  String                  @unique
+  name                  String
+  default_complexity    complexity_t            @default(standard)
+  active                Boolean                 @default(true)
+  lead_product_interest lead_product_interest[]
+  revenue_schedule_line revenue_schedule_line[]
+  target                target[]
+}
+
+model ref_list {
+  id        BigInt      @id @default(autoincrement())
+  code      String      @unique
+  ref_value ref_value[]
+}
+
+model ref_value {
+  id                                                BigInt                 @id @default(autoincrement())
+  list_id                                           BigInt
+  code                                              String
+  label                                             String
+  sort_order                                        Int                    @default(0)
+  active                                            Boolean                @default(true)
+  budget_line                                       budget_line[]
+  lead_lead_disqualification_reason_idToref_value   lead[]                 @relation("lead_disqualification_reason_idToref_value")
+  lead_lead_source_idToref_value                    lead[]                 @relation("lead_source_idToref_value")
+  opportunity_opportunity_hold_reason_idToref_value opportunity[]          @relation("opportunity_hold_reason_idToref_value")
+  opportunity_opportunity_loss_reason_idToref_value opportunity[]          @relation("opportunity_loss_reason_idToref_value")
+  ref_list                                          ref_list               @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  strategic_initiative                              strategic_initiative[]
+  tender                                            tender[]
+
+  @@unique([list_id, code])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model revenue_actual {
+  id           BigInt    @id @default(autoincrement())
+  period_month DateTime  @db.Date
+  revenue_line String
+  sector_id    BigInt?
+  basis        String    @default("actual")
+  amount       Decimal   @db.Decimal(18, 2)
+  source       String    @default("manual_load")
+  loaded_at    DateTime  @default(now()) @db.Timestamptz(6)
+  loaded_by    BigInt?
+  app_user     app_user? @relation(fields: [loaded_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sector       sector?   @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model revenue_schedule_line {
+  id                        BigInt         @id @default(autoincrement())
+  opportunity_id            BigInt
+  product_id                BigInt
+  effective_month           DateTime       @db.Date
+  expected_amount           Decimal        @db.Decimal(18, 2)
+  currency                  String         @default("UGX") @db.Char(3)
+  probability_override      Decimal?       @db.Decimal(5, 2)
+  probability_override_note String?
+  revenue_type              revenue_type_t @default(new_business)
+  recurring                 Boolean        @default(false)
+  actual_amount             Decimal?       @db.Decimal(18, 2)
+  created_at                DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime       @default(now()) @db.Timestamptz(6)
+  archived_at               DateTime?      @db.Timestamptz(6)
+  opportunity               opportunity    @relation(fields: [opportunity_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product                   product        @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([effective_month], map: "rsl_month_idx")
+  @@index([opportunity_id], map: "rsl_opp_idx")
+}
+
+model sector {
+  id                   BigInt                 @id @default(autoincrement())
+  unit_id              BigInt
+  code                 String                 @unique
+  name                 String
+  active               Boolean                @default(true)
+  account              account[]
+  lead                 lead[]
+  opportunity          opportunity[]
+  revenue_actual       revenue_actual[]
+  unit                 unit                   @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  strategic_initiative strategic_initiative[]
+  tender               tender[]
+}
+
+model stage_history {
+  id                                                         BigInt          @id @default(autoincrement())
+  opportunity_id                                             BigInt
+  from_stage_id                                              BigInt?
+  to_stage_id                                                BigInt
+  changed_by                                                 BigInt
+  changed_at                                                 DateTime        @default(now()) @db.Timestamptz(6)
+  backfilled                                                 Boolean         @default(false)
+  app_user                                                   app_user        @relation(fields: [changed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pipeline_stage_stage_history_from_stage_idTopipeline_stage pipeline_stage? @relation("stage_history_from_stage_idTopipeline_stage", fields: [from_stage_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  opportunity                                                opportunity     @relation(fields: [opportunity_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pipeline_stage_stage_history_to_stage_idTopipeline_stage   pipeline_stage  @relation("stage_history_to_stage_idTopipeline_stage", fields: [to_stage_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([opportunity_id, changed_at], map: "stage_history_opp_idx")
+}
+
+model strategic_initiative {
+  id                     BigInt                   @id @default(autoincrement())
+  name                   String                   @unique
+  unit_id                BigInt
+  sector_id              BigInt
+  champion_id            BigInt
+  effort_share_pct       Decimal?                 @db.Decimal(5, 2)
+  annual_target          Decimal                  @db.Decimal(18, 2)
+  target_year            Int
+  status_id              BigInt
+  next_milestone         String?
+  next_milestone_date    DateTime?                @db.Date
+  milestone_completed_at DateTime?                @db.Date
+  created_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  archived_at            DateTime?                @db.Timestamptz(6)
+  budget_line            budget_line[]
+  initiative_co_champion initiative_co_champion[]
+  initiative_note        initiative_note[]
+  opportunity            opportunity[]
+  app_user               app_user                 @relation(fields: [champion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sector                 sector                   @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ref_value              ref_value                @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit                   unit                     @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  target                 target[]
+}
+
+model support_request {
+  id             BigInt         @id @default(autoincrement())
+  opportunity_id BigInt
+  support_type   support_type_t
+  ask            String
+  requested_by   BigInt
+  requested_at   DateTime       @default(now()) @db.Timestamptz(6)
+  resolved_at    DateTime?      @db.Timestamptz(6)
+  resolution     String?
+  opportunity    opportunity    @relation(fields: [opportunity_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user       app_user       @relation(fields: [requested_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model system_setting {
+  key   String @id
+  value String
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model target {
+  id                                    BigInt                @id @default(autoincrement())
+  target_year                           Int
+  level                                 target_level_t
+  unit_id                               BigInt?
+  initiative_id                         BigInt?
+  owner_id                              BigInt?
+  product_id                            BigInt?
+  amount                                Decimal               @db.Decimal(18, 2)
+  version                               Int                   @default(1)
+  superseded_by                         BigInt?
+  approved_by                           BigInt?
+  approved_at                           DateTime?             @db.Timestamptz(6)
+  created_at                            DateTime              @default(now()) @db.Timestamptz(6)
+  app_user_target_approved_byToapp_user app_user?             @relation("target_approved_byToapp_user", fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  strategic_initiative                  strategic_initiative? @relation(fields: [initiative_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user_target_owner_idToapp_user    app_user?             @relation("target_owner_idToapp_user", fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product                               product?              @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  target                                target?               @relation("targetTotarget", fields: [superseded_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_target                          target[]              @relation("targetTotarget")
+  unit                                  unit?                 @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  target_phasing                        target_phasing[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model target_phasing {
+  target_id BigInt
+  month     DateTime @db.Date
+  amount    Decimal  @db.Decimal(18, 2)
+  target    target   @relation(fields: [target_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([target_id, month])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tender {
+  id                         BigInt          @id @default(autoincrement())
+  tender_type                tender_type_t
+  issuing_body               String
+  title                      String
+  sector_id                  BigInt
+  unit_id                    BigInt
+  recorded_value             Decimal         @db.Decimal(18, 2)
+  currency                   String          @default("UGX") @db.Char(3)
+  value_basis                value_basis_t
+  status                     tender_status_t @default(to_submit)
+  published_date             DateTime?       @db.Date
+  submission_deadline        DateTime?       @db.Date
+  submitted_date             DateTime?       @db.Date
+  decision_date              DateTime?       @db.Date
+  outcome_reason_id          BigInt?
+  outcome_text               String?
+  linked_opportunity_id      BigInt?
+  parent_prequalification_id BigInt?
+  owner_id                   BigInt?
+  created_at                 DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime        @default(now()) @db.Timestamptz(6)
+  archived_at                DateTime?       @db.Timestamptz(6)
+  opportunity                opportunity?    @relation(fields: [linked_opportunity_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ref_value                  ref_value?      @relation(fields: [outcome_reason_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  app_user                   app_user?       @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tender                     tender?         @relation("tenderTotender", fields: [parent_prequalification_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_tender               tender[]        @relation("tenderTotender")
+  sector                     sector          @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit                       unit            @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model unit {
+  id                   BigInt                 @id @default(autoincrement())
+  code                 String                 @unique
+  name                 String
+  active               Boolean                @default(true)
+  account              account[]
+  app_user             app_user[]
+  budget_line          budget_line[]
+  lead                 lead[]
+  opportunity          opportunity[]
+  sector               sector[]
+  strategic_initiative strategic_initiative[]
+  target               target[]
+  tender               tender[]
+}
+
+enum activity_type_t {
+  meeting
+  call
+  submission
+  task
+  next_action
+}
+
+enum close_confidence_t {
+  confirmed
+  estimated
+  tbc
+}
+
+enum complexity_t {
+  light
+  standard
+  complex
+}
+
+enum forecast_category_t {
+  prior_forecast
+  additional_forecast
+}
+
+enum lead_status_t {
+  new
+  contacted
+  qualifying
+  qualified
+  disqualified
+  dormant
+  converted
+}
+
+enum outcome_t {
+  open
+  won
+  lost
+  on_hold
+  withdrawn
+}
+
+enum revenue_type_t {
+  new_business
+  renewal
+  cross_sell
+  upsell
+}
+
+enum support_type_t {
+  management
+  mrs
+}
+
+enum target_level_t {
+  company
+  unit
+  initiative
+  owner
+  product
+}
+
+enum tender_status_t {
+  to_submit
+  submitted
+  in_evaluation
+  prequalified
+  won
+  lost
+  withdrawn
+}
+
+enum tender_type_t {
+  prequalification
+  tender
+}
+
+enum user_role_t {
+  bd_owner
+  unit_head
+  bd_leadership
+  executive_ro
+  admin
+}
+
+enum value_basis_t {
+  brokerage_income
+  sum_insured
+  premium
+}
