@@ -154,7 +154,7 @@ export default async function ReportsPage() {
 
       <p className="text-[13px] text-(--c-muted)">
         Trend views (forecast movement, stage throughput, bogged-down exceptions) need history to
-        accumulate. See <Link href="/console/reports/movement" className="underline underline-offset-2">forecast movement</Link>.
+        accumulate. See <Link href="/console/reports/movement" className="underline underline-offset-2">forecast movement</Link> and{" "}<Link href="/console/reports/workload" className="underline underline-offset-2">workload</Link>.
       </p>
     </div>
   );
