@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { writeAudit } from "./audit";
-import { decisionNeedsReason, type ValueBasis } from "./tender-rules";
+import { DECIDED_STATUSES, decisionNeedsReason, type ValueBasis } from "./tender-rules";
 
 export class TenderRuleError extends Error {}
 
@@ -97,7 +97,7 @@ export async function changeTenderStatus(
       data: {
         status: input.status as never,
         outcome_reason_id: input.outcomeReasonId ? BigInt(input.outcomeReasonId) : null,
-        decision_date: ["won", "lost"].includes(input.status) ? new Date() : null,
+        decision_date: DECIDED_STATUSES.has(input.status) ? new Date() : null,
         submitted_date:
           input.status === "submitted" ? (tender.submitted_date ?? new Date()) : tender.submitted_date,
         updated_at: new Date(),

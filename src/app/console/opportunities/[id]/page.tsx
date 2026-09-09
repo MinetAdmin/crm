@@ -6,7 +6,14 @@ import { db } from "@/lib/db";
 import { formatAmount } from "@/lib/format";
 import { getOpportunity, opportunityTotals } from "@/lib/opportunities";
 import { submitOpportunityLink } from "../../initiatives/actions";
-import { submitClosure, submitScheduleLine, submitStageChange } from "../actions";
+import { nextActionFor } from "@/lib/activities";
+import {
+  submitActionDone,
+  submitClosure,
+  submitNextAction,
+  submitScheduleLine,
+  submitStageChange,
+} from "../actions";
 
 const FIELD = "mt-1 w-full rounded-md border border-(--c-line) bg-(--c-surface) px-3 py-2 text-sm";
 
@@ -31,6 +38,7 @@ export default async function OpportunityPage({
     }),
     db().strategic_initiative.findMany({ where: { archived_at: null }, orderBy: { name: "asc" } }),
   ]);
+  const nextAction = await nextActionFor(id);
   const open = opportunity.outcome === "open";
 
   return (
@@ -64,6 +72,58 @@ export default async function OpportunityPage({
           value={opportunity.expected_close_date.toISOString().slice(0, 10)}
         />
       </dl>
+
+      {open && (
+        <section className="mt-6 rounded-md border border-(--c-line) bg-(--c-surface) p-4">
+          <h2 className="text-[15px] font-semibold">Next action</h2>
+          {nextAction ? (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm">
+                {nextAction.subject}
+                <span
+                  className={`ml-2 text-[13px] ${
+                    nextAction.overdue ? "text-(--c-warn)" : "text-(--c-muted)"
+                  }`}
+                >
+                  due {nextAction.dueDate?.toISOString().slice(0, 10)}
+                  {nextAction.overdue && ", overdue"}
+                </span>
+              </p>
+              <form action={submitActionDone}>
+                <input type="hidden" name="opportunityId" value={opportunity.id.toString()} />
+                <input type="hidden" name="actionId" value={nextAction.id} />
+                <button
+                  type="submit"
+                  className="rounded-full border border-(--c-line) px-4 py-1.5 text-sm font-medium hover:bg-(--c-wash)"
+                >
+                  Mark done
+                </button>
+              </form>
+            </div>
+          ) : (
+            <>
+              <p className="mt-1 text-[13px] text-(--c-warn)">
+                An open pursuit with no next action is one nobody is working.
+              </p>
+              <form
+                action={submitNextAction}
+                className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end"
+              >
+                <input type="hidden" name="opportunityId" value={opportunity.id.toString()} />
+                <label className="block text-sm">
+                  <span className="font-medium">What happens next</span>
+                  <input name="subject" required className={FIELD} />
+                </label>
+                <label className="block text-sm">
+                  <span className="font-medium">Due</span>
+                  <input type="date" name="dueDate" required className={FIELD} />
+                </label>
+                <PrimaryButton>Set action</PrimaryButton>
+              </form>
+            </>
+          )}
+        </section>
+      )}
 
       <section className="mt-8">
         <h2 className="text-[15px] font-semibold">Revenue schedule</h2>

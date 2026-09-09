@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import { RuleError, addScheduleLine, changeStage, closeOpportunity } from "@/lib/opportunities";
+import { completeAction, setNextAction } from "@/lib/activities";
 
 async function actorId(): Promise<bigint> {
   const session = await auth();
@@ -81,5 +82,26 @@ export async function submitClosure(form: FormData) {
     backWithViolations(id, error);
   }
   revalidatePath(`/console/opportunities/${id}`);
+  redirect(`/console/opportunities/${id}`);
+}
+
+export async function submitNextAction(form: FormData) {
+  const id = text(form, "opportunityId");
+  const subject = text(form, "subject");
+  const dueDate = text(form, "dueDate");
+  if (subject && dueDate) {
+    await setNextAction({ opportunityId: id, subject, dueDate }, await actorId());
+    revalidatePath(`/console/opportunities/${id}`);
+  }
+  redirect(`/console/opportunities/${id}`);
+}
+
+export async function submitActionDone(form: FormData) {
+  const id = text(form, "opportunityId");
+  const actionId = text(form, "actionId");
+  if (actionId) {
+    await completeAction(actionId, await actorId());
+    revalidatePath(`/console/opportunities/${id}`);
+  }
   redirect(`/console/opportunities/${id}`);
 }

@@ -27,11 +27,11 @@ export function totalsByBasis(values: ReadonlyArray<TenderValue>): {
     .sort((a, b) => a.basis.localeCompare(b.basis));
 }
 
-const DECIDED = new Set(["won", "lost"]);
+export const DECIDED_STATUSES = new Set(["won", "lost"]);
 
 /** BR-TEN-02: a decided tender has to say why. */
 export function decisionNeedsReason(status: string, outcomeReasonId: string | null): boolean {
-  return DECIDED.has(status) && !outcomeReasonId;
+  return DECIDED_STATUSES.has(status) && !outcomeReasonId;
 }
 
 /** Win rate by count and by value, always reported as a pair. */
