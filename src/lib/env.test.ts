@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { validateEnv } from "./env";
+import { authEnvStatus } from "./env";
 
 const VALID = {
   DATABASE_URL: "postgresql://localhost:5432/crmdev",
@@ -16,30 +16,44 @@ afterEach(() => {
   process.env = { ...original };
 });
 
-function withEnv(overrides: Record<string, string>) {
+function withEnv(overrides: Record<string, string | undefined>) {
   process.env = { ...original, ...VALID, ...overrides };
 }
 
-describe("validateEnv", () => {
-  it("accepts a correct configuration", () => {
+function problems(): string[] {
+  const status = authEnvStatus();
+  return status.ready ? [] : status.problems;
+}
+
+describe("authEnvStatus", () => {
+  it("is ready on a correct configuration", () => {
     withEnv({});
-    expect(() => validateEnv()).not.toThrow();
+    expect(authEnvStatus()).toEqual({ ready: true });
   });
 
-  it("rejects a Secret ID pasted in place of the secret Value", () => {
+  it("never throws when nothing is configured, so a build can run bare", () => {
+    process.env = { NODE_ENV: original.NODE_ENV };
+    expect(() => authEnvStatus()).not.toThrow();
+    expect(authEnvStatus().ready).toBe(false);
+  });
+
+  it("names each missing variable", () => {
+    withEnv({ AUTH_SECRET: undefined, DATABASE_URL: undefined });
+    expect(problems()).toEqual(["DATABASE_URL is not set", "AUTH_SECRET is not set"]);
+  });
+
+  it("catches a Secret ID pasted in place of the secret Value", () => {
     withEnv({ AUTH_MICROSOFT_ENTRA_ID_SECRET: "9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f" });
-    expect(() => validateEnv()).toThrow(/Secret ID, not the secret Value/);
+    expect(problems().join()).toMatch(/Secret ID, not the secret Value/);
   });
 
-  it("rejects a multi-tenant issuer", () => {
-    withEnv({
-      AUTH_MICROSOFT_ENTRA_ID_ISSUER: "https://login.microsoftonline.com/common/v2.0",
-    });
-    expect(() => validateEnv()).toThrow(/pinned to the Minet tenant/);
+  it("catches a multi-tenant issuer", () => {
+    withEnv({ AUTH_MICROSOFT_ENTRA_ID_ISSUER: "https://login.microsoftonline.com/common/v2.0" });
+    expect(problems().join()).toMatch(/pinned to the Minet tenant/);
   });
 
-  it("rejects a short AUTH_SECRET", () => {
+  it("catches a short AUTH_SECRET", () => {
     withEnv({ AUTH_SECRET: "too-short" });
-    expect(() => validateEnv()).toThrow(/at least 32 characters/);
+    expect(problems().join()).toMatch(/at least 32 characters/);
   });
 });

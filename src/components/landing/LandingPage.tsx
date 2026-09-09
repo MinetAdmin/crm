@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Wordmark } from "@/components/brand/Wordmark";
+
 import { ForecastBand } from "./ForecastBand";
 import { LedgerResolve } from "./LedgerResolve";
 import { StageLadder } from "./StageLadder";
@@ -64,10 +66,10 @@ function Arrow() {
 function SignInButton({
   children,
   tone = "brand",
-}: {
+}: Readonly<{
   children: React.ReactNode;
   tone?: "brand" | "ink";
-}) {
+}>) {
   const styles =
     tone === "brand"
       ? "h-12 bg-(--lp-brand) px-6 text-[15px] text-white hover:bg-(--lp-brand)/90"
@@ -79,21 +81,6 @@ function SignInButton({
     >
       {children}
     </Link>
-  );
-}
-
-function Wordmark({ size = "lg" }: { size?: "lg" | "sm" }) {
-  return (
-    <span className="flex items-center gap-2.5">
-      <span
-        aria-hidden
-        className={`${size === "lg" ? "h-6 w-1.5" : "h-5 w-1"} shrink-0 rounded-full bg-(--lp-brand)`}
-      />
-      <span className={`lp-display tracking-[-0.02em] ${size === "lg" ? "text-lg" : "text-sm"}`}>
-        CRM
-        <span className="text-(--lp-fg-muted)"> · Minet Uganda</span>
-      </span>
-    </span>
   );
 }
 
@@ -110,9 +97,7 @@ function SiteHeader() {
   );
 }
 
-/**
- * The hero is the argument: one deal, four ways, resolving into one record.
- */
+/** Hero: the headline and the ledger figure. */
 function Hero() {
   return (
     <section className="mx-auto w-full max-w-[78rem] px-5 pt-16 pb-20 md:px-8 md:pt-24 md:pb-28">
@@ -152,7 +137,7 @@ function Hero() {
   );
 }
 
-/** Dark full-bleed band: the whole year in one line. */
+/** Dark band: the year in one line. */
 function Forecast() {
   return (
     <section className="bg-(--lp-panel) py-20 text-(--lp-panel-fg) md:py-28">
@@ -195,7 +180,7 @@ function Stages() {
   );
 }
 
-/** Defined by what it refuses: the save-time rules, stated plainly. */
+/** The save-time rules, stated as refusals. */
 function Refusals() {
   return (
     <section className="border-y border-(--lp-line-soft) bg-(--lp-wash) py-14 md:py-24">

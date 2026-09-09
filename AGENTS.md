@@ -17,9 +17,10 @@ without being asked.
 ## Comments
 
 - Do not add unnecessary comments. Most code does not need one.
-- A comment explains what a function or method does, or states a constraint the
-  code cannot show. It is not a place for narration, history, or reasoning at
-  length.
+- A comment states what the code does. Functional explanations only.
+- Do not explain why a line was written, what it replaced, what would happen
+  otherwise, or what decision it came from. That belongs in the commit message
+  or in `docs/`, not in the file.
 - Keep comments short and grammatical. No verbose block comments.
 - While editing a file, delete comments that are unnecessary.
 
@@ -29,7 +30,11 @@ without being asked.
   file and the build pack in `docs/`.
 - Reduce cyclomatic complexity when writing or touching code. Prefer small,
   focused functions and components over long branching handlers.
-- Run `pnpm verify` before committing. A change is not finished while it fails.
+- Run `pnpm verify` and `pnpm build` before committing, every time. A change is
+  not finished while either fails, and neither is optional because the change
+  "looks safe".
+- Keep the CI workflow passing. If a change breaks a CI step, fix the change or
+  the workflow in the same commit; never commit knowing CI will fail.
 
 ## Writing
 

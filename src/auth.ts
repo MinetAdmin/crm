@@ -1,19 +1,10 @@
-/**
- * Invite-only Microsoft Entra ID SSO (doc 03 §2.1, doc 06 §0). Entra proves
- * the person belongs to the Minet tenant; this module decides whether they
- * have an account. Invites are issued in the app, so the only exception is
- * the first sign-in, which bootstraps the administrator.
- */
+/** Invite-only Microsoft Entra ID SSO (doc 03 §2.1, doc 06 §0). */
 import NextAuth, { type Profile } from "next-auth";
 import type { app_user } from "@prisma/client";
 import { authConfig } from "./auth.config";
 import { withAudit, writeAudit } from "./lib/audit";
 import { type AccountState, decideAccess } from "./lib/access";
-import { prisma } from "./lib/db";
-import { validateEnv } from "./lib/env";
-
-validateEnv();
-
+import { db } from "./lib/db";
 declare module "next-auth" {
   interface Session {
     user: {
@@ -43,12 +34,9 @@ function profileIdentity(profile: Profile | undefined): {
   return { oid, email: raw?.toLowerCase() ?? null };
 }
 
-/**
- * Links the Azure OID to an invited account on its first SSO login. The
- * caller has already established that the link is permitted.
- */
+/** Links the Azure OID to an invited account on its first SSO login. */
 async function linkFirstLogin(user: app_user, oid: string): Promise<app_user> {
-  await withAudit(prisma, {
+  await withAudit(db(), {
     entity: "app_user",
     entityId: user.id,
     changedBy: user.id,
@@ -58,21 +46,19 @@ async function linkFirstLogin(user: app_user, oid: string): Promise<app_user> {
       return { azure_oid: oid };
     },
   });
-  return prisma.app_user.findUniqueOrThrow({ where: { id: user.id } });
+  return db().app_user.findUniqueOrThrow({ where: { id: user.id } });
 }
 
 /**
- * Claims the administrator role for the first person to sign in, while no
- * account has ever been linked to a Microsoft identity. The system has no
- * administrator until then, so there is nobody to issue the first invite.
- * The count inside the transaction makes a concurrent second claim fail.
+ * Creates the first person to sign in as administrator, while no account has
+ * ever been linked to a Microsoft identity. Returns null once one has.
  */
 async function bootstrapAdministrator(
   oid: string,
   email: string,
   fullName: string | null,
 ): Promise<app_user | null> {
-  return prisma.$transaction(async (tx) => {
+  return db().$transaction(async (tx) => {
     const linked = await tx.app_user.count({ where: { azure_oid: { not: null } } });
     if (linked > 0) return null;
     const user = await tx.app_user.create({
@@ -103,12 +89,12 @@ async function resolveUser(
   email: string | null,
   fullName: string | null,
 ): Promise<app_user | null> {
-  const byOid = await prisma.app_user.findUnique({ where: { azure_oid: oid } });
+  const byOid = await db().app_user.findUnique({ where: { azure_oid: oid } });
   const byEmail =
-    !byOid && email ? await prisma.app_user.findUnique({ where: { email } }) : null;
+    !byOid && email ? await db().app_user.findUnique({ where: { email } }) : null;
   const anyAccountLinked =
     Boolean(byOid) ||
-    (await prisma.app_user.count({ where: { azure_oid: { not: null } } })) > 0;
+    (await db().app_user.count({ where: { azure_oid: { not: null } } })) > 0;
 
   const decision = decideAccess({
     oid,
@@ -129,7 +115,7 @@ async function resolveUser(
 }
 
 async function recordLogin(user: app_user): Promise<void> {
-  await withAudit(prisma, {
+  await withAudit(db(), {
     entity: "app_user",
     entityId: user.id,
     changedBy: user.id,
@@ -164,7 +150,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (trigger !== "signIn") return token;
       const { oid } = profileIdentity(profile);
       if (!oid) return token;
-      const user = await prisma.app_user.findUnique({ where: { azure_oid: oid } });
+      const user = await db().app_user.findUnique({ where: { azure_oid: oid } });
       if (!user) return token;
       token.appUserId = user.id.toString();
       token.role = user.role;

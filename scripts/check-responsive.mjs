@@ -1,9 +1,7 @@
 /**
- * Fails if any page scrolls sideways at common widths. Run against a dev or
- * preview server: pnpm check:responsive [url]
- *
- * Not part of pnpm verify, because it needs a browser and a running server.
- * Install the browser once with: pnpm exec playwright install chromium
+ * Fails if a page scrolls sideways at common widths.
+ * Usage: pnpm check:responsive [url]
+ * Needs: pnpm exec playwright install chromium
  */
 import { chromium } from "playwright";
 

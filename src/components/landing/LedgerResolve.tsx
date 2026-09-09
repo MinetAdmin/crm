@@ -1,12 +1,6 @@
 /**
- * The transformation the console exists to perform, shown in the system's own
- * material: rows.
- *
- * Left, one Medical pursuit as the workbooks hold it. Each month it was
- * restated on a new row as the forecast was refreshed, the client spelled a
- * different way each time, so a column total counts the same deal four times.
- * Right, one record: one expected amount, and the months read as its history.
- * The figures are invented.
+ * One pursuit as four restated workbook rows beside the single record it
+ * becomes. Illustrative figures.
  */
 
 const RECORDED: ReadonlyArray<{ cells: ReadonlyArray<string>; fault: string }> = [
@@ -45,7 +39,6 @@ export function LedgerResolve() {
         and the months kept as its history.
       </figcaption>
 
-      {/* As recorded */}
       <div
         className="lp-rise rounded-md border border-(--lp-line) bg-(--lp-card) p-5 md:p-6"
         style={{ "--lp-delay": "0.35s" } as React.CSSProperties}
@@ -89,7 +82,6 @@ export function LedgerResolve() {
         </div>
       </div>
 
-      {/* Resolution marker */}
       <div
         className="lp-rise flex items-center justify-center lg:flex-col"
         style={{ "--lp-delay": "1s" } as React.CSSProperties}
@@ -102,7 +94,6 @@ export function LedgerResolve() {
         <span className="hidden h-10 w-px bg-(--lp-line) lg:block" />
       </div>
 
-      {/* As held */}
       <div
         className="lp-rise rounded-md bg-(--lp-panel) p-5 text-(--lp-panel-fg) md:p-6"
         style={{ "--lp-delay": "1.1s" } as React.CSSProperties}

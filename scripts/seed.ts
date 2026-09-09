@@ -1,7 +1,6 @@
 /**
- * Seed runner. Reference data always; dev fixtures only outside production.
- * Usage: pnpm db:seed            (reference + dev when NODE_ENV != production)
- *        pnpm db:seed -- --reference-only
+ * Applies reference data always, dev fixtures outside production.
+ * Usage: pnpm db:seed [-- --reference-only]
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";

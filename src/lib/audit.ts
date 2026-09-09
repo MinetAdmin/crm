@@ -1,7 +1,4 @@
-/**
- * Field-level audit (FR-AUD-01, doc 06 §4). Every business-entity mutation
- * goes through withAudit, in the same transaction as the change.
- */
+/** Field-level audit (FR-AUD-01, doc 06 §4). */
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
@@ -20,10 +17,7 @@ function serialize(v: AuditableValue): string | null {
   return String(v);
 }
 
-/**
- * Diffs two shallow records into field changes, compared by serialized value.
- * `ignore` defaults to bookkeeping columns that would only add noise.
- */
+/** Diffs two shallow records into field changes, compared by serialized value. */
 export function diffForAudit(
   before: AuditableRecord,
   after: AuditableRecord,
@@ -42,10 +36,7 @@ export function diffForAudit(
 
 type Tx = Prisma.TransactionClient | PrismaClient;
 
-/**
- * Writes audit rows for a change inside the caller's transaction.
- * `requestId` groups every row of one save.
- */
+/** Writes audit rows inside the caller's transaction, grouped by `requestId`. */
 export async function writeAudit(
   tx: Tx,
   params: {
@@ -71,11 +62,7 @@ export async function writeAudit(
   });
 }
 
-/**
- * Runs `mutate` in a transaction, then diffs `before` against its return
- * value and records the changes. Callers pass the same field subset on both
- * sides.
- */
+/** Runs `mutate` in a transaction, then records the diff against `before`. */
 export async function withAudit<T extends AuditableRecord>(
   prisma: PrismaClient,
   params: {

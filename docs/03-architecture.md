@@ -91,6 +91,25 @@ it. From that moment the system is invite-only: every later sign-in needs a reco
 is therefore between deployment and the administrator's first login, which is why the admin
 signs in immediately after go-live and the audit log is checked to confirm it was them.
 
+### 2.1.1 Hosting does not change who gets in
+
+Deploying to Azure changes nothing about access. The Container App is a public
+HTTPS endpoint; the app itself runs the Entra flow and the `app_user` record
+decides the rest. End users need no Azure RBAC, no Entra security group and no
+app-role assignment, which is the point of D-23: an invite is a row in our
+database, not a membership someone maintains in the portal.
+
+**Leave Container Apps built-in authentication (Easy Auth) switched off.** It
+would front the container with a second Entra layer, duplicate the flow the app
+already performs, and reintroduce the portal-side configuration this design
+removed.
+
+Azure RBAC covers only the management plane: one Contributor assignment on the
+resource group, to the developer, so releases and logs are reachable. That is a
+single one-time assignment to a person, unrelated to CRM access. If network
+narrowing is ever wanted, Container Apps ingress supports IP restrictions, which
+involve no identity at all.
+
 ### 2.2 Solo-developer posture
 
 One person builds and operates this. Consequences, treated as constraints:

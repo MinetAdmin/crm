@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+.next
+docs
+*.md
+!README.md
+.env
+.env.*
+!.env.example
+.claude
+graft
+coverage

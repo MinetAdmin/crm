@@ -1,8 +1,4 @@
-/**
- * Sign-in access decision, separated from Prisma so the rules are testable
- * on their own. Mirrors doc 06 §0: an account is reached by linked identity,
- * then by invited email, and only the very first sign-in may bootstrap.
- */
+/** Sign-in access rules (doc 06 §0), independent of the database. */
 
 export type AccountState = {
   active: boolean;

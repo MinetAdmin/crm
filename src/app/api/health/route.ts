@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 
-// Unauthenticated liveness/readiness probe (NFR-OPS-04).
+// Liveness and readiness probe (NFR-OPS-04).
 export async function GET() {
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await db().$queryRaw`SELECT 1`;
     return NextResponse.json({ status: "ok", db: "up" });
   } catch {
     return NextResponse.json({ status: "degraded", db: "down" }, { status: 503 });

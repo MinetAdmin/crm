@@ -1,14 +1,16 @@
 import NextAuth from "next-auth";
+import { NextResponse, type NextRequest } from "next/server";
+
 import { authConfig } from "./auth.config";
 
 const { auth } = NextAuth(authConfig);
+const gate = auth(() => undefined);
 
-// Session gate for all non-public routes. Edge-safe config only; the
-// authorized callback decides and unauthenticated requests go to /signin.
-// Public: the landing page at "/", the sign-in page, auth routes, the health
-// probe and static assets. "/" renders the landing page when signed out and
-// the console when signed in, so it gates itself.
-export default auth(() => {});
+/** Session gate for every route the matcher covers. Unconfigured means open. */
+export default function proxy(request: NextRequest, event: unknown) {
+  if (!process.env.AUTH_SECRET) return NextResponse.next();
+  return (gate as unknown as (req: NextRequest, ev: unknown) => Response)(request, event);
+}
 
 export const config = {
   matcher: ["/((?!api/auth|api/health|_next/static|_next/image|favicon.ico|signin|$).*)"],
