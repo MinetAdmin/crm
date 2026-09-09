@@ -12,9 +12,9 @@ export const NAV: ReadonlyArray<NavItem> = [
   { label: "Opportunities", href: "/console/opportunities" },
   { label: "Initiatives", href: "/console/initiatives" },
   { label: "Tenders", href: "/console/tenders" },
-  { label: "Targets" },
+  { label: "Targets", href: "/console/targets" },
   { label: "Reports", href: "/console/reports" },
-  { label: "Admin", adminOnly: true },
+  { label: "Admin", href: "/console/admin", adminOnly: true },
 ];
 
 export function navFor(role: string): ReadonlyArray<NavItem> {
