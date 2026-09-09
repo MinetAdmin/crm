@@ -63,8 +63,8 @@ M5 reports + admin (wk 13) · M6 UAT exit (wk 15) · **M7 go-live** (wk 16).
   tier, Graph email); database **~US$15–20/month** on the recommended Postgres option, or $0
   on the Azure SQL free offer at the cost of a 1–2 week port and daily cold starts
   (Decision D-21 — put option A vs B to the boss with those numbers).
-- Named system administrator (H1) trained on picklists, **user invites (Entra assignment +
-  CRM user record)**, settings, snapshot recovery before go-live — admin UI acceptance
+- Named system administrator (H1) trained on picklists, **user invites (a CRM user record; no
+  Azure portal step)**, settings, snapshot recovery before go-live — admin UI acceptance
   includes the admin actually using it.
 - Maintenance: budget ~2–4 developer-days/month post-hypercare for fixes and small changes;
   the custom build's "maintenance obligation" is a line item from day one, not a surprise.

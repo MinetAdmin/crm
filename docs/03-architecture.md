@@ -55,11 +55,13 @@ What EAP got right and is kept:
 
 What is done better here:
 
-1. **Enforcement moves up into Entra as well.** The app registration has *Assignment
-   required* enabled, and only invited staff are assigned to it. Unassigned users are refused
-   by Microsoft before our callback ever runs — invite-only at two independent layers
-   (Entra assignment + `app_user` row). On the free Entra tier, assignment is per-user
-   (group-based assignment needs P1); at ≤25 users that is a two-click admin task.
+1. **One place to manage access, and it is the app.** EAP required a matching record before
+   sign-in but left the Entra side to portal work. Here invites are issued only in the CRM
+   admin UI: the app registration stays open to the Minet tenant, Entra proves who the person
+   is, and the `app_user` row decides whether they have an account. Nobody administers two
+   systems to onboard one colleague. Turning on *Assignment required* in Entra remains
+   available as optional hardening (it stops unlisted staff reaching the sign-in page at all)
+   but nothing in the design depends on it.
 2. **Single-tenant, not multi-tenant.** The OIDC issuer is pinned to the Minet tenant ID
    (never `common`); the EAP tenant-resolution table disappears — there is exactly one
    organisation.
@@ -75,12 +77,19 @@ What is done better here:
    answers *what you may do*. Roles and units live on `app_user`, edited in the admin UI —
    no Entra app-role administration on the critical path.
 
-**Invite flow (FR-ADM-02 extended):** admin creates the user in the CRM (name, work email,
-role, unit, capacity fields) → assigns the person to the Entra app in the Azure portal (or via
-a Graph API call from the admin UI, a nice-to-have) → the person signs in with their normal
-Microsoft account → first login links their OID and stamps `last_login`. Deactivation is the
-reverse: unassign in Entra + `active=false` in the app; the user record and its history are
-never deleted.
+**Invite flow (FR-ADM-02):** the admin creates the user in the CRM (name, work email, role,
+unit, capacity fields), the person signs in with their normal Microsoft account, and that
+first login links their OID and stamps `last_login`. No Azure portal step. Deactivation sets
+`active=false`; the user record and its history are never deleted, and disabling the person's
+Entra account cuts access to everything at once.
+
+**First-run bootstrap.** A new deployment has no accounts, so nobody can issue the first
+invite. While no account has ever been linked to a Microsoft identity, the first person to
+sign in from the tenant is created as `admin`, and the event is written to the audit log. The
+check runs inside the creating transaction, so a concurrent second sign-in cannot also claim
+it. From that moment the system is invite-only: every later sign-in needs a record. The window
+is therefore between deployment and the administrator's first login, which is why the admin
+signs in immediately after go-live and the audit log is checked to confirm it was them.
 
 ### 2.2 Solo-developer posture
 

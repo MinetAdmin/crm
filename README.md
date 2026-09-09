@@ -40,9 +40,11 @@ pnpm verify       # lint + typecheck + tests
 ```
 
 Entra setup for local sign-in: app registration (single tenant) with redirect URI
-`http://localhost:3000/api/auth/callback/microsoft-entra-id`, **Assignment required = Yes**,
-and your account assigned. Your email must also exist in `app_user` (dev seed uses
-`example.test` emails; insert your own row to sign in locally).
+`http://localhost:3000/api/auth/callback/microsoft-entra-id`. Copy the secret **Value** from
+Certificates & secrets, not the Secret ID; the Secret ID is a UUID and fails at token exchange
+as `invalid_client`. No app assignment is needed. Access is decided by the `app_user` table:
+on a database where nobody has signed in yet, your first sign-in creates you as `admin`
+(see docs/03 §2.1), and everyone after that needs an invite from an admin.
 
 ## Layout
 

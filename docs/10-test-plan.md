@@ -43,9 +43,9 @@ Per Spec §16, on seeded fixtures the build must demonstrate at launch:
 5. Visibility matrix (doc 06) enforced server-side; matrix sweep green (§11 non-negotiable #3).
 6. All day-one reports (doc 08 §6 "day one" rows) correct against migrated data.
 7. Migration exit gates G3.1–G3.5 signed off, including the line-by-line money reconciliation.
-8. NFR smoke: backup restore drill done; SSO invite-only verified (an unassigned / unprovisioned
-   Microsoft account is refused at both layers per doc 03 §2.1); an org MFA policy covers the
-   app; <2s dashboards on 10× seeded volume.
+8. NFR smoke: backup restore drill done; SSO invite-only verified (a tenant account with no
+   `app_user` record is refused, and the first-run bootstrap is spent, per doc 03 §2.1); an org
+   MFA policy covers the app; <2s dashboards on 10× seeded volume.
 9. T-SEED-01…06 pass.
 
 **Explicitly out at launch** (accepted later, per §16 — do not argue about these in go-live

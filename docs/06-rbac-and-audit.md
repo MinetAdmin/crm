@@ -8,15 +8,16 @@ BD team answers.
 
 ## 0. Who gets in at all: invite-only Entra SSO
 
-Authentication is Microsoft Entra ID SSO, single-tenant, invite-only at two independent
-layers (full design in doc 03 §2.1): the person must be *assigned to the app in Entra*
-("Assignment required" on) **and** have an `app_user` record created by the admin. There is no
-self-service signup and no password path. First login links the Azure OID to the user record
+Authentication is Microsoft Entra ID SSO, single-tenant (full design in doc 03 §2.1). Entra
+proves the person belongs to Minet; an `app_user` record created by an admin decides whether
+they have an account. There is no self-service signup and no password path, and invites are
+issued in the app rather than the Azure portal. First login links the Azure OID to the record
 (re-linking to a different OID is refused — recycled-email guard, inherited from the EAP
-implementation). Offboarding = unassign in Entra + `active=false` in-app; records and history
-are never deleted. Invites, deactivations and OID links are audited like any other change.
-Entra answers *who you are*; everything below answers *what you may do* — roles live on
-`app_user`, not in Entra app roles.
+implementation). The one exception is the first-run bootstrap: while no account has ever been
+linked, the first person to sign in becomes `admin`, audited. Offboarding sets `active=false`;
+records and history are never deleted. Invites, deactivations, bootstraps and OID links are
+audited like any other change. Entra answers *who you are*; everything below answers *what you
+may do* — roles live on `app_user`, not in Entra app roles.
 
 ## 1. Roles
 
