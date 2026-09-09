@@ -1,12 +1,14 @@
 /**
- * Invite-only Microsoft Entra ID SSO (doc 03 §2.1, doc 06 §0). Entra refuses
- * unassigned users first; here a provisioned, active app_user row must also
- * exist. Lookup is by azure_oid, linked once by email on first login.
+ * Invite-only Microsoft Entra ID SSO (doc 03 §2.1, doc 06 §0). Entra proves
+ * the person belongs to the Minet tenant; this module decides whether they
+ * have an account. Invites are issued in the app, so the only exception is
+ * the first sign-in, which bootstraps the administrator.
  */
 import NextAuth, { type Profile } from "next-auth";
 import type { app_user } from "@prisma/client";
 import { authConfig } from "./auth.config";
-import { withAudit } from "./lib/audit";
+import { withAudit, writeAudit } from "./lib/audit";
+import { type AccountState, decideAccess } from "./lib/access";
 import { prisma } from "./lib/db";
 import { validateEnv } from "./lib/env";
 
@@ -25,7 +27,7 @@ declare module "next-auth" {
 }
 
 function maskEmail(email: string | null): string {
-  if (!email || !email.includes("@")) return "<none>";
+  if (!email?.includes("@")) return "<none>";
   const [local, domain] = email.split("@");
   return `${local[0] ?? ""}***@${domain}`;
 }
@@ -36,30 +38,16 @@ function profileIdentity(profile: Profile | undefined): {
   email: string | null;
 } {
   const oid = typeof profile?.oid === "string" ? profile.oid : null;
-  const raw =
-    typeof profile?.email === "string"
-      ? profile.email
-      : typeof profile?.preferred_username === "string"
-        ? profile.preferred_username
-        : null;
+  const claims = [profile?.email, profile?.preferred_username];
+  const raw = claims.find((c): c is string => typeof c === "string");
   return { oid, email: raw?.toLowerCase() ?? null };
 }
 
 /**
- * First SSO login: links the Azure OID to the provisioned user with that
- * email. Refused when no active user exists or the record is already linked
- * to a different OID (recycled-email takeover guard).
+ * Links the Azure OID to an invited account on its first SSO login. The
+ * caller has already established that the link is permitted.
  */
-async function linkFirstLogin(oid: string, email: string): Promise<app_user | null> {
-  const user = await prisma.app_user.findUnique({ where: { email } });
-  if (!user || !user.active) {
-    console.warn(`[auth] unprovisioned sign-in refused, email=${maskEmail(email)}`);
-    return null;
-  }
-  if (user.azure_oid && user.azure_oid !== oid) {
-    console.warn(`[auth] refused relink of linked account, email=${maskEmail(email)}`);
-    return null;
-  }
+async function linkFirstLogin(user: app_user, oid: string): Promise<app_user> {
   await withAudit(prisma, {
     entity: "app_user",
     entityId: user.id,
@@ -73,12 +61,71 @@ async function linkFirstLogin(oid: string, email: string): Promise<app_user | nu
   return prisma.app_user.findUniqueOrThrow({ where: { id: user.id } });
 }
 
-/** Resolves a sign-in to an active user: by OID, else by first-login link. */
-async function resolveUser(oid: string, email: string | null): Promise<app_user | null> {
+/**
+ * Claims the administrator role for the first person to sign in, while no
+ * account has ever been linked to a Microsoft identity. The system has no
+ * administrator until then, so there is nobody to issue the first invite.
+ * The count inside the transaction makes a concurrent second claim fail.
+ */
+async function bootstrapAdministrator(
+  oid: string,
+  email: string,
+  fullName: string | null,
+): Promise<app_user | null> {
+  return prisma.$transaction(async (tx) => {
+    const linked = await tx.app_user.count({ where: { azure_oid: { not: null } } });
+    if (linked > 0) return null;
+    const user = await tx.app_user.create({
+      data: { email, full_name: fullName ?? email, role: "admin", azure_oid: oid },
+    });
+    await writeAudit(tx, {
+      entity: "app_user",
+      entityId: user.id,
+      changes: [
+        { field: "email", oldValue: null, newValue: email },
+        { field: "role", oldValue: null, newValue: "admin" },
+        { field: "azure_oid", oldValue: null, newValue: oid },
+      ],
+      changedBy: user.id,
+    });
+    console.warn(`[auth] bootstrapped first administrator, email=${maskEmail(email)}`);
+    return user;
+  });
+}
+
+function toAccountState(user: app_user | null): AccountState | null {
+  return user ? { active: user.active, linkedOid: user.azure_oid } : null;
+}
+
+/** Applies the access rules in lib/access to the accounts matching a sign-in. */
+async function resolveUser(
+  oid: string,
+  email: string | null,
+  fullName: string | null,
+): Promise<app_user | null> {
   const byOid = await prisma.app_user.findUnique({ where: { azure_oid: oid } });
-  if (byOid) return byOid.active ? byOid : null;
-  if (!email) return null;
-  return linkFirstLogin(oid, email);
+  const byEmail =
+    !byOid && email ? await prisma.app_user.findUnique({ where: { email } }) : null;
+  const anyAccountLinked =
+    Boolean(byOid) ||
+    (await prisma.app_user.count({ where: { azure_oid: { not: null } } })) > 0;
+
+  const decision = decideAccess({
+    oid,
+    email,
+    byOid: toAccountState(byOid),
+    byEmail: toAccountState(byEmail),
+    anyAccountLinked,
+  });
+
+  if (decision.kind === "deny") {
+    console.warn(`[auth] sign-in denied (${decision.reason}), email=${maskEmail(email)}`);
+    return null;
+  }
+  if (decision.kind === "bootstrap") {
+    return bootstrapAdministrator(oid, email as string, fullName);
+  }
+  return decision.reason === "linked" ? byOid : linkFirstLogin(byEmail as app_user, oid);
 }
 
 async function recordLogin(user: app_user): Promise<void> {
@@ -106,7 +153,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.warn(`[auth] token without oid claim, email=${maskEmail(email)}`);
         return false;
       }
-      const user = await resolveUser(oid, email);
+      const fullName = typeof profile?.name === "string" ? profile.name : null;
+      const user = await resolveUser(oid, email, fullName);
       if (!user) return false;
       await recordLogin(user);
       return true;
