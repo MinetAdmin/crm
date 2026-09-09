@@ -1,7 +1,7 @@
 # Builds and runs the console. Carries db/ and scripts/ so migrations run from
 # the same image.
 
-FROM node:22-slim AS base
+FROM node:24-slim AS base
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
