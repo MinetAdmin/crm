@@ -63,8 +63,11 @@ export function LedgerResolve() {
               style={{ "--lp-delay": `${0.5 + index * 0.09}s` } as React.CSSProperties}
             >
               <div className="lp-num grid grid-cols-[1.7fr_0.55fr_0.45fr_1fr] gap-1.5 rounded border border-(--lp-line-soft) bg-(--lp-wash) px-2 py-1.5 text-[10px] text-(--lp-fg-muted) sm:gap-2 sm:px-2.5 sm:text-[11px]">
-                {row.cells.map((cell) => (
-                  <span key={cell} className="truncate">
+                {row.cells.map((cell, cellIndex) => (
+                  <span
+                    key={cell}
+                    className={`truncate ${cellIndex === row.cells.length - 1 ? "text-right" : ""}`}
+                  >
                     {cell}
                   </span>
                 ))}
@@ -77,12 +80,12 @@ export function LedgerResolve() {
         </ul>
 
         <div
-          className="lp-rise mt-4 flex items-baseline justify-between gap-3 border-t border-(--lp-line) pt-3"
+          className="lp-rise mt-4 flex items-baseline justify-between gap-3 border-t border-(--lp-line) px-2 pt-3 sm:px-2.5"
           style={{ "--lp-delay": "0.9s" } as React.CSSProperties}
           aria-hidden
         >
           <span className="lp-num text-[12px] text-(--lp-fg-muted)">Column total</span>
-          <span className="lp-num text-[15px] text-(--lp-brand)">180,000,000</span>
+          <span className="lp-num text-[13px] font-medium text-(--lp-brand)">180,000,000</span>
         </div>
       </div>
 
@@ -127,11 +130,11 @@ export function LedgerResolve() {
           >
             <div className="flex items-baseline justify-between gap-3">
               <dt className="lp-num text-[12px] text-(--lp-panel-muted)">Expected amount</dt>
-              <dd className="lp-num text-[15px]">45,000,000</dd>
+              <dd className="lp-num text-[13px] font-medium">45,000,000</dd>
             </div>
             <div className="flex items-baseline justify-between gap-3">
               <dt className="lp-num text-[12px] text-(--lp-panel-muted)">Weighted, calculated</dt>
-              <dd className="lp-num text-[15px] text-(--lp-panel-committed)">22,500,000</dd>
+              <dd className="lp-num text-[13px] font-medium text-(--lp-panel-committed)">22,500,000</dd>
             </div>
           </dl>
 
