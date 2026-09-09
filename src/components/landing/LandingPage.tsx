@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Wordmark } from "@/components/brand/Wordmark";
+
 import { ForecastBand } from "./ForecastBand";
 import { LedgerResolve } from "./LedgerResolve";
 import { StageLadder } from "./StageLadder";
@@ -79,21 +81,6 @@ function SignInButton({
     >
       {children}
     </Link>
-  );
-}
-
-function Wordmark({ size = "lg" }: { size?: "lg" | "sm" }) {
-  return (
-    <span className="flex items-center gap-2.5">
-      <span
-        aria-hidden
-        className={`${size === "lg" ? "h-6 w-1.5" : "h-5 w-1"} shrink-0 rounded-full bg-(--lp-brand)`}
-      />
-      <span className={`lp-display tracking-[-0.02em] ${size === "lg" ? "text-lg" : "text-sm"}`}>
-        CRM
-        <span className="text-(--lp-fg-muted)"> · Minet Uganda</span>
-      </span>
-    </span>
   );
 }
 
