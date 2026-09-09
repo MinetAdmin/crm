@@ -39,7 +39,7 @@ export default async function SignInPage({
   const status = authEnvStatus();
   if (status.ready) {
     const session = await auth();
-    if (session?.user) redirect("/");
+    if (session?.user) redirect("/console");
   } else {
     console.warn(`[auth] sign-in unavailable: ${status.problems.join("; ")}`);
   }
@@ -73,7 +73,7 @@ export default async function SignInPage({
                 className="mt-7"
                 action={async () => {
                   "use server";
-                  await signIn("microsoft-entra-id", { redirectTo: "/" });
+                  await signIn("microsoft-entra-id", { redirectTo: "/console" });
                 }}
               >
                 <button

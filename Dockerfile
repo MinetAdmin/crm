@@ -10,6 +10,8 @@ WORKDIR /app
 
 FROM base AS build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# The @prisma/client postinstall runs prisma generate, which needs the schema.
+COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm exec prisma generate

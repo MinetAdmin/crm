@@ -4,7 +4,7 @@ import type { app_user } from "@prisma/client";
 import { authConfig } from "./auth.config";
 import { withAudit, writeAudit } from "./lib/audit";
 import { type AccountState, decideAccess } from "./lib/access";
-import { prisma } from "./lib/db";
+import { db } from "./lib/db";
 declare module "next-auth" {
   interface Session {
     user: {
@@ -36,7 +36,7 @@ function profileIdentity(profile: Profile | undefined): {
 
 /** Links the Azure OID to an invited account on its first SSO login. */
 async function linkFirstLogin(user: app_user, oid: string): Promise<app_user> {
-  await withAudit(prisma, {
+  await withAudit(db(), {
     entity: "app_user",
     entityId: user.id,
     changedBy: user.id,
@@ -46,7 +46,7 @@ async function linkFirstLogin(user: app_user, oid: string): Promise<app_user> {
       return { azure_oid: oid };
     },
   });
-  return prisma.app_user.findUniqueOrThrow({ where: { id: user.id } });
+  return db().app_user.findUniqueOrThrow({ where: { id: user.id } });
 }
 
 /**
@@ -58,7 +58,7 @@ async function bootstrapAdministrator(
   email: string,
   fullName: string | null,
 ): Promise<app_user | null> {
-  return prisma.$transaction(async (tx) => {
+  return db().$transaction(async (tx) => {
     const linked = await tx.app_user.count({ where: { azure_oid: { not: null } } });
     if (linked > 0) return null;
     const user = await tx.app_user.create({
@@ -89,12 +89,12 @@ async function resolveUser(
   email: string | null,
   fullName: string | null,
 ): Promise<app_user | null> {
-  const byOid = await prisma.app_user.findUnique({ where: { azure_oid: oid } });
+  const byOid = await db().app_user.findUnique({ where: { azure_oid: oid } });
   const byEmail =
-    !byOid && email ? await prisma.app_user.findUnique({ where: { email } }) : null;
+    !byOid && email ? await db().app_user.findUnique({ where: { email } }) : null;
   const anyAccountLinked =
     Boolean(byOid) ||
-    (await prisma.app_user.count({ where: { azure_oid: { not: null } } })) > 0;
+    (await db().app_user.count({ where: { azure_oid: { not: null } } })) > 0;
 
   const decision = decideAccess({
     oid,
@@ -115,7 +115,7 @@ async function resolveUser(
 }
 
 async function recordLogin(user: app_user): Promise<void> {
-  await withAudit(prisma, {
+  await withAudit(db(), {
     entity: "app_user",
     entityId: user.id,
     changedBy: user.id,
@@ -150,7 +150,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (trigger !== "signIn") return token;
       const { oid } = profileIdentity(profile);
       if (!oid) return token;
-      const user = await prisma.app_user.findUnique({ where: { azure_oid: oid } });
+      const user = await db().app_user.findUnique({ where: { azure_oid: oid } });
       if (!user) return token;
       token.appUserId = user.id.toString();
       token.role = user.role;

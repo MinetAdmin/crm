@@ -19,7 +19,7 @@ export function ConsoleShell({
     <div className="flex min-h-svh flex-col lg:flex-row">
       <aside className="shrink-0 border-b border-(--c-line-soft) bg-(--c-surface) lg:w-60 lg:border-r lg:border-b-0">
         <div className="px-5 py-4 lg:px-6">
-          <Link href="/">
+          <Link href="/console">
             <Wordmark />
           </Link>
         </div>
