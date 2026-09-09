@@ -26,8 +26,9 @@ brew install postgresql@18 && brew services start postgresql@18
 createdb crmdev
 
 # 2. Env
-cp .env.example .env.local && cp .env.example .env
-# fill in AUTH_* values; DATABASE_URL default fits the setup above
+cp .env.example .env
+# fill in AUTH_* values and put your username in DATABASE_URL
+# (postgresql://$(whoami)@localhost:5432/crmdev)
 
 # 3. Install, migrate, seed (reference lists + dev fixtures)
 pnpm install
