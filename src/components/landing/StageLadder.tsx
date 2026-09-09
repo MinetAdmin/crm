@@ -1,8 +1,12 @@
 /**
- * The six stages as a climb, each step as tall as the probability it carries,
- * with the committed threshold drawn across at 50 percent. A pursuit only
- * moves up a step when its exit criterion is met, which is what makes one
- * owner's "engaged" mean the same as another's.
+ * The six stages as a climb, each step as long as the probability it carries,
+ * with the committed threshold marked at 50 percent. A pursuit only moves up
+ * when its exit criterion is met, which is what makes one owner's "engaged"
+ * mean the same as another's.
+ *
+ * Wide screens get the staircase, read left to right. Narrow screens get the
+ * same figure turned on its side, because six columns of prose in 50 pixels
+ * is not a staircase, it is a wall.
  */
 
 const STAGES: ReadonlyArray<{ name: string; probability: number; exit: string }> = [
@@ -16,10 +20,72 @@ const STAGES: ReadonlyArray<{ name: string; probability: number; exit: string }>
 
 const THRESHOLD = 50;
 
+const isCommitted = (probability: number) => probability >= THRESHOLD;
+
+const barColor = (probability: number) =>
+  isCommitted(probability) ? "var(--lp-brand)" : "var(--lp-wash)";
+
+const labelColor = (probability: number) =>
+  isCommitted(probability) ? "text-(--lp-brand)" : "text-(--lp-fg-muted)";
+
 export function StageLadder() {
   return (
-    <div>
-      <div className="relative h-40 md:h-56" aria-hidden>
+    <>
+      <StackedStages />
+      <Staircase />
+    </>
+  );
+}
+
+/** Narrow screens: one stage per row, bars running left to right. */
+function StackedStages() {
+  return (
+    <ol className="relative grid gap-5 pt-6 md:hidden">
+      <div
+        className="pointer-events-none absolute inset-y-0 top-6 border-l border-dashed border-(--lp-brand)/50"
+        style={{ left: `${THRESHOLD}%` }}
+        aria-hidden
+      >
+        <span className="lp-num absolute -top-5 left-1.5 text-[10px] whitespace-nowrap text-(--lp-brand)">
+          Committed from 50%
+        </span>
+      </div>
+      {STAGES.map((stage, index) => (
+        <li key={stage.name} className="grid gap-1.5">
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 className="text-[15px] leading-tight font-medium">
+              <span className="lp-num mr-2 text-[11px] text-(--lp-fg-muted)">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              {stage.name}
+            </h3>
+            <span className={`lp-num text-[11px] ${labelColor(stage.probability)}`}>
+              {stage.probability}%
+            </span>
+          </div>
+          <div
+            className="lp-sweep h-1.5 rounded-full"
+            style={
+              {
+                width: `${stage.probability}%`,
+                backgroundColor: barColor(stage.probability),
+                "--lp-delay": `${0.1 + index * 0.07}s`,
+              } as React.CSSProperties
+            }
+            aria-hidden
+          />
+          <p className="text-[13px] leading-relaxed text-(--lp-fg-muted)">{stage.exit}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** Wide screens: the staircase, each step as tall as its probability. */
+function Staircase() {
+  return (
+    <div className="hidden md:block">
+      <div className="relative h-56" aria-hidden>
         <div
           className="absolute inset-x-0 border-t border-dashed border-(--lp-brand)/50"
           style={{ bottom: `${THRESHOLD}%` }}
@@ -29,16 +95,15 @@ export function StageLadder() {
           </span>
         </div>
 
-        <ol className="flex h-full items-end gap-1.5 md:gap-3">
+        <ol className="flex h-full items-end gap-3">
           {STAGES.map((stage, index) => (
             <li
               key={stage.name}
-              className="lp-sweep flex-1 rounded-t-sm bg-(--lp-wash)"
+              className="lp-sweep flex-1 rounded-t-sm"
               style={
                 {
                   height: `${stage.probability}%`,
-                  backgroundColor:
-                    stage.probability >= THRESHOLD ? "var(--lp-brand)" : "var(--lp-wash)",
+                  backgroundColor: barColor(stage.probability),
                   "--lp-origin": "bottom center",
                   "--lp-delay": `${0.15 + index * 0.08}s`,
                 } as React.CSSProperties
@@ -48,25 +113,19 @@ export function StageLadder() {
         </ol>
       </div>
 
-      <ol className="mt-4 flex gap-1.5 border-t border-(--lp-line) md:gap-3">
+      <ol className="mt-4 flex gap-3 border-t border-(--lp-line)">
         {STAGES.map((stage, index) => (
           <li key={stage.name} className="grid flex-1 content-start gap-1.5 pt-4">
             <div className="flex items-baseline justify-between gap-1">
               <span className="lp-num text-[11px] text-(--lp-fg-muted)">
                 {String(index + 1).padStart(2, "0")}
               </span>
-              <span
-                className={`lp-num text-[11px] ${
-                  stage.probability >= THRESHOLD ? "text-(--lp-brand)" : "text-(--lp-fg-muted)"
-                }`}
-              >
+              <span className={`lp-num text-[11px] ${labelColor(stage.probability)}`}>
                 {stage.probability}%
               </span>
             </div>
-            <h3 className="text-[13px] leading-tight font-medium md:text-[15px]">{stage.name}</h3>
-            <p className="hidden text-[13px] leading-relaxed text-(--lp-fg-muted) md:block">
-              {stage.exit}
-            </p>
+            <h3 className="text-[15px] leading-tight font-medium">{stage.name}</h3>
+            <p className="text-[13px] leading-relaxed text-(--lp-fg-muted)">{stage.exit}</p>
           </li>
         ))}
       </ol>

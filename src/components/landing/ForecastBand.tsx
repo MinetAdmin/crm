@@ -67,7 +67,30 @@ export function ForecastBand() {
         ))}
       </div>
 
-      <dl className="mt-4 flex w-full gap-1" aria-hidden>
+      {/* Narrow: a two-column key, since a label under a 60px segment is unreadable. */}
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 md:hidden">
+        {SEGMENTS.map((segment) => (
+          <div key={segment.key} className="flex items-baseline gap-2">
+            <span
+              className="mt-1 size-2 shrink-0 rounded-full"
+              style={{
+                backgroundColor: segment.open ? "transparent" : segment.fill,
+                border: segment.open ? "1px dashed var(--lp-brand)" : "none",
+              }}
+              aria-hidden
+            />
+            <div className="grid content-start gap-0.5">
+              <dt className="lp-num text-[11px] text-(--lp-panel-muted)">{segment.label}</dt>
+              <dd className={`lp-num text-sm ${segment.open ? "text-(--lp-brand)" : ""}`}>
+                {segment.amount}
+              </dd>
+            </div>
+          </div>
+        ))}
+      </dl>
+
+      {/* Wide: labels sit under the segment they describe. */}
+      <dl className="mt-4 hidden w-full gap-1 md:flex" aria-hidden>
         {SEGMENTS.map((segment, index) => (
           <div
             key={segment.key}
@@ -79,9 +102,7 @@ export function ForecastBand() {
             <dt className="lp-num truncate text-[11px] text-(--lp-panel-muted)">
               {segment.label}
             </dt>
-            <dd
-              className={`lp-num text-sm md:text-base ${segment.open ? "text-(--lp-brand)" : ""}`}
-            >
+            <dd className={`lp-num text-base ${segment.open ? "text-(--lp-brand)" : ""}`}>
               {segment.amount}
             </dd>
           </div>

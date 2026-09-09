@@ -62,7 +62,7 @@ export function LedgerResolve() {
               className="lp-rise grid gap-1"
               style={{ "--lp-delay": `${0.5 + index * 0.09}s` } as React.CSSProperties}
             >
-              <div className="lp-num grid grid-cols-[1.6fr_0.7fr_0.5fr_1fr] gap-2 rounded border border-(--lp-line-soft) bg-(--lp-wash) px-2.5 py-1.5 text-[11px] text-(--lp-fg-muted)">
+              <div className="lp-num grid grid-cols-[1.7fr_0.55fr_0.45fr_1fr] gap-1.5 rounded border border-(--lp-line-soft) bg-(--lp-wash) px-2 py-1.5 text-[10px] text-(--lp-fg-muted) sm:gap-2 sm:px-2.5 sm:text-[11px]">
                 {row.cells.map((cell) => (
                   <span key={cell} className="truncate">
                     {cell}
