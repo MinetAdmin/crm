@@ -35,6 +35,9 @@ without being asked.
   "looks safe".
 - Keep the CI workflow passing. If a change breaks a CI step, fix the change or
   the workflow in the same commit; never commit knowing CI will fail.
+- Leave no linter or SonarQube warning behind. Check the diagnostics for every
+  file you touch and clear them before committing, rather than leaving them for
+  the next agent.
 
 ## Writing
 
