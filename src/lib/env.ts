@@ -21,8 +21,15 @@ const schema = z.object({
     ),
 });
 
-/** Validates auth and database env vars, failing fast with a readable message. */
+/**
+ * Validates auth and database env vars, failing fast with a readable message.
+ *
+ * Skipped while `next build` runs: compiling pages must not require the
+ * production secrets, and a bad configuration should stop the container at
+ * startup rather than break the build that produced it.
+ */
 export function validateEnv(): void {
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
   const result = schema.safeParse(process.env);
   if (result.success) return;
   const lines = result.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`);

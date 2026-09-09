@@ -60,6 +60,29 @@ src/lib/audit.ts field-level audit: every business write goes through withAudit
 src/proxy.ts      session gate for all non-public routes (Next 16 proxy)
 ```
 
+## Container and deployment
+
+`pnpm build` needs no secrets: env validation is skipped during the build and
+runs at startup instead, so a bad configuration stops the container with a
+readable message rather than breaking the build.
+
+```bash
+docker build -t crm .
+docker run --rm -p 3000:3000 --env-file .env crm
+```
+
+The image carries `db/` and `scripts/`, so migrations run from the same
+artefact that serves the app:
+
+```bash
+docker run --rm --env-file .env crm pnpm db:migrate
+```
+
+CI builds the image on every run and publishes it to GitHub Container Registry
+from `main` only. Hosting target is Azure Container Apps, with the scheduled
+worker as a Container Apps Job and migrations as a job before each release
+(docs/03 §8, decision D-21).
+
 ## Working rules (solo-dev discipline, docs/03 §2.2)
 
 - Schema changes: new numbered file in `db/migrations/`, update `docs/schema.sql` to match,

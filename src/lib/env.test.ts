@@ -38,6 +38,11 @@ describe("validateEnv", () => {
     expect(() => validateEnv()).toThrow(/pinned to the Minet tenant/);
   });
 
+  it("skips validation during the production build", () => {
+    withEnv({ AUTH_SECRET: "", NEXT_PHASE: "phase-production-build" });
+    expect(() => validateEnv()).not.toThrow();
+  });
+
   it("rejects a short AUTH_SECRET", () => {
     withEnv({ AUTH_SECRET: "too-short" });
     expect(() => validateEnv()).toThrow(/at least 32 characters/);
