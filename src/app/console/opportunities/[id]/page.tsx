@@ -5,6 +5,7 @@ import { BackLink, Notice, PrimaryButton, SelectField } from "@/components/conso
 import { db } from "@/lib/db";
 import { formatAmount } from "@/lib/format";
 import { getOpportunity, opportunityTotals } from "@/lib/opportunities";
+import { submitOpportunityLink } from "../../initiatives/actions";
 import { submitClosure, submitScheduleLine, submitStageChange } from "../actions";
 
 const FIELD = "mt-1 w-full rounded-md border border-(--c-line) bg-(--c-surface) px-3 py-2 text-sm";
@@ -20,7 +21,7 @@ export default async function OpportunityPage({
   const opportunity = await getOpportunity(id);
   if (!opportunity) notFound();
 
-  const [totals, stages, products, reasons] = await Promise.all([
+  const [totals, stages, products, reasons, initiatives] = await Promise.all([
     opportunityTotals(id),
     db().pipeline_stage.findMany({ where: { active: true }, orderBy: { sort_order: "asc" } }),
     db().product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
@@ -28,6 +29,7 @@ export default async function OpportunityPage({
       where: { active: true, ref_list: { code: { in: ["loss_reason", "hold_reason"] } } },
       orderBy: { sort_order: "asc" },
     }),
+    db().strategic_initiative.findMany({ where: { archived_at: null }, orderBy: { name: "asc" } }),
   ]);
   const open = opportunity.outcome === "open";
 
@@ -201,6 +203,23 @@ export default async function OpportunityPage({
           </form>
         </section>
       )}
+
+      <section className="mt-8">
+        <h2 className="text-[15px] font-semibold">Strategic initiative</h2>
+        <form action={submitOpportunityLink} className="mt-3 flex flex-wrap items-end gap-3">
+          <input type="hidden" name="opportunityId" value={opportunity.id.toString()} />
+          <div className="min-w-64 flex-1">
+            <SelectField
+              label="Contributes to"
+              name="initiativeId"
+              defaultValue={opportunity.initiative_id?.toString()}
+              emptyLabel="Not linked"
+              options={initiatives.map((i) => ({ value: i.id.toString(), label: i.name }))}
+            />
+          </div>
+          <PrimaryButton>Save link</PrimaryButton>
+        </form>
+      </section>
 
       <section className="mt-8">
         <h2 className="text-[15px] font-semibold">Stage history</h2>
