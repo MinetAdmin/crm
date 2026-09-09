@@ -13,7 +13,7 @@ export const NAV: ReadonlyArray<NavItem> = [
   { label: "Initiatives", href: "/console/initiatives" },
   { label: "Tenders", href: "/console/tenders" },
   { label: "Targets" },
-  { label: "Reports" },
+  { label: "Reports", href: "/console/reports" },
   { label: "Admin", adminOnly: true },
 ];
 
