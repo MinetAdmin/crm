@@ -445,7 +445,22 @@ CREATE TABLE forecast_snapshot_line (
   expected_close_date date
 );
 CREATE INDEX fsl_snapshot_idx ON forecast_snapshot_line (snapshot_id);
--- App role gets INSERT + SELECT only on both tables; no UPDATE/DELETE grants.
+
+-- Snapshot tables are insert and select only, enforced by trigger.
+CREATE OR REPLACE FUNCTION refuse_snapshot_change() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'snapshots are immutable: % on % is not allowed', TG_OP, TG_TABLE_NAME
+    USING HINT = 'Take a new snapshot instead of changing a stored one.';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER forecast_snapshot_immutable
+  BEFORE UPDATE OR DELETE ON forecast_snapshot
+  FOR EACH ROW EXECUTE FUNCTION refuse_snapshot_change();
+
+CREATE TRIGGER forecast_snapshot_line_immutable
+  BEFORE UPDATE OR DELETE ON forecast_snapshot_line
+  FOR EACH ROW EXECUTE FUNCTION refuse_snapshot_change();
 
 -- ---------------------------------------------------------------------------
 -- Audit log. Append-only, written in the same transaction as the change.
