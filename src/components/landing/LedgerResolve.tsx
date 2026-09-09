@@ -81,8 +81,8 @@ export function LedgerResolve() {
           style={{ "--lp-delay": "0.9s" } as React.CSSProperties}
           aria-hidden
         >
-          <span className="lp-num text-[11px] text-(--lp-fg-muted)">Column total</span>
-          <span className="lp-num text-base text-(--lp-brand)">180,000,000</span>
+          <span className="lp-num text-[12px] text-(--lp-fg-muted)">Column total</span>
+          <span className="lp-num text-[15px] text-(--lp-brand)">180,000,000</span>
         </div>
       </div>
 
@@ -126,12 +126,12 @@ export function LedgerResolve() {
             style={{ "--lp-delay": "1.25s" } as React.CSSProperties}
           >
             <div className="flex items-baseline justify-between gap-3">
-              <dt className="lp-num text-[11px] text-(--lp-panel-muted)">Expected amount</dt>
-              <dd className="lp-num text-base">45,000,000</dd>
+              <dt className="lp-num text-[12px] text-(--lp-panel-muted)">Expected amount</dt>
+              <dd className="lp-num text-[15px]">45,000,000</dd>
             </div>
             <div className="flex items-baseline justify-between gap-3">
-              <dt className="lp-num text-[11px] text-(--lp-panel-muted)">Weighted, calculated</dt>
-              <dd className="lp-num text-base text-(--lp-panel-committed)">22,500,000</dd>
+              <dt className="lp-num text-[12px] text-(--lp-panel-muted)">Weighted, calculated</dt>
+              <dd className="lp-num text-[15px] text-(--lp-panel-committed)">22,500,000</dd>
             </div>
           </dl>
 
