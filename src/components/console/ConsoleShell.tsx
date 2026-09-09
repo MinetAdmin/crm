@@ -72,7 +72,7 @@ export function ConsoleShell({
           </form>
         </header>
 
-        <main className="flex-1 px-5 py-8 md:px-8 md:py-10">{children}</main>
+        <main className="flex-1 px-5 py-6 md:px-8">{children}</main>
       </div>
     </div>
   );

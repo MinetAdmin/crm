@@ -7,6 +7,7 @@ export type NavItem = {
 
 export const NAV: ReadonlyArray<NavItem> = [
   { label: "Dashboard", href: "/console" },
+  { label: "Accounts", href: "/console/accounts" },
   { label: "Leads" },
   { label: "Opportunities" },
   { label: "Initiatives" },
