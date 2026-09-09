@@ -9,7 +9,7 @@ export const NAV: ReadonlyArray<NavItem> = [
   { label: "Dashboard", href: "/console" },
   { label: "Accounts", href: "/console/accounts" },
   { label: "Leads", href: "/console/leads" },
-  { label: "Opportunities" },
+  { label: "Opportunities", href: "/console/opportunities" },
   { label: "Initiatives" },
   { label: "Tenders" },
   { label: "Targets" },
