@@ -9,7 +9,7 @@ document fixes *what each screen must contain and enforce*.
 - **Navigation:** Dashboard · Leads · Opportunities · Initiatives · Tenders · Reports ·
   Targets · Admin (role-dependent).
 - **Shell (D-24):** shadcn/ui throughout; collapsible icon sidebar with tooltip labels when
-  collapsed; page identity lives in the header breadcrumb — screens render no page headings
+  collapsed; page identity lives in the header breadcrumb, so screens render no page headings
   of their own.
 - **Global search** across accounts, opportunities, leads, tenders by name/ID.
 - **Exception badge** in the nav: count of the user's hygiene exceptions (FR-RPT-12).

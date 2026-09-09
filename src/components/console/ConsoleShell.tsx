@@ -25,7 +25,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
   SidebarContent,
@@ -83,26 +82,32 @@ function ConsoleSidebar({
   const items = navFor(user.role);
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center px-2 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <Link href="/console" className="flex items-center gap-2.5">
-            <Logo size={22} />
-            <span className="font-heading text-[15px] font-semibold tracking-tight whitespace-nowrap group-data-[collapsible=icon]:hidden">
-              CRM <span className="font-medium text-muted-foreground">· Minet Uganda</span>
-            </span>
-          </Link>
-        </div>
-        <SidebarInput
-          placeholder="Search"
-          disabled
-          title="Not built yet"
-          className="group-data-[collapsible=icon]:hidden"
-        />
+    <Sidebar collapsible="icon" className="border-none">
+      <SidebarHeader className="h-14 justify-center">
+        <SidebarMenu>
+          <CenteredMenuItem>
+            <SidebarMenuButton
+              asChild
+              className="hover:bg-transparent active:bg-transparent [&_svg]:size-6 group-data-[collapsible=icon]:p-1!"
+            >
+              <Link href="/console">
+                <Logo size={24} />
+                <span className="font-heading text-[15px] font-semibold tracking-tight whitespace-nowrap">
+                  CRM <span className="font-medium text-muted-foreground">· Minet Uganda</span>
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </CenteredMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup className="pt-4 pb-0 group-data-[collapsible=icon]:hidden">
+          <SidebarGroupContent>
+            <SidebarInput placeholder="Search" disabled title="Not built yet" />
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]:pt-4">
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -121,19 +126,29 @@ function ConsoleSidebar({
   );
 }
 
+function CenteredMenuItem({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+      {children}
+    </SidebarMenuItem>
+  );
+}
+
 function NavEntry({
   item,
   pathname,
 }: Readonly<{ item: NavItem; pathname: string }>) {
   if (!item.href) {
     return (
-      <SidebarMenuItem>
-        <SidebarMenuButton disabled tooltip={`${item.label} — not built yet`}>
+      <CenteredMenuItem>
+        <SidebarMenuButton disabled tooltip={`${item.label} (not built yet)`}>
           <item.icon />
           <span>{item.label}</span>
         </SidebarMenuButton>
         <SidebarMenuBadge>soon</SidebarMenuBadge>
-      </SidebarMenuItem>
+      </CenteredMenuItem>
     );
   }
 
@@ -143,7 +158,7 @@ function NavEntry({
       : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
   return (
-    <SidebarMenuItem>
+    <CenteredMenuItem>
       <SidebarMenuButton
         asChild
         isActive={active}
@@ -155,7 +170,7 @@ function NavEntry({
           <span>{item.label}</span>
         </Link>
       </SidebarMenuButton>
-    </SidebarMenuItem>
+    </CenteredMenuItem>
   );
 }
 
@@ -173,7 +188,7 @@ function UserMenu({
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
+      <CenteredMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg" tooltip={user.name}>
@@ -207,7 +222,7 @@ function UserMenu({
             </form>
           </DropdownMenuContent>
         </DropdownMenu>
-      </SidebarMenuItem>
+      </CenteredMenuItem>
     </SidebarMenu>
   );
 }
@@ -217,12 +232,8 @@ function ConsoleHeader() {
   const showHeaderSearch = state === "collapsed" && !isMobile;
 
   return (
-    <header className="relative flex h-14 shrink-0 items-center gap-2 border-b px-4 md:px-6">
+    <header className="relative flex h-14 shrink-0 items-center gap-3 px-4 md:px-6">
       <SidebarTrigger className="-ml-1.5" />
-      <Separator
-        orientation="vertical"
-        className="mr-1 data-vertical:h-4 data-vertical:self-center"
-      />
       <HeaderCrumbs />
       {showHeaderSearch && (
         <div className="absolute left-1/2 w-full max-w-xs -translate-x-1/2">

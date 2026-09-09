@@ -51,6 +51,8 @@ export type ExceptionRow = {
   name: string;
   owner: string;
   reasons: string[];
+  /** Days since the pursuit last changed. */
+  ageDays: number;
 };
 
 /** The hygiene feed of v_opportunity_hygiene (FR-RPT-12). */
@@ -65,10 +67,12 @@ export async function hygieneExceptions(): Promise<ExceptionRow[]> {
       overdue_next_action: boolean;
       close_date_past: boolean;
       missing_schedule_lines: boolean;
+      age_days: number;
     }[]
   >`
     SELECT h.id, o.name, u.full_name AS owner, h.is_stale, h.missing_next_action,
-           h.overdue_next_action, h.close_date_past, h.missing_schedule_lines
+           h.overdue_next_action, h.close_date_past, h.missing_schedule_lines,
+           (CURRENT_DATE - h.updated_at::date)::int AS age_days
     FROM v_opportunity_hygiene h
     JOIN opportunity o ON o.id = h.id
     JOIN app_user u ON u.id = o.owner_id
@@ -83,7 +87,13 @@ export async function hygieneExceptions(): Promise<ExceptionRow[]> {
     if (r.is_stale) reasons.push("No movement in 30 days");
     if (r.close_date_past) reasons.push("Close date passed");
     if (r.missing_schedule_lines) reasons.push("No schedule line");
-    return { id: r.id.toString(), name: r.name, owner: r.owner, reasons };
+    return {
+      id: r.id.toString(),
+      name: r.name,
+      owner: r.owner,
+      reasons,
+      ageDays: r.age_days,
+    };
   });
 }
 

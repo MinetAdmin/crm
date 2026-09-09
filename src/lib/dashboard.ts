@@ -35,3 +35,42 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     tendersDue: tenders[0]?.count ?? 0,
   };
 }
+
+export type SnapshotBaseline = {
+  month: string;
+  openPursuits: number;
+  weightedPipeline: number;
+};
+
+/** The latest month-end snapshot reduced to the two dashboard figures. */
+export async function lastSnapshotBaseline(): Promise<SnapshotBaseline | null> {
+  const rows = await db().$queryRaw<
+    { snapshot_month: Date; open_pursuits: number; weighted: string }[]
+  >`
+    SELECT s.snapshot_month,
+           COUNT(DISTINCT l.opportunity_id) FILTER (WHERE l.outcome = 'open')::int AS open_pursuits,
+           COALESCE(SUM(l.weighted_amount) FILTER (WHERE l.outcome = 'open'), 0)::text AS weighted
+    FROM forecast_snapshot s
+    JOIN forecast_snapshot_line l ON l.snapshot_id = s.id
+    WHERE s.snapshot_month = (SELECT MAX(snapshot_month) FROM forecast_snapshot)
+    GROUP BY s.snapshot_month`;
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    month: row.snapshot_month.toISOString().slice(0, 7),
+    openPursuits: row.open_pursuits,
+    weightedPipeline: Number(row.weighted),
+  };
+}
+
+/** Won share of decided pursuits, by count. Null until anything is decided. */
+export async function wonRateAllTime(): Promise<number | null> {
+  const rows = await db().$queryRaw<{ won: number; decided: number }[]>`
+    SELECT COUNT(*) FILTER (WHERE outcome = 'won')::int AS won,
+           COUNT(*) FILTER (WHERE outcome IN ('won', 'lost'))::int AS decided
+    FROM opportunity
+    WHERE archived_at IS NULL`;
+  const row = rows[0];
+  if (!row || row.decided === 0) return null;
+  return row.won / row.decided;
+}

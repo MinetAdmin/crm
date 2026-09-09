@@ -38,7 +38,7 @@
   --accent: #f1eceb;
   --accent-foreground: #1a1214;
   --destructive: #c8102e;
-  --border: rgb(26 18 20 / 0.1);
+  --border: rgb(26 18 20 / 0.07);
   --input: rgb(26 18 20 / 0.1);
   --ring: #c8102e;
   --chart-1: #a9c0d0;
@@ -126,7 +126,7 @@
     --accent: #1a1315;
     --accent-foreground: #f2edee;
     --destructive: #ff6b7d;
-    --border: rgb(255 255 255 / 0.12);
+    --border: rgb(255 255 255 / 0.09);
     --input: rgb(255 255 255 / 0.15);
     --ring: #ff6b7d;
     --chart-1: #56809d;
