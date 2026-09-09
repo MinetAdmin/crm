@@ -8,6 +8,9 @@ import type { app_user } from "@prisma/client";
 import { authConfig } from "./auth.config";
 import { withAudit } from "./lib/audit";
 import { prisma } from "./lib/db";
+import { validateEnv } from "./lib/env";
+
+validateEnv();
 
 declare module "next-auth" {
   interface Session {
