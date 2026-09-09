@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { auth, signOut } from "@/auth";
@@ -17,6 +18,9 @@ export default async function ConsoleLayout({
   const session = await auth();
   if (!session?.user) redirect("/signin");
 
+  const cookieStore = await cookies();
+  const defaultSidebarOpen = cookieStore.get("sidebar_state")?.value !== "false";
+
   return (
     <ConsoleShell
       user={{
@@ -25,6 +29,7 @@ export default async function ConsoleLayout({
         role: session.user.role || "unknown",
       }}
       signOutAction={handleSignOut}
+      defaultSidebarOpen={defaultSidebarOpen}
     >
       {children}
     </ConsoleShell>
