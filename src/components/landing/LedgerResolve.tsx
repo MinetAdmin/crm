@@ -49,10 +49,10 @@ export function LedgerResolve() {
         style={{ "--lp-delay": "0.35s" } as React.CSSProperties}
       >
         <div className="flex items-baseline justify-between gap-3">
-          <span className="lp-mono text-[11px] tracking-[0.08em] text-(--lp-fg-muted) uppercase">
+          <span className="lp-num text-[11px] text-(--lp-fg-muted)">
             As recorded
           </span>
-          <span className="lp-mono text-[11px] text-(--lp-fg-muted)">4 rows</span>
+          <span className="lp-num text-[11px] text-(--lp-fg-muted)">4 rows</span>
         </div>
 
         <ul className="mt-4 grid gap-2" aria-hidden>
@@ -62,7 +62,7 @@ export function LedgerResolve() {
               className="lp-rise grid gap-1"
               style={{ "--lp-delay": `${0.5 + index * 0.09}s` } as React.CSSProperties}
             >
-              <div className="lp-mono grid grid-cols-[1.6fr_0.7fr_0.5fr_1fr] gap-2 rounded border border-(--lp-line-soft) bg-(--lp-wash) px-2.5 py-1.5 text-[11px] text-(--lp-fg-muted)">
+              <div className="lp-num grid grid-cols-[1.6fr_0.7fr_0.5fr_1fr] gap-2 rounded border border-(--lp-line-soft) bg-(--lp-wash) px-2.5 py-1.5 text-[11px] text-(--lp-fg-muted)">
                 {row.cells.slice(0, 4).map((cell) => (
                   <span key={cell} className="truncate">
                     {cell}
@@ -84,8 +84,8 @@ export function LedgerResolve() {
         aria-hidden
       >
         <span className="hidden h-10 w-px bg-(--lp-line) lg:block" />
-        <span className="lp-mono rounded-full border border-(--lp-line) bg-(--lp-page) px-3 py-1 text-[10px] tracking-[0.08em] text-(--lp-fg-muted) uppercase">
-          resolves to
+        <span className="lp-num rounded-full border border-(--lp-line) bg-(--lp-page) px-3 py-1 text-[10px] text-(--lp-fg-muted)">
+          Resolves to
         </span>
         <span className="hidden h-10 w-px bg-(--lp-line) lg:block" />
       </div>
@@ -96,15 +96,15 @@ export function LedgerResolve() {
         style={{ "--lp-delay": "1.05s" } as React.CSSProperties}
       >
         <div className="flex items-baseline justify-between gap-3">
-          <span className="lp-mono text-[11px] tracking-[0.08em] text-(--lp-panel-muted) uppercase">
+          <span className="lp-num text-[11px] text-(--lp-panel-muted)">
             As held
           </span>
-          <span className="lp-mono text-[11px] text-(--lp-panel-muted)">1 record</span>
+          <span className="lp-num text-[11px] text-(--lp-panel-muted)">1 record</span>
         </div>
 
         <div className="mt-4" aria-hidden>
           <p className="lp-display text-xl tracking-[-0.02em]">Memnon Capital, Medical 2026</p>
-          <div className="lp-mono mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-(--lp-panel-muted)">
+          <div className="lp-num mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-(--lp-panel-muted)">
             <span>OPP-1042</span>
             <span aria-hidden>·</span>
             <span>Quotation prepared</span>
@@ -118,7 +118,7 @@ export function LedgerResolve() {
             {HELD_LINES.map((line, index) => (
               <li
                 key={line.month}
-                className="lp-rise lp-mono grid grid-cols-[1fr_0.8fr_auto] items-center gap-2 border-b border-(--lp-panel-line) py-2 text-[11px]"
+                className="lp-rise lp-num grid grid-cols-[1fr_0.8fr_auto] items-center gap-2 border-b border-(--lp-panel-line) py-2 text-[11px]"
                 style={{ "--lp-delay": `${1.2 + index * 0.09}s` } as React.CSSProperties}
               >
                 <span className="text-(--lp-panel-muted)">{line.month}</span>
@@ -132,10 +132,10 @@ export function LedgerResolve() {
             className="lp-rise mt-3 flex items-baseline justify-between gap-3"
             style={{ "--lp-delay": "1.5s" } as React.CSSProperties}
           >
-            <span className="lp-mono text-[11px] text-(--lp-panel-muted)">
-              weighted, calculated
+            <span className="lp-num text-[11px] text-(--lp-panel-muted)">
+              Weighted, calculated
             </span>
-            <span className="lp-mono text-base text-(--lp-panel-committed)">67,500,000</span>
+            <span className="lp-num text-base text-(--lp-panel-committed)">67,500,000</span>
           </div>
         </div>
       </div>

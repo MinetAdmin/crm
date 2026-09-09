@@ -33,8 +33,8 @@ export default async function Home() {
           Signed in as <strong>{session.user.email}</strong>
         </p>
         <p>
-          Role: <code>{session.user.role || "unknown"}</code> · Unit:{" "}
-          <code>{session.user.unitId ?? "none"}</code>
+          Role: <strong>{session.user.role || "unknown"}</strong> · Unit:{" "}
+          <strong>{session.user.unitId ?? "none"}</strong>
         </p>
       </section>
     </main>

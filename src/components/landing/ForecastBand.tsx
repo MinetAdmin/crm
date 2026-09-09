@@ -40,10 +40,10 @@ export function ForecastBand() {
       </figcaption>
 
       <div className="flex items-baseline justify-between gap-4">
-        <span className="lp-mono text-[11px] tracking-[0.08em] text-(--lp-panel-muted) uppercase">
+        <span className="lp-num text-[11px] text-(--lp-panel-muted)">
           Full year target
         </span>
-        <span className="lp-mono text-[11px] text-(--lp-panel-muted)">3,191m, illustrative</span>
+        <span className="lp-num text-[11px] text-(--lp-panel-muted)">3,191m, illustrative</span>
       </div>
 
       <div
@@ -76,11 +76,11 @@ export function ForecastBand() {
               { flexGrow: segment.share, "--lp-delay": `${0.6 + index * 0.14}s` } as React.CSSProperties
             }
           >
-            <dt className="lp-mono truncate text-[11px] text-(--lp-panel-muted)">
+            <dt className="lp-num truncate text-[11px] text-(--lp-panel-muted)">
               {segment.label}
             </dt>
             <dd
-              className={`lp-mono text-sm md:text-base ${segment.open ? "text-(--lp-brand)" : ""}`}
+              className={`lp-num text-sm md:text-base ${segment.open ? "text-(--lp-brand)" : ""}`}
             >
               {segment.amount}
             </dd>

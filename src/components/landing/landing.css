@@ -6,11 +6,10 @@
  */
 
 .landing {
-  /* Display face is the landing page's own; body and mono follow the system
-   * stacks in globals.css so the console and the front door agree. */
+  /* Two faces only: Bricolage Grotesque for display, Inter Tight for
+   * everything else, following the system stack in globals.css. */
   --lp-font-display: var(--font-display), "Bricolage Grotesque", var(--font-sans);
   --lp-font-body: var(--font-sans);
-  --lp-font-mono: var(--font-mono);
 
   --lp-page: #faf9f8;
   --lp-card: #ffffff;
@@ -73,10 +72,10 @@
   text-wrap: balance;
 }
 
-.lp-mono {
-  font-family: var(--lp-font-mono);
+/* Figures and codes: Inter Tight with its digits aligned, not a mono face. */
+.lp-num {
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
 .lp-lede {

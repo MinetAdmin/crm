@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Inter_Tight } from "next/font/google";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -14,12 +14,6 @@ const body = Inter_Tight({
   display: "swap",
 });
 
-const mono = JetBrains_Mono({
-  variable: "--font-mono-face",
-  subsets: ["latin"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   title: "CRM · Minet Uganda",
   description:
@@ -30,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
+      className={`${display.variable} ${body.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>

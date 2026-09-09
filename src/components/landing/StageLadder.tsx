@@ -24,8 +24,8 @@ export function StageLadder() {
           className="absolute inset-x-0 border-t border-dashed border-(--lp-brand)/50"
           style={{ bottom: `${THRESHOLD}%` }}
         >
-          <span className="lp-mono absolute -top-5 right-0 text-[10px] text-(--lp-brand)">
-            committed from 50%
+          <span className="lp-num absolute -top-5 right-0 text-[10px] text-(--lp-brand)">
+            Committed from 50%
           </span>
         </div>
 
@@ -52,11 +52,11 @@ export function StageLadder() {
         {STAGES.map((stage, index) => (
           <li key={stage.name} className="grid flex-1 content-start gap-1.5 pt-4">
             <div className="flex items-baseline justify-between gap-1">
-              <span className="lp-mono text-[11px] text-(--lp-fg-muted)">
+              <span className="lp-num text-[11px] text-(--lp-fg-muted)">
                 {String(index + 1).padStart(2, "0")}
               </span>
               <span
-                className={`lp-mono text-[11px] ${
+                className={`lp-num text-[11px] ${
                   stage.probability >= THRESHOLD ? "text-(--lp-brand)" : "text-(--lp-fg-muted)"
                 }`}
               >

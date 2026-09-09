@@ -5,22 +5,19 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* Font stacks match the EAP console. Inter Tight carries the interface, the
-   * system stack behind it covers the load window and offline. Mono is
-   * reserved for tabular numerics, IDs, codes and timestamps. */
+  /* Two faces only: Bricolage Grotesque for display, Inter Tight for the
+   * interface, with the system stack behind it for the load window and
+   * offline. Figures use Inter Tight's tabular numerals rather than a mono
+   * face, so digits still align in a column. */
   --font-sans:
     var(--font-body), "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Helvetica Neue", sans-serif;
-  --font-mono:
-    var(--font-mono-face), "JetBrains Mono", "SF Mono", ui-monospace, "Menlo", "Consolas",
-    monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
 }
 
 @media (prefers-color-scheme: dark) {

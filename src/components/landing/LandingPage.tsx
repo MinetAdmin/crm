@@ -243,7 +243,7 @@ function SiteFooter() {
           <Wordmark size="sm" />
           <span className="text-sm">© 2026</span>
         </div>
-        <span className="lp-mono text-[11px] text-(--lp-fg-muted)">v0.1</span>
+        <span className="lp-num text-[11px] text-(--lp-fg-muted)">v0.1</span>
       </div>
     </footer>
   );
