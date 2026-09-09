@@ -2,6 +2,7 @@
 # the same image.
 
 FROM node:22-slim AS base
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
@@ -21,13 +22,14 @@ FROM base AS run
 ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/db ./db
-COPY --from=build /app/scripts ./scripts
-COPY --from=build /app/package.json ./package.json
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/.next ./.next
+COPY --from=build --chown=node:node /app/public ./public
+COPY --from=build --chown=node:node /app/prisma ./prisma
+COPY --from=build --chown=node:node /app/db ./db
+COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/package.json ./package.json
 USER node
 EXPOSE 3000
-CMD ["pnpm", "start"]
+# Node directly, so the runtime needs neither pnpm nor a shell shim.
+CMD ["node", "node_modules/next/dist/bin/next", "start"]
