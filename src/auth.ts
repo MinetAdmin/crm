@@ -1,19 +1,10 @@
-/**
- * Invite-only Microsoft Entra ID SSO (doc 03 §2.1, doc 06 §0). Entra proves
- * the person belongs to the Minet tenant; this module decides whether they
- * have an account. Invites are issued in the app, so the only exception is
- * the first sign-in, which bootstraps the administrator.
- */
+/** Invite-only Microsoft Entra ID SSO (doc 03 §2.1, doc 06 §0). */
 import NextAuth, { type Profile } from "next-auth";
 import type { app_user } from "@prisma/client";
 import { authConfig } from "./auth.config";
 import { withAudit, writeAudit } from "./lib/audit";
 import { type AccountState, decideAccess } from "./lib/access";
 import { prisma } from "./lib/db";
-import { validateEnv } from "./lib/env";
-
-validateEnv();
-
 declare module "next-auth" {
   interface Session {
     user: {
@@ -43,10 +34,7 @@ function profileIdentity(profile: Profile | undefined): {
   return { oid, email: raw?.toLowerCase() ?? null };
 }
 
-/**
- * Links the Azure OID to an invited account on its first SSO login. The
- * caller has already established that the link is permitted.
- */
+/** Links the Azure OID to an invited account on its first SSO login. */
 async function linkFirstLogin(user: app_user, oid: string): Promise<app_user> {
   await withAudit(prisma, {
     entity: "app_user",
@@ -62,10 +50,8 @@ async function linkFirstLogin(user: app_user, oid: string): Promise<app_user> {
 }
 
 /**
- * Claims the administrator role for the first person to sign in, while no
- * account has ever been linked to a Microsoft identity. The system has no
- * administrator until then, so there is nobody to issue the first invite.
- * The count inside the transaction makes a concurrent second claim fail.
+ * Creates the first person to sign in as administrator, while no account has
+ * ever been linked to a Microsoft identity. Returns null once one has.
  */
 async function bootstrapAdministrator(
   oid: string,

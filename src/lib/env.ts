@@ -2,36 +2,43 @@ import { z } from "zod";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const schema = z.object({
-  DATABASE_URL: z.string().min(1),
-  AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters"),
+const REQUIRED = [
+  "DATABASE_URL",
+  "AUTH_SECRET",
+  "AUTH_MICROSOFT_ENTRA_ID_ID",
+  "AUTH_MICROSOFT_ENTRA_ID_SECRET",
+  "AUTH_MICROSOFT_ENTRA_ID_ISSUER",
+] as const;
+
+const shape = z.object({
+  AUTH_SECRET: z.string().min(32, "must be at least 32 characters"),
   AUTH_MICROSOFT_ENTRA_ID_ID: z.string().regex(UUID, "must be the Application (client) ID"),
   AUTH_MICROSOFT_ENTRA_ID_SECRET: z
     .string()
-    .min(1)
-    // Entra secret values are never UUIDs; a UUID here means the Secret ID was
-    // copied instead of the Value, which fails at token exchange as invalid_client.
     .refine((v) => !UUID.test(v), "is the Secret ID, not the secret Value"),
   AUTH_MICROSOFT_ENTRA_ID_ISSUER: z
     .string()
-    .url()
+    .refine((v) => URL.canParse(v), "must be a URL")
     .refine(
       (v) => !v.includes("/common/") && !v.includes("/organizations/"),
       "must be pinned to the Minet tenant id, not /common or /organizations",
     ),
 });
 
-/**
- * Validates auth and database env vars, failing fast with a readable message.
- *
- * Skipped while `next build` runs: compiling pages must not require the
- * production secrets, and a bad configuration should stop the container at
- * startup rather than break the build that produced it.
- */
-export function validateEnv(): void {
-  if (process.env.NEXT_PHASE === "phase-production-build") return;
-  const result = schema.safeParse(process.env);
-  if (result.success) return;
-  const lines = result.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`);
-  throw new Error(`Environment is not configured correctly:\n${lines.join("\n")}`);
+export type EnvStatus = { ready: true } | { ready: false; problems: string[] };
+
+/** Whether the app has everything it needs to sign anyone in. Never throws. */
+export function authEnvStatus(): EnvStatus {
+  const missing = REQUIRED.filter((key) => !process.env[key]);
+  if (missing.length > 0) {
+    return { ready: false, problems: missing.map((key) => `${key} is not set`) };
+  }
+
+  const result = shape.safeParse(process.env);
+  if (result.success) return { ready: true };
+
+  return {
+    ready: false,
+    problems: result.error.issues.map((i) => `${i.path.join(".")} ${i.message}`),
+  };
 }

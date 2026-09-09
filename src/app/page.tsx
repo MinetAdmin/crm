@@ -2,20 +2,22 @@ import { auth, signOut } from "@/auth";
 import { ConsoleShell } from "@/components/console/ConsoleShell";
 import { LandingPage } from "@/components/landing/LandingPage";
 import { getDashboardSummary } from "@/lib/dashboard";
+import { authEnvStatus } from "@/lib/env";
 import { formatAmount } from "@/lib/format";
 
-// Public route: the landing page for signed-out visitors, the console for
-// everyone else.
+async function handleSignOut() {
+  "use server";
+  await signOut({ redirectTo: "/" });
+}
+
+/** Landing page for signed-out visitors, console for everyone else. */
 export default async function Home() {
+  if (!authEnvStatus().ready) return <LandingPage />;
+
   const session = await auth();
   if (!session?.user) return <LandingPage />;
 
   const summary = await getDashboardSummary();
-
-  async function handleSignOut() {
-    "use server";
-    await signOut({ redirectTo: "/" });
-  }
 
   return (
     <ConsoleShell
@@ -80,12 +82,12 @@ function Tile({
   value,
   note,
   tone = "plain",
-}: {
+}: Readonly<{
   label: string;
   value: string;
   note: string;
   tone?: "plain" | "warn";
-}) {
+}>) {
   return (
     <div className="rounded-md border border-(--c-line) bg-(--c-surface) p-4">
       <dt className="text-[13px] text-(--c-muted)">{label}</dt>

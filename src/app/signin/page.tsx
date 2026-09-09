@@ -3,12 +3,9 @@ import { redirect } from "next/navigation";
 
 import { auth, signIn } from "@/auth";
 import { Wordmark } from "@/components/brand/Wordmark";
+import { authEnvStatus } from "@/lib/env";
 
-/**
- * Readable messages for the Auth.js error codes this app can produce. An
- * invite refusal arrives as AccessDenied, which is the common case and the
- * one worth explaining properly.
- */
+/** Readable messages for the Auth.js error codes this app can produce. */
 const ERROR_MESSAGES: Record<string, string> = {
   AccessDenied:
     "That Microsoft account has no CRM account yet. An administrator creates one before the first sign-in.",
@@ -36,11 +33,16 @@ const ASSURANCES: ReadonlyArray<{ term: string; detail: string }> = [
 
 export default async function SignInPage({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ error?: string }>;
-}) {
-  const session = await auth();
-  if (session?.user) redirect("/");
+}>) {
+  const status = authEnvStatus();
+  if (status.ready) {
+    const session = await auth();
+    if (session?.user) redirect("/");
+  } else {
+    console.warn(`[auth] sign-in unavailable: ${status.problems.join("; ")}`);
+  }
   const { error } = await searchParams;
 
   return (
@@ -55,36 +57,45 @@ export default async function SignInPage({
 
         <div className="flex flex-1 items-center justify-center px-5 py-12 md:px-10">
           <div className="w-full max-w-[24rem]">
-            <h1 className="lp-display text-[clamp(2rem,4vw,2.75rem)]">Sign in</h1>
+            <h1 className="lp-display text-[clamp(2rem,4vw,2.75rem)]">
+              {status.ready ? "Sign in" : "Not open yet"}
+            </h1>
             <p className="lp-lede mt-3 text-[15px] leading-relaxed text-(--lp-fg-muted)">
-              Use the Microsoft account you sign in to work with. The console opens on the book you
-              left.
+              {status.ready
+                ? "Use the Microsoft account you sign in to work with. The console opens on the book you left."
+                : "The console is deployed but not yet connected to its database and directory. Sign-in opens once setup is finished."}
             </p>
 
-            {error && <ErrorNote code={error} />}
+            {status.ready && error && <ErrorNote code={error} />}
 
-            <form
-              className="mt-7"
-              action={async () => {
-                "use server";
-                await signIn("microsoft-entra-id", { redirectTo: "/" });
-              }}
-            >
-              <button
-                type="submit"
-                className="flex h-12 w-full items-center justify-center gap-3 rounded-full bg-(--lp-fg) px-6 text-[15px] font-medium text-(--lp-page) transition-colors hover:bg-(--lp-fg)/85"
+            {status.ready ? (
+              <form
+                className="mt-7"
+                action={async () => {
+                  "use server";
+                  await signIn("microsoft-entra-id", { redirectTo: "/" });
+                }}
               >
-                <MicrosoftMark />
-                Continue with Microsoft
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  className="flex h-12 w-full items-center justify-center gap-3 rounded-full bg-(--lp-fg) px-6 text-[15px] font-medium text-(--lp-page) transition-colors hover:bg-(--lp-fg)/85"
+                >
+                  <MicrosoftMark />
+                  Continue with Microsoft
+                </button>
+              </form>
+            ) : (
+              <div className="mt-7 rounded-full border border-dashed border-(--lp-line) px-6 py-3.5 text-center text-[15px] text-(--lp-fg-muted)">
+                Microsoft sign-in, coming soon
+              </div>
+            )}
 
             <p className="mt-5 text-[13px] leading-relaxed text-(--lp-fg-muted)">
-              Access is by invitation. If you have not been given an account, ask the BD
-              administrator to create one, then sign in here.
+              {status.ready
+                ? "Access is by invitation. If you have not been given an account, ask the BD administrator to create one, then sign in here."
+                : "Nothing to do here yet. The BD administrator will say when accounts are being issued."}
             </p>
 
-            {/* The dark panel carries these on wide screens; keep them here too. */}
             <dl className="mt-8 grid gap-4 border-t border-(--lp-line) pt-6 lg:hidden">
               {ASSURANCES.map((item) => (
                 <div key={item.term} className="grid gap-0.5">
@@ -107,7 +118,7 @@ export default async function SignInPage({
   );
 }
 
-/** The dark half: what this console is, for anyone who arrives here first. */
+/** The dark half of the split layout. */
 function Argument() {
   return (
     <aside className="hidden flex-col justify-between bg-(--lp-panel) p-10 text-(--lp-panel-fg) lg:flex xl:p-14">
@@ -141,7 +152,7 @@ function Argument() {
   );
 }
 
-function ErrorNote({ code }: { code: string }) {
+function ErrorNote({ code }: Readonly<{ code: string }>) {
   return (
     <p
       role="alert"
@@ -152,7 +163,7 @@ function ErrorNote({ code }: { code: string }) {
   );
 }
 
-/** Microsoft's mark, so the button reads as the identity provider it is. */
+/** Microsoft's four-square mark. */
 function MicrosoftMark() {
   return (
     <svg viewBox="0 0 16 16" className="size-[18px] shrink-0" aria-hidden>
