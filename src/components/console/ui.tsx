@@ -1,14 +1,14 @@
 import Link from "next/link";
 
-const PRIMARY =
-  "inline-flex items-center rounded-full bg-(--c-brand) px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90";
+import { Button } from "@/components/ui/button";
+
 const FIELD = "mt-1 w-full rounded-md border border-(--c-line) bg-(--c-surface) px-3 py-2 text-sm";
 
 export function PrimaryButton({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <button type="submit" className={PRIMARY}>
+    <Button type="submit" size="sm">
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -17,9 +17,9 @@ export function PrimaryLink({
   children,
 }: Readonly<{ href: string; children: React.ReactNode }>) {
   return (
-    <Link href={href} className={PRIMARY}>
-      {children}
-    </Link>
+    <Button asChild size="sm">
+      <Link href={href}>{children}</Link>
+    </Button>
   );
 }
 

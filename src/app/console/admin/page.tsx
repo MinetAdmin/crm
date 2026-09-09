@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { Notice, PrimaryButton, SelectField, TextField } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { currentViewer } from "@/lib/viewer";
 import { canAdminister } from "@/lib/visibility";
@@ -71,12 +72,9 @@ export default async function AdminPage({
                   <td className="px-4 py-2.5 text-right">
                     <form action={submitUserActive}>
                       <input type="hidden" name="userId" value={u.id.toString()} />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-(--c-line) px-3 py-1 text-[13px] hover:bg-(--c-wash)"
-                      >
+                      <Button type="submit" variant="outline" size="xs">
                         {u.active ? "Deactivate" : "Reactivate"}
-                      </button>
+                      </Button>
                     </form>
                   </td>
                 </tr>
@@ -118,9 +116,9 @@ export default async function AdminPage({
                   defaultValue={s.value}
                   className="w-28 rounded-md border border-(--c-line) bg-(--c-surface) px-2 py-1 text-sm tabular-nums"
                 />
-                <button type="submit" className="rounded-full border border-(--c-line) px-3 py-1 text-[13px] hover:bg-(--c-wash)">
+                <Button type="submit" variant="outline" size="xs">
                   Save
-                </button>
+                </Button>
               </form>
             </li>
           ))}
@@ -145,9 +143,14 @@ export default async function AdminPage({
                     </span>
                     <form action={submitRefValueActive}>
                       <input type="hidden" name="refValueId" value={value.id.toString()} />
-                      <button type="submit" className="text-(--c-muted) underline-offset-2 hover:underline">
+                      <Button
+                        type="submit"
+                        variant="link"
+                        size="xs"
+                        className="h-auto p-0 text-muted-foreground"
+                      >
                         {value.active ? "Deactivate" : "Restore"}
-                      </button>
+                      </Button>
                     </form>
                   </li>
                 ))}

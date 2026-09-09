@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { BackLink, Notice, PrimaryButton, SelectField } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { formatAmount } from "@/lib/format";
 import { getOpportunity, opportunityTotals } from "@/lib/opportunities";
@@ -92,12 +93,9 @@ export default async function OpportunityPage({
               <form action={submitActionDone}>
                 <input type="hidden" name="opportunityId" value={opportunity.id.toString()} />
                 <input type="hidden" name="actionId" value={nextAction.id} />
-                <button
-                  type="submit"
-                  className="rounded-full border border-(--c-line) px-4 py-1.5 text-sm font-medium hover:bg-(--c-wash)"
-                >
+                <Button type="submit" variant="outline" size="sm">
                   Mark done
-                </button>
+                </Button>
               </form>
             </div>
           ) : (
