@@ -47,7 +47,7 @@ still deserves a real answer.
 | **C1** | Amounts = brokerage commission or gross written premium? | Migration G0.2; meaning of every figure | BD lead + finance | ⛔ Open |
 | **C2** | What does Effective Month mean? | Migration G0.3; phasing semantics | BD lead + finance | ⛔ Open (D-08 assumption) |
 | **F1** | Which workbook is authoritative? | Migration G0.1 | BD lead | ⛔ Open |
-| **F2** | Repeated client rows: one deal or several? | Migration G0.4 (grain) | BD team | ⛔ Open |
+| **F2** | Repeated client rows: one deal or several? | Migration G0.4 (grain) | BD team | ⛔ Open, with an indication: a repeated month row for the same client and product is a **restatement of one pursuit as the forecast was refreshed**, not phased revenue (reported by the developer, 2026-09-09). If that holds across the sheet, totalling the column double counts, and the months migrate as history rather than as schedule lines. Still needs row-by-row BD sign-off, since a genuinely phased deal looks identical in the source. |
 | **A1** | Do individual owners carry revenue targets? | Target model; owner performance report | BD leadership | ⛔ Open |
 
 ### A. Team, ownership, access

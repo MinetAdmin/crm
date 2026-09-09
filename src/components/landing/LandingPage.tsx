@@ -126,9 +126,9 @@ function Hero() {
           className="lp-lede lp-rise text-lg leading-[1.55] text-(--lp-fg-muted)"
           style={{ "--lp-delay": "0.1s" } as React.CSSProperties}
         >
-          The pipeline used to live in three sheets that disagreed with each other. Here a pursuit
-          is one record, its money is a set of dated lines beneath it, and the forecast is derived
-          rather than carried.
+          The pipeline used to live in sheets that disagreed with each other, where refreshing a
+          deal meant restating it on a new row. Here a pursuit is one record, updating it is
+          history rather than another row, and the forecast is derived rather than carried.
         </p>
       </div>
 
