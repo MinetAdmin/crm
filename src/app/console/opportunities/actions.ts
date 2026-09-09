@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
+import { ForbiddenError, assertCanWriteOpportunity, currentViewer } from "@/lib/viewer";
 import { RuleError, addScheduleLine, changeStage, closeOpportunity } from "@/lib/opportunities";
 import { completeAction, setNextAction } from "@/lib/activities";
 
@@ -19,7 +20,14 @@ function text(form: FormData, field: string): string {
 }
 
 /** Turns a rule refusal into a message on the record it came from. */
+async function assertWritable(id: string): Promise<void> {
+  await assertCanWriteOpportunity(await currentViewer(), id);
+}
+
 function backWithViolations(id: string, error: unknown): never {
+  if (error instanceof ForbiddenError) {
+    redirect(`/console/opportunities/${id}?blocked=${encodeURIComponent("not yours to change")}`);
+  }
   if (error instanceof RuleError) {
     const rules = error.violations.map((v) => v.rule).join(",");
     redirect(`/console/opportunities/${id}?blocked=${encodeURIComponent(rules)}`);
@@ -31,6 +39,7 @@ export async function submitStageChange(form: FormData) {
   const id = text(form, "opportunityId");
   const probability = text(form, "probability");
   try {
+    await assertWritable(id);
     await changeStage(
       {
         opportunityId: id,
@@ -53,6 +62,11 @@ export async function submitScheduleLine(form: FormData) {
   if (!Number.isFinite(amount) || amount <= 0) {
     redirect(`/console/opportunities/${id}?blocked=BR-RSL-01`);
   }
+  try {
+    await assertWritable(id);
+  } catch (error) {
+    backWithViolations(id, error);
+  }
   await addScheduleLine(
     {
       opportunityId: id,
@@ -70,6 +84,7 @@ export async function submitScheduleLine(form: FormData) {
 export async function submitClosure(form: FormData) {
   const id = text(form, "opportunityId");
   try {
+    await assertWritable(id);
     await closeOpportunity(
       {
         opportunityId: id,
