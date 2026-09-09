@@ -60,6 +60,12 @@ src/lib/audit.ts field-level audit: every business write goes through withAudit
 src/proxy.ts      session gate for all non-public routes (Next 16 proxy)
 ```
 
+## Brand
+
+The mark is `src/components/brand/Logo.tsx`, served to browsers as
+`src/app/icon.svg` and `src/app/apple-icon.png`. `public/logo.svg` is the
+lockup for slides and documents.
+
 ## Container and deployment
 
 `pnpm build` needs no secrets: env validation is skipped during the build and
