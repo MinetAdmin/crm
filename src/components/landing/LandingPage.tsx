@@ -1,131 +1,49 @@
 import Link from "next/link";
 
-import { PipelineBoard } from "./PipelineBoard";
+import { ForecastBand } from "./ForecastBand";
+import { LedgerResolve } from "./LedgerResolve";
+import { StageLadder } from "./StageLadder";
 
-const NAV = [
-  { href: "#stages", label: "How a pursuit moves" },
-  { href: "#console", label: "The console" },
-  { href: "#assurance", label: "Assurance" },
-];
-
-const STAGES: ReadonlyArray<{ step: string; title: string; exit: string; probability: string }> = [
+const REFUSALS: ReadonlyArray<{ rule: string; because: string }> = [
   {
-    step: "01",
-    title: "Prospecting",
-    exit: "A named contact has responded.",
-    probability: "10%",
+    rule: "You cannot type a weighted figure.",
+    because: "It is expected amount times probability, calculated on read. There is no cell to overwrite.",
   },
   {
-    step: "02",
-    title: "Information gathering",
-    exit: "Enough held to price or scope the risk.",
-    probability: "20%",
+    rule: "You cannot save a pursuit nobody owns.",
+    because: "An unowned deal is one nobody is working, and it will not be found later by accident.",
   },
   {
-    step: "03",
-    title: "Engaged",
-    exit: "The client invites a quotation or bid.",
-    probability: "35%",
+    rule: "You cannot close one without a reason.",
+    because: "Lost and on hold both ask why, because the reason is the only part worth reading next year.",
   },
   {
-    step: "04",
-    title: "Quotation prepared",
-    exit: "Quotation issued to the client.",
-    probability: "50%",
+    rule: "You cannot put TBA in a date.",
+    because: "Uncertainty belongs in close-date confidence, where it can be counted.",
   },
   {
-    step: "05",
-    title: "Proposal submitted",
-    exit: "Receipt confirmed, evaluation underway.",
-    probability: "70%",
+    rule: "You cannot quietly change a probability.",
+    because: "An override wants a note, and the note is kept with your name on it.",
   },
   {
-    step: "06",
-    title: "Shortlisted",
-    exit: "Award decision communicated.",
-    probability: "85%",
+    rule: "You cannot lose the history.",
+    because: "Stage moves are written as they happen. A month end, once taken, is never rewritten.",
   },
-];
-
-const CAPABILITIES: ReadonlyArray<{ title: string; detail: string; span?: boolean }> = [
-  {
-    title: "Pipeline and revenue schedule",
-    detail:
-      "One pursuit is one record. Its money lives underneath it as dated schedule lines, one per product and month, so a deal phased across a quarter stops looking like four different deals.",
-    span: true,
-  },
-  {
-    title: "Strategic initiatives",
-    detail:
-      "Target entered once. Delivered, expected and the gap roll up from the pursuits linked to it.",
-  },
-  {
-    title: "Tenders and prequalifications",
-    detail:
-      "Their own lifecycle and their own win rate, with the basis of every value recorded so figures on different bases are never added together.",
-  },
-  {
-    title: "Forecast and month-end snapshots",
-    detail:
-      "Committed, weighted and year-end landing, phased by month. Each month end is frozen and kept, so the movement since last month decomposes into what was added, revised, won, lost and slipped.",
-    span: true,
-  },
-];
-
-const ASSURANCES: ReadonlyArray<{ term: string; detail: string }> = [
-  {
-    term: "Invite-only sign-in",
-    detail: "Microsoft identity at the door, and an account an administrator created.",
-  },
-  {
-    term: "Field-level audit trail",
-    detail: "Who changed a probability, and when. Written with the change, not alongside it.",
-  },
-  {
-    term: "Immutable snapshots",
-    detail: "A month end, once taken, is never rewritten by a later edit.",
-  },
-  {
-    term: "Role-scoped visibility",
-    detail: "An owner sees their book, a unit head sees the unit, enforced on every query.",
-  },
-];
-
-const PROOF: ReadonlyArray<{ value: string; label: string }> = [
-  { value: "One record", label: "From first approach to won" },
-  { value: "Derived", label: "Weighted figures calculated, never typed" },
-  { value: "Every change", label: "Written to the audit trail" },
 ];
 
 export function LandingPage() {
   return (
     <div className="landing flex min-h-svh flex-col">
       <SiteHeader />
-
       <main className="flex-1">
         <Hero />
+        <Forecast />
         <Stages />
-        <Capabilities />
-        <Assurance />
+        <Refusals />
         <Closing />
       </main>
-
       <SiteFooter />
     </div>
-  );
-}
-
-function SignInButton({ children, tone = "brand" }: { children: React.ReactNode; tone?: "brand" | "ink" }) {
-  const base =
-    "inline-flex items-center gap-2 rounded-full font-medium transition-colors focus-visible:outline-2";
-  const styles =
-    tone === "brand"
-      ? "h-12 bg-(--lp-brand) px-6 text-[15px] text-white hover:bg-(--lp-brand)/90"
-      : "h-9 bg-(--lp-fg) px-4 text-sm text-(--lp-page) hover:bg-(--lp-fg)/85";
-  return (
-    <Link href="/signin" className={`${base} ${styles}`}>
-      {children}
-    </Link>
   );
 }
 
@@ -140,6 +58,27 @@ function Arrow() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+function SignInButton({
+  children,
+  tone = "brand",
+}: {
+  children: React.ReactNode;
+  tone?: "brand" | "ink";
+}) {
+  const styles =
+    tone === "brand"
+      ? "h-12 bg-(--lp-brand) px-6 text-[15px] text-white hover:bg-(--lp-brand)/90"
+      : "h-9 bg-(--lp-fg) px-4 text-sm text-(--lp-page) hover:bg-(--lp-fg)/85";
+  return (
+    <Link
+      href="/signin"
+      className={`inline-flex items-center gap-2 rounded-full font-medium transition-colors ${styles}`}
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -160,185 +99,120 @@ function Wordmark({ size = "lg" }: { size?: "lg" | "sm" }) {
 function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-(--lp-line-soft) bg-(--lp-page)/85 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[80rem] items-center justify-between gap-6 px-5 py-3.5 md:px-8">
+      <div className="mx-auto flex w-full max-w-[78rem] items-center justify-between gap-6 px-5 py-3.5 md:px-8">
         <Link href="/">
           <Wordmark />
         </Link>
-
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Sections">
-          {NAV.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="text-sm text-(--lp-fg-muted) transition-colors hover:text-(--lp-fg)"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
+        <span className="lp-mono hidden text-[11px] tracking-[0.08em] text-(--lp-fg-muted) uppercase sm:block">
+          Minet Uganda, Business Development
+        </span>
         <SignInButton tone="ink">Sign in</SignInButton>
       </div>
     </header>
   );
 }
 
+/**
+ * The hero is the argument: one deal, four ways, resolving into one record.
+ */
 function Hero() {
   return (
-    <section className="mx-auto w-full max-w-[80rem] px-5 pt-14 pb-8 md:px-8 md:pt-20">
-      <h1 className="lp-display lp-rise text-[clamp(2.5rem,7.7vw,6.75rem)]">
-        The forecast is
-        <br />
-        never typed.
-      </h1>
-
-      <div className="mt-8 grid gap-8 md:mt-10 lg:grid-cols-[minmax(0,44ch)_auto] lg:items-end lg:justify-between lg:gap-16">
+    <section className="mx-auto w-full max-w-[78rem] px-5 pt-16 pb-20 md:px-8 md:pt-24 md:pb-28">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,38ch)] lg:items-end lg:gap-16">
+        <h1 className="lp-display lp-rise text-[clamp(2.5rem,7vw,6rem)]">
+          One deal.
+          <br />
+          One row.
+        </h1>
         <p
-          className="lp-lede lp-rise text-lg leading-[1.55] text-(--lp-fg-muted) md:text-xl"
+          className="lp-lede lp-rise text-lg leading-[1.55] text-(--lp-fg-muted)"
           style={{ "--lp-delay": "0.1s" } as React.CSSProperties}
         >
-          It is derived, every time, from the pursuits underneath it. The BD console holds leads,
-          opportunities, initiatives and tenders, and the weighted number falls out of them rather
-          than being carried between workbooks.
+          The pipeline used to live in three sheets that disagreed with each other. Here a pursuit
+          is one record, its money is a set of dated lines beneath it, and the forecast is derived
+          rather than carried.
         </p>
-
-        <div
-          className="lp-rise flex flex-wrap items-center gap-3"
-          style={{ "--lp-delay": "0.2s" } as React.CSSProperties}
-        >
-          <SignInButton>
-            Sign in to the console
-            <Arrow />
-          </SignInButton>
-          <a
-            href="#stages"
-            className="inline-flex h-12 items-center rounded-full px-5 text-[15px] font-medium text-(--lp-fg) transition-colors hover:bg-(--lp-wash)"
-          >
-            How a pursuit moves
-          </a>
-        </div>
       </div>
 
-      <div className="relative mt-12 md:mt-16">
-        <PipelineBoard />
-        <ProofBar />
+      <div className="mt-12 md:mt-16">
+        <LedgerResolve />
+      </div>
+
+      <div
+        className="lp-rise mt-10 flex flex-wrap items-center gap-3"
+        style={{ "--lp-delay": "1.7s" } as React.CSSProperties}
+      >
+        <SignInButton>
+          Sign in to the console
+          <Arrow />
+        </SignInButton>
+        <span className="text-[15px] text-(--lp-fg-muted)">
+          Microsoft sign-in. Access is by invitation.
+        </span>
       </div>
     </section>
   );
 }
 
-function ProofBar() {
+/** Dark full-bleed band: the whole year in one line. */
+function Forecast() {
   return (
-    <div
-      className="lp-rise relative z-10 mx-3 mt-3 rounded-md bg-(--lp-card) p-1.5 sm:mx-6 sm:-mt-16 md:mx-10"
-      style={{ "--lp-delay": "1.75s" } as React.CSSProperties}
-    >
-      <dl className="grid divide-y divide-(--lp-line-soft) sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        {PROOF.map((item) => (
-          <div key={item.value} className="flex flex-col gap-0.5 px-5 py-3">
-            <dt className="lp-display text-base tracking-[-0.02em]">{item.value}</dt>
-            <dd className="text-[13px] text-(--lp-fg-muted)">{item.label}</dd>
+    <section className="bg-(--lp-panel) py-20 text-(--lp-panel-fg) md:py-28">
+      <div className="mx-auto w-full max-w-[78rem] px-5 md:px-8">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,34ch)_minmax(0,1fr)] lg:gap-16">
+          <div>
+            <h2 className="lp-display text-[clamp(1.875rem,3.6vw,3rem)]">
+              The year, read left to right
+            </h2>
+            <p className="mt-5 text-[15px] leading-relaxed text-(--lp-panel-muted)">
+              Won, committed, weighted, and the part nobody has yet. Four groupings of the same
+              schedule lines, so they always add up. Month end is frozen and kept, which is what
+              makes next month&rsquo;s movement explainable rather than arguable.
+            </p>
           </div>
-        ))}
-      </dl>
-    </div>
+          <ForecastBand />
+        </div>
+      </div>
+    </section>
   );
 }
 
 function Stages() {
   return (
-    <section id="stages" className="scroll-mt-20 border-t border-(--lp-line-soft) py-20 md:py-28">
-      <div className="mx-auto w-full max-w-[80rem] px-5 md:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <h2 className="lp-display max-w-[52rem] text-[clamp(2rem,4.2vw,3.5rem)]">
-            Six stages, each with a way out
-          </h2>
-          <p className="max-w-[32ch] text-[15px] leading-relaxed text-(--lp-fg-muted)">
-            Every stage carries an exit criterion, so moving a deal means the same thing whoever
-            moves it. The probability comes with the stage.
-          </p>
-        </div>
+    <section className="mx-auto w-full max-w-[78rem] px-5 py-20 md:px-8 md:py-28">
+      <div className="flex flex-wrap items-end justify-between gap-6">
+        <h2 className="lp-display max-w-[20ch] text-[clamp(1.875rem,3.6vw,3rem)]">
+          A stage is a claim, so it needs a test
+        </h2>
+        <p className="max-w-[34ch] text-[15px] leading-relaxed text-(--lp-fg-muted)">
+          Each step carries an exit criterion and the probability that comes with it. Without the
+          criterion a stage is just an opinion, and win rate cannot be read from opinions.
+        </p>
+      </div>
 
-        <ol className="mt-12 grid gap-px border-t border-(--lp-line) md:mt-16 md:grid-cols-3 lg:grid-cols-6">
-          {STAGES.map((item) => (
-            <li
-              key={item.step}
-              className="grid content-start gap-2.5 border-b border-(--lp-line-soft) py-6 lg:border-b-0 lg:border-r lg:border-r-(--lp-line-soft) lg:px-5 lg:py-8 lg:first:pl-0 lg:last:border-r-0 lg:last:pr-0"
-            >
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="lp-mono text-[11px] text-(--lp-brand)">{item.step}</span>
-                <span className="lp-mono text-[11px] text-(--lp-fg-muted)">{item.probability}</span>
-              </div>
-              <h3 className="lp-display text-lg tracking-[-0.02em]">{item.title}</h3>
-              <p className="text-[14px] leading-relaxed text-(--lp-fg-muted)">{item.exit}</p>
-            </li>
-          ))}
-        </ol>
+      <div className="mt-12 md:mt-16">
+        <StageLadder />
       </div>
     </section>
   );
 }
 
-function Capabilities() {
+/** Defined by what it refuses: the save-time rules, stated plainly. */
+function Refusals() {
   return (
-    <section id="console" className="scroll-mt-20 bg-(--lp-wash) py-20 md:py-28">
-      <div className="mx-auto w-full max-w-[80rem] px-5 md:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <h2 className="lp-display max-w-[44rem] text-[clamp(2rem,4.2vw,3.5rem)]">
-            Four surfaces, one set of records
-          </h2>
-          <p className="max-w-[30ch] text-[15px] leading-relaxed text-(--lp-fg-muted)">
-            Owners, unit heads and management read the same records from different angles. Nothing
-            is reconciled between them, because nothing is held twice.
-          </p>
-        </div>
+    <section className="border-y border-(--lp-line-soft) bg-(--lp-wash) py-20 md:py-28">
+      <div className="mx-auto w-full max-w-[78rem] px-5 md:px-8">
+        <h2 className="lp-display max-w-[24ch] text-[clamp(1.875rem,3.6vw,3rem)]">
+          Six things it will not let you do
+        </h2>
 
-        <div className="mt-12 grid gap-4 md:mt-16 md:grid-cols-3">
-          {CAPABILITIES.map((item) => (
-            <article
-              key={item.title}
-              className={`grid content-start gap-3 rounded-md bg-(--lp-card) p-6 md:p-8 ${
-                item.span ? "md:col-span-2" : ""
-              }`}
-            >
-              <h3 className="lp-display text-2xl tracking-[-0.025em]">{item.title}</h3>
-              <p className="max-w-[46ch] text-[15px] leading-relaxed text-(--lp-fg-muted)">
-                {item.detail}
-              </p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Assurance() {
-  return (
-    <section
-      id="assurance"
-      className="scroll-mt-20 bg-(--lp-panel) py-20 text-(--lp-panel-fg) md:py-28"
-    >
-      <div className="mx-auto grid w-full max-w-[80rem] gap-12 px-5 md:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-20">
-        <div>
-          <h2 className="lp-display text-[clamp(2rem,4vw,3.25rem)]">
-            A number is only worth as much as its history
-          </h2>
-          <p className="mt-6 max-w-[42ch] text-[15px] leading-relaxed text-(--lp-panel-muted)">
-            Spreadsheets lost the pipeline twice over: two files that no longer agreed, and no way
-            to tell which to trust. Single ownership and a trail behind every change matter here
-            more than any report.
-          </p>
-        </div>
-
-        <dl className="grid gap-px self-start border-t border-(--lp-panel-line) sm:grid-cols-2">
-          {ASSURANCES.map((item) => (
-            <div
-              key={item.term}
-              className="grid content-start gap-2 border-b border-(--lp-panel-line) py-6 sm:px-6 sm:first:pl-0 sm:[&:nth-child(2n)]:pr-0 sm:[&:nth-child(2n+1)]:pl-0"
-            >
-              <dt className="lp-display text-lg tracking-[-0.02em]">{item.term}</dt>
-              <dd className="text-sm leading-relaxed text-(--lp-panel-muted)">{item.detail}</dd>
+        <dl className="mt-12 grid gap-x-12 gap-y-8 md:mt-16 md:grid-cols-2 lg:gap-y-10">
+          {REFUSALS.map((item) => (
+            <div key={item.rule} className="grid content-start gap-2 border-t border-(--lp-line) pt-5">
+              <dt className="lp-display text-lg tracking-[-0.02em] md:text-xl">{item.rule}</dt>
+              <dd className="max-w-[52ch] text-[15px] leading-relaxed text-(--lp-fg-muted)">
+                {item.because}
+              </dd>
             </div>
           ))}
         </dl>
@@ -349,9 +223,9 @@ function Assurance() {
 
 function Closing() {
   return (
-    <section className="mx-auto w-full max-w-[80rem] px-5 py-20 md:px-8 md:py-28">
+    <section className="mx-auto w-full max-w-[78rem] px-5 py-20 md:px-8 md:py-28">
       <div className="flex flex-wrap items-end justify-between gap-8">
-        <h2 className="lp-display max-w-[24ch] text-[clamp(2rem,4.4vw,3.75rem)]">
+        <h2 className="lp-display max-w-[22ch] text-[clamp(2rem,4.2vw,3.5rem)]">
           Pick up the book where you left it.
         </h2>
         <SignInButton>
@@ -366,10 +240,10 @@ function Closing() {
 function SiteFooter() {
   return (
     <footer className="border-t border-(--lp-line-soft)">
-      <div className="mx-auto flex w-full max-w-[80rem] flex-wrap items-center justify-between gap-4 px-5 py-6 md:px-8">
+      <div className="mx-auto flex w-full max-w-[78rem] flex-wrap items-center justify-between gap-4 px-5 py-6 md:px-8">
         <div className="flex items-center gap-2.5 text-(--lp-fg-muted)">
           <Wordmark size="sm" />
-          <span className="text-sm">© 2026 Minet Uganda, Business Development</span>
+          <span className="text-sm">© 2026 Minet Uganda</span>
         </div>
         <span className="lp-mono text-[11px] text-(--lp-fg-muted)">v0.1</span>
       </div>
