@@ -1,3 +1,5 @@
+import { Logo } from "./Logo";
+
 /** The product mark. */
 export function Wordmark({
   size = "lg",
@@ -9,10 +11,7 @@ export function Wordmark({
   const muted = tone === "dark" ? "text-(--lp-panel-muted)" : "text-(--lp-fg-muted)";
   return (
     <span className="flex items-center gap-2.5">
-      <span
-        aria-hidden
-        className={`${size === "lg" ? "h-6 w-1.5" : "h-5 w-1"} shrink-0 rounded-full bg-(--lp-brand)`}
-      />
+      <Logo size={size === "lg" ? 24 : 20} />
       <span className={`lp-display tracking-[-0.02em] ${size === "lg" ? "text-lg" : "text-sm"}`}>
         CRM{" "}
         <span className={muted}>· Minet Uganda</span>
