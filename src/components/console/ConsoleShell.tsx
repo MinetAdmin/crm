@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+import { HEADER_ACTIONS_ID } from "./HeaderActions";
 import { navFor, type NavItem } from "./nav";
 
 type ConsoleUser = { name: string; email: string; role: string };
@@ -216,7 +217,7 @@ function ConsoleHeader() {
   const showHeaderSearch = state === "collapsed" && !isMobile;
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 md:px-6">
+    <header className="relative flex h-14 shrink-0 items-center gap-2 border-b px-4 md:px-6">
       <SidebarTrigger className="-ml-1.5" />
       <Separator
         orientation="vertical"
@@ -228,6 +229,10 @@ function ConsoleHeader() {
           <Input placeholder="Search" disabled title="Not built yet" className="h-8" />
         </div>
       )}
+      <div
+        id={HEADER_ACTIONS_ID}
+        className="ml-auto flex items-center gap-2"
+      />
     </header>
   );
 }
