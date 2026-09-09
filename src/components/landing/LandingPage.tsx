@@ -177,8 +177,8 @@ function Forecast() {
 
 function Stages() {
   return (
-    <section className="mx-auto w-full max-w-[78rem] px-5 py-20 md:px-8 md:py-28">
-      <div className="flex flex-wrap items-end justify-between gap-6">
+    <section className="mx-auto w-full max-w-[78rem] px-5 py-14 md:px-8 md:py-20">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <h2 className="lp-display max-w-[20ch] text-[clamp(1.875rem,3.6vw,3rem)]">
           A stage is a claim, so it needs a test
         </h2>
@@ -188,7 +188,7 @@ function Stages() {
         </p>
       </div>
 
-      <div className="mt-12 md:mt-16">
+      <div className="mt-8 md:mt-10">
         <StageLadder />
       </div>
     </section>
@@ -198,17 +198,20 @@ function Stages() {
 /** Defined by what it refuses: the save-time rules, stated plainly. */
 function Refusals() {
   return (
-    <section className="border-y border-(--lp-line-soft) bg-(--lp-wash) py-20 md:py-28">
+    <section className="border-y border-(--lp-line-soft) bg-(--lp-wash) py-14 md:py-24">
       <div className="mx-auto w-full max-w-[78rem] px-5 md:px-8">
         <h2 className="lp-display max-w-[24ch] text-[clamp(1.875rem,3.6vw,3rem)]">
           Six things it will not let you do
         </h2>
 
-        <dl className="mt-12 grid gap-x-12 gap-y-8 md:mt-16 md:grid-cols-2 lg:gap-y-10">
+        <dl className="mt-8 grid gap-x-12 gap-y-5 md:mt-14 md:grid-cols-2 md:gap-y-8">
           {REFUSALS.map((item) => (
-            <div key={item.rule} className="grid content-start gap-2 border-t border-(--lp-line) pt-5">
-              <dt className="lp-display text-lg tracking-[-0.02em] md:text-xl">{item.rule}</dt>
-              <dd className="max-w-[52ch] text-[15px] leading-relaxed text-(--lp-fg-muted)">
+            <div
+              key={item.rule}
+              className="grid content-start gap-1 border-t border-(--lp-line) pt-3.5 md:gap-2 md:pt-5"
+            >
+              <dt className="lp-display text-[17px] tracking-[-0.02em] md:text-xl">{item.rule}</dt>
+              <dd className="max-w-[52ch] text-[15px] leading-snug text-(--lp-fg-muted) md:leading-relaxed">
                 {item.because}
               </dd>
             </div>

@@ -40,7 +40,7 @@ export function StageLadder() {
 /** Narrow screens: one stage per row, bars running left to right. */
 function StackedStages() {
   return (
-    <ol className="relative grid gap-5 pt-6 md:hidden">
+    <ol className="relative grid gap-3 pt-6 md:hidden">
       <div
         className="pointer-events-none absolute inset-y-0 top-6 border-l border-dashed border-(--lp-brand)/50"
         style={{ left: `${THRESHOLD}%` }}
@@ -51,8 +51,23 @@ function StackedStages() {
         </span>
       </div>
       {STAGES.map((stage, index) => (
-        <li key={stage.name} className="grid gap-1.5">
-          <div className="flex items-baseline justify-between gap-3">
+        <li key={stage.name} className="relative overflow-hidden rounded-sm py-1.5 pr-1 pl-2.5">
+          {/* The bar is the row's ground, so it costs no height of its own. */}
+          <div
+            className="lp-sweep absolute inset-y-0 left-0"
+            style={
+              {
+                width: `${stage.probability}%`,
+                background: isCommitted(stage.probability)
+                  ? "color-mix(in srgb, var(--lp-brand) 12%, transparent)"
+                  : "var(--lp-wash)",
+                borderRight: `2px solid ${barColor(stage.probability)}`,
+                "--lp-delay": `${0.1 + index * 0.07}s`,
+              } as React.CSSProperties
+            }
+            aria-hidden
+          />
+          <div className="relative flex items-baseline justify-between gap-3">
             <h3 className="text-[15px] leading-tight font-medium">
               <span className="lp-num mr-2 text-[11px] text-(--lp-fg-muted)">
                 {String(index + 1).padStart(2, "0")}
@@ -63,18 +78,9 @@ function StackedStages() {
               {stage.probability}%
             </span>
           </div>
-          <div
-            className="lp-sweep h-1.5 rounded-full"
-            style={
-              {
-                width: `${stage.probability}%`,
-                backgroundColor: barColor(stage.probability),
-                "--lp-delay": `${0.1 + index * 0.07}s`,
-              } as React.CSSProperties
-            }
-            aria-hidden
-          />
-          <p className="text-[13px] leading-relaxed text-(--lp-fg-muted)">{stage.exit}</p>
+          <p className="relative mt-0.5 text-[13px] leading-snug text-(--lp-fg-muted)">
+            {stage.exit}
+          </p>
         </li>
       ))}
     </ol>
@@ -85,7 +91,7 @@ function StackedStages() {
 function Staircase() {
   return (
     <div className="hidden md:block">
-      <div className="relative h-56" aria-hidden>
+      <div className="relative h-36" aria-hidden>
         <div
           className="absolute inset-x-0 border-t border-dashed border-(--lp-brand)/50"
           style={{ bottom: `${THRESHOLD}%` }}
@@ -113,9 +119,9 @@ function Staircase() {
         </ol>
       </div>
 
-      <ol className="mt-4 flex gap-3 border-t border-(--lp-line)">
+      <ol className="mt-3 flex gap-3 border-t border-(--lp-line)">
         {STAGES.map((stage, index) => (
-          <li key={stage.name} className="grid flex-1 content-start gap-1.5 pt-4">
+          <li key={stage.name} className="grid flex-1 content-start gap-1 pt-3">
             <div className="flex items-baseline justify-between gap-1">
               <span className="lp-num text-[11px] text-(--lp-fg-muted)">
                 {String(index + 1).padStart(2, "0")}
@@ -125,7 +131,7 @@ function Staircase() {
               </span>
             </div>
             <h3 className="text-[15px] leading-tight font-medium">{stage.name}</h3>
-            <p className="text-[13px] leading-relaxed text-(--lp-fg-muted)">{stage.exit}</p>
+            <p className="text-[13px] leading-snug text-(--lp-fg-muted)">{stage.exit}</p>
           </li>
         ))}
       </ol>
