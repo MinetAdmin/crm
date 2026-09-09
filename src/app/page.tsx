@@ -12,7 +12,9 @@ export default async function Home() {
     <main className="mx-auto max-w-3xl p-8">
       <header className="flex items-center justify-between border-b pb-4">
         <div>
-          <h1 className="text-xl font-semibold">BD CRM</h1>
+          <h1 className="text-xl font-semibold">
+            CRM <span className="font-normal text-neutral-500">· Minet Uganda</span>
+          </h1>
           <p className="text-sm text-neutral-500">Sprint 0 shell. Build docs in /docs.</p>
         </div>
         <form

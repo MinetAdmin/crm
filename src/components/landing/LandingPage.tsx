@@ -90,7 +90,8 @@ function Wordmark({ size = "lg" }: { size?: "lg" | "sm" }) {
         className={`${size === "lg" ? "h-6 w-1.5" : "h-5 w-1"} shrink-0 rounded-full bg-(--lp-brand)`}
       />
       <span className={`lp-display tracking-[-0.02em] ${size === "lg" ? "text-lg" : "text-sm"}`}>
-        BD CRM
+        CRM
+        <span className="text-(--lp-fg-muted)"> · Minet Uganda</span>
       </span>
     </span>
   );
@@ -103,9 +104,6 @@ function SiteHeader() {
         <Link href="/">
           <Wordmark />
         </Link>
-        <span className="lp-mono hidden text-[11px] tracking-[0.08em] text-(--lp-fg-muted) uppercase sm:block">
-          Minet Uganda, Business Development
-        </span>
         <SignInButton tone="ink">Sign in</SignInButton>
       </div>
     </header>
@@ -243,7 +241,7 @@ function SiteFooter() {
       <div className="mx-auto flex w-full max-w-[78rem] flex-wrap items-center justify-between gap-4 px-5 py-6 md:px-8">
         <div className="flex items-center gap-2.5 text-(--lp-fg-muted)">
           <Wordmark size="sm" />
-          <span className="text-sm">© 2026 Minet Uganda</span>
+          <span className="text-sm">© 2026</span>
         </div>
         <span className="lp-mono text-[11px] text-(--lp-fg-muted)">v0.1</span>
       </div>

@@ -21,7 +21,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BD CRM",
+  title: "CRM · Minet Uganda",
   description:
     "Business Development console for Minet Uganda: leads, pipeline, initiatives, tenders and the forecast derived from them.",
 };
