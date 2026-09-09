@@ -1,9 +1,6 @@
 /**
- * Forward-only SQL migration runner. Applies db/migrations/NNNN_*.sql in
- * filename order and records each in _migrations. Files manage their own
- * BEGIN/COMMIT.
- *
- * Usage: pnpm db:migrate [-- --dry]
+ * Applies db/migrations/NNNN_*.sql in filename order and records each in
+ * _migrations. Usage: pnpm db:migrate [-- --dry]
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -32,7 +29,7 @@ async function main() {
     );
     const files = readdirSync(MIGRATIONS_DIR)
       .filter((f) => /^\d{4}_.+\.sql$/.test(f))
-      .sort();
+      .sort((a, b) => a.localeCompare(b));
 
     const pending = files.filter((f) => !applied.has(f));
     if (pending.length === 0) {

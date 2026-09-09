@@ -1,8 +1,4 @@
-/**
- * The console's sections, in the order doc 07 §1 sets out. Only the dashboard
- * exists so far; the rest are listed but marked unavailable rather than linked
- * to nothing, so the shell shows the shape of the product honestly.
- */
+/** The console's sections in the order doc 07 §1 sets out. No href means unbuilt. */
 export type NavItem = {
   label: string;
   href?: string;

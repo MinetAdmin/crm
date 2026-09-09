@@ -3,20 +3,16 @@ import Link from "next/link";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { navFor } from "./nav";
 
-/**
- * Console chrome: sections on the left, the signed-in person and sign-out on
- * top, the page below. Narrow screens get the same sections as a scrolling
- * row, so the shell needs no client-side state.
- */
+/** Console chrome: sections, the signed-in person, and the page. */
 export function ConsoleShell({
   user,
   signOutAction,
   children,
-}: {
+}: Readonly<{
   user: { name: string; email: string; role: string };
   signOutAction: () => Promise<void>;
   children: React.ReactNode;
-}) {
+}>) {
   const items = navFor(user.role);
 
   return (
@@ -63,7 +59,7 @@ export function ConsoleShell({
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{user.name}</p>
             <p className="truncate text-[13px] text-(--c-muted)">
-              {user.email} · {user.role.replace(/_/g, " ")}
+              {user.email} · {user.role.replaceAll("_", " ")}
             </p>
           </div>
           <form action={signOutAction}>

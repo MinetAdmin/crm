@@ -1,8 +1,4 @@
-/**
- * The full-year target read left to right: what is won, what is committed,
- * what the weighted pipeline adds, and the gap still open. Every segment is a
- * grouping of the same schedule lines, which is the point. Figures invented.
- */
+/** The full-year target as won, committed, weighted and gap. Illustrative figures. */
 
 const SEGMENTS: ReadonlyArray<{
   key: string;
@@ -67,7 +63,6 @@ export function ForecastBand() {
         ))}
       </div>
 
-      {/* Narrow: a two-column key, since a label under a 60px segment is unreadable. */}
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 md:hidden">
         {SEGMENTS.map((segment) => (
           <div key={segment.key} className="flex items-baseline gap-2">
@@ -89,7 +84,6 @@ export function ForecastBand() {
         ))}
       </dl>
 
-      {/* Wide: labels sit under the segment they describe. */}
       <dl className="mt-4 hidden w-full gap-1 md:flex" aria-hidden>
         {SEGMENTS.map((segment, index) => (
           <div

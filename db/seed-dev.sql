@@ -1,6 +1,4 @@
--- Dev and staging fixtures: fake users and a small book covering the known
--- edge cases (multi-line schedule, initiative rollup, tender chain, hygiene
--- exceptions). seed.ts refuses to apply this file in production.
+-- Dev and staging fixtures. seed.ts refuses to apply this file in production.
 BEGIN;
 
 INSERT INTO app_user (email, full_name, role, unit_id, capacity_pursuits, availability_pct) VALUES
@@ -24,7 +22,7 @@ INSERT INTO account (name, sector_id, unit_id) VALUES
   ('Nile Microfinance',(SELECT id FROM sector WHERE code='EBM'), (SELECT id FROM unit WHERE code='UNIT3'))
 ON CONFLICT DO NOTHING;
 
--- One healthy opportunity with a phased schedule (two lines, one product)
+-- Opportunity with a two-line schedule
 INSERT INTO opportunity (account_id, name, unit_id, sector_id, owner_id, stage_id, probability,
                          expected_close_date, close_confidence, created_by)
 SELECT a.id, 'Memnon Capital Medical 2026', u.id, s.id, o.id, st.id, st.default_probability,
@@ -47,7 +45,7 @@ SELECT o.id, NULL, o.stage_id, o.created_by FROM opportunity o
 WHERE o.name='Memnon Capital Medical 2026'
   AND NOT EXISTS (SELECT 1 FROM stage_history h WHERE h.opportunity_id = o.id);
 
--- A hygiene-exception opportunity: no schedule lines, no next action, stale
+-- Opportunity with no schedule lines, no next action, and a stale timestamp
 INSERT INTO opportunity (account_id, name, unit_id, sector_id, owner_id, stage_id, probability,
                          expected_close_date, close_confidence, created_by, updated_at)
 SELECT a.id, 'Nile Microfinance Credit Life 2026', u.id, s.id, o.id, st.id, st.default_probability,
@@ -57,7 +55,7 @@ WHERE a.name='Nile Microfinance' AND u.code='UNIT3' AND s.code='EBM'
   AND o.email='dev.owner2@example.test' AND st.code='PROSPECT'
 ON CONFLICT DO NOTHING;
 
--- Initiative with the healthy opportunity linked
+-- Initiative
 INSERT INTO strategic_initiative (name, unit_id, sector_id, champion_id, annual_target, target_year, status_id)
 SELECT 'NGO Forum', u.id, s.id, c.id, 800000000, 2026, rv.id
 FROM unit u, sector s, app_user c, ref_value rv
@@ -69,7 +67,7 @@ ON CONFLICT (name) DO NOTHING;
 UPDATE opportunity SET initiative_id = (SELECT id FROM strategic_initiative WHERE name='NGO Forum')
 WHERE name='Memnon Capital Medical 2026' AND initiative_id IS NULL;
 
--- Tender chain: prequalification -> tender (different value bases, BR-TEN-01)
+-- Prequalification and the tender it enabled, on different value bases
 INSERT INTO tender (tender_type, issuing_body, title, sector_id, unit_id, recorded_value, value_basis,
                     status, submission_deadline, owner_id)
 SELECT 'prequalification', 'Uganda Revenue Authority', 'URA-PQ-2026-014', s.id, u.id,

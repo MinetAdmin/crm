@@ -1,7 +1,5 @@
 -- ============================================================================
--- BD CRM — PostgreSQL schema, v1.0 (2026-09-09)
--- Source of truth for the data model in docs/04-data-model.md.
--- Traceable to Spec §4, §5, §6, §8, §15, §16 and PRD requirement IDs.
+-- BD CRM PostgreSQL schema. Documented in docs/04-data-model.md.
 -- Conventions: snake_case; surrogate bigint identity PKs; soft delete via
 -- archived_at; created/updated stamps on business tables; money numeric(18,2);
 -- months stored as DATE pinned to the 1st.
@@ -10,7 +8,7 @@
 BEGIN;
 
 -- ---------------------------------------------------------------------------
--- Enums: structural values only. Everything user-manageable is a table row.
+-- Enums. User-manageable vocabularies are table rows, not enums.
 -- ---------------------------------------------------------------------------
 CREATE TYPE outcome_t            AS ENUM ('open','won','lost','on_hold','withdrawn');
 CREATE TYPE close_confidence_t   AS ENUM ('confirmed','estimated','tbc');
@@ -19,16 +17,15 @@ CREATE TYPE lead_status_t        AS ENUM ('new','contacted','qualifying','qualif
 CREATE TYPE revenue_type_t       AS ENUM ('new_business','renewal','cross_sell','upsell');
 CREATE TYPE tender_type_t        AS ENUM ('prequalification','tender');
 CREATE TYPE tender_status_t      AS ENUM ('to_submit','submitted','in_evaluation','prequalified','won','lost','withdrawn');
-CREATE TYPE value_basis_t        AS ENUM ('brokerage_income','sum_insured','premium');  -- BR-TEN-01
+CREATE TYPE value_basis_t        AS ENUM ('brokerage_income','sum_insured','premium');
 CREATE TYPE target_level_t       AS ENUM ('company','unit','initiative','owner','product');
-CREATE TYPE support_type_t       AS ENUM ('management','mrs');                          -- pending I6
+CREATE TYPE support_type_t       AS ENUM ('management','mrs');
 CREATE TYPE activity_type_t      AS ENUM ('meeting','call','submission','task','next_action');
 CREATE TYPE user_role_t          AS ENUM ('bd_owner','unit_head','bd_leadership','executive_ro','admin');
 CREATE TYPE complexity_t         AS ENUM ('light','standard','complex');
 
 -- ---------------------------------------------------------------------------
--- Reference / organisational structure  (Spec §15 correction: unit ⊃ sector;
--- department retired — Decision D-05)
+-- Reference and organisational structure: unit contains sectors (D-05).
 -- ---------------------------------------------------------------------------
 CREATE TABLE unit (
   id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -37,9 +34,9 @@ CREATE TABLE unit (
   active      boolean NOT NULL DEFAULT true
 );
 
-CREATE TABLE sector (                         -- the workbook's "Dept" = pack's "Sector"
+CREATE TABLE sector (
   id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  unit_id     bigint NOT NULL REFERENCES unit(id),   -- fixed hierarchy, pending I7
+  unit_id     bigint NOT NULL REFERENCES unit(id),
   code        text NOT NULL UNIQUE,          -- 'EMT','IND','SPE','SME','EBM'
   name        text NOT NULL,
   active      boolean NOT NULL DEFAULT true
@@ -48,8 +45,8 @@ CREATE TABLE sector (                         -- the workbook's "Dept" = pack's 
 CREATE TABLE product (
   id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   code        text NOT NULL UNIQUE,
-  name        text NOT NULL,                 -- ~16 real products after F3 sign-off
-  default_complexity complexity_t NOT NULL DEFAULT 'standard',  -- BR-OPP-07 default source
+  name        text NOT NULL,
+  default_complexity complexity_t NOT NULL DEFAULT 'standard',
   active      boolean NOT NULL DEFAULT true
 );
 
@@ -59,12 +56,11 @@ CREATE TABLE pipeline_stage (
   name                text NOT NULL,
   sort_order          int  NOT NULL UNIQUE,
   default_probability numeric(5,2) NOT NULL CHECK (default_probability BETWEEN 0 AND 100),
-  exit_criterion      text NOT NULL,         -- shown in UI on stage change (FR-OPP-02)
+  exit_criterion      text NOT NULL,         -- shown at the point of stage change
   active              boolean NOT NULL DEFAULT true
 );
 
--- Generic managed picklists (lead source, loss reason, disqualification reason,
--- hold reason, initiative status, cost category, tender outcome reason, ...)
+-- Managed picklists: lead source, loss reason, initiative status, and the rest.
 CREATE TABLE ref_list (
   id    bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   code  text NOT NULL UNIQUE                 -- 'lead_source','loss_reason',...
@@ -75,17 +71,17 @@ CREATE TABLE ref_value (
   code      text NOT NULL,
   label     text NOT NULL,
   sort_order int NOT NULL DEFAULT 0,
-  active    boolean NOT NULL DEFAULT true,   -- deactivate, never delete (FR-ADM-01)
+  active    boolean NOT NULL DEFAULT true,   -- deactivated, never deleted
   UNIQUE (list_id, code)
 );
 
-CREATE TABLE system_setting (                -- FR-ADM-03
+CREATE TABLE system_setting (
   key   text PRIMARY KEY,                    -- 'committed_threshold_pct'=50,
   value text NOT NULL                        -- 'ageing_days'=30, 'coverage_min'=3.0,
 );                                           -- 'concentration_threshold_pct', 'fy_end_month'
 
 -- ---------------------------------------------------------------------------
--- Users  (Spec §4 User and Team; §16 capacity additions)
+-- Users
 -- ---------------------------------------------------------------------------
 CREATE TABLE app_user (
   id                bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -93,9 +89,9 @@ CREATE TABLE app_user (
   full_name         text NOT NULL,
   role              user_role_t NOT NULL,
   unit_id           bigint REFERENCES unit(id),
-  capacity_pursuits int,                      -- nominal concurrent pursuits (§16)
+  capacity_pursuits int,                      -- nominal concurrent pursuits
   pipeline_split_pct numeric(5,2),            -- share of time on pipeline vs initiatives
-  availability_pct  numeric(5,2) NOT NULL DEFAULT 100,  -- leave / part-time (§16)
+  availability_pct  numeric(5,2) NOT NULL DEFAULT 100,
   active            boolean NOT NULL DEFAULT true,
   created_at        timestamptz NOT NULL DEFAULT now()
 );
@@ -110,7 +106,7 @@ CREATE TABLE account (
   sector_id       bigint REFERENCES sector(id),
   unit_id         bigint REFERENCES unit(id),
   country         char(2) NOT NULL DEFAULT 'UG',
-  operations_ref  text,                      -- reference to the post-win account (Spec §1)
+  operations_ref  text,                      -- account created after handover
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now(),
   archived_at     timestamptz
@@ -131,10 +127,10 @@ CREATE TABLE contact (
 );
 
 -- ---------------------------------------------------------------------------
--- Leads  (Spec §5.1)
+-- Leads
 -- ---------------------------------------------------------------------------
 CREATE TABLE lead (
-  id                bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,   -- Lead ID, never edited
+  id                bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   company_name      text NOT NULL,
   matched_account_id bigint REFERENCES account(id),
   contact_name      text,
@@ -143,7 +139,7 @@ CREATE TABLE lead (
   source_id         bigint NOT NULL REFERENCES ref_value(id),  -- list 'lead_source'
   sector_id         bigint REFERENCES sector(id),
   unit_id           bigint NOT NULL REFERENCES unit(id),
-  estimated_value   numeric(18,2),            -- order of magnitude, never in forecast
+  estimated_value   numeric(18,2),            -- excluded from the forecast
   currency          char(3) NOT NULL DEFAULT 'UGX',
   owner_id          bigint NOT NULL REFERENCES app_user(id),
   status            lead_status_t NOT NULL DEFAULT 'new',
@@ -218,7 +214,7 @@ CREATE TABLE opportunity (
   probability_override_note text,             -- BR-OPP-05: required when != stage default (app-enforced)
   expected_close_date   date NOT NULL,        -- BR-OPP-06: a true date
   close_confidence      close_confidence_t NOT NULL DEFAULT 'estimated',
-  initiative_id         bigint REFERENCES strategic_initiative(id), -- one-to-many (D-10, pending E1)
+  initiative_id         bigint REFERENCES strategic_initiative(id),
   forecast_category     forecast_category_t,
   key_blocker           text,                 -- blank means none; NIL/None/N-A retired
   loss_reason_id        bigint REFERENCES ref_value(id),  -- list 'loss_reason'
@@ -276,7 +272,7 @@ CREATE TABLE owner_reassignment (
   created_at     timestamptz NOT NULL DEFAULT now()
 );
 
--- Stage history — the 14th entity; written automatically, never edited (FR-OPP-04)
+-- Stage history. Written by the stage service, never edited.
 CREATE TABLE stage_history (
   id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   opportunity_id bigint NOT NULL REFERENCES opportunity(id),
@@ -289,7 +285,7 @@ CREATE TABLE stage_history (
 CREATE INDEX stage_history_opp_idx ON stage_history (opportunity_id, changed_at);
 
 -- ---------------------------------------------------------------------------
--- Revenue schedule lines  (Spec §5.3) — where the money lives
+-- Revenue schedule lines
 -- ---------------------------------------------------------------------------
 CREATE TABLE revenue_schedule_line (
   id                   bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -302,13 +298,11 @@ CREATE TABLE revenue_schedule_line (
   probability_override_note text,
   revenue_type         revenue_type_t NOT NULL DEFAULT 'new_business',
   recurring            boolean NOT NULL DEFAULT false,
-  actual_amount        numeric(18,2),         -- D-09 (pending C3): recorded when won
+  actual_amount        numeric(18,2),         -- recorded when the pursuit is won
   created_at           timestamptz NOT NULL DEFAULT now(),
   updated_at           timestamptz NOT NULL DEFAULT now(),
   archived_at          timestamptz
-  -- Weighted amount is NOT a column. See v_schedule_line_weighted.
-  -- C1-contingent (if amounts turn out to be premium): add premium_amount,
-  -- commission_rate; expected_amount becomes derived. Isolated to this table.
+  -- Weighted amount is derived. See v_schedule_line_weighted.
 );
 CREATE INDEX rsl_opp_idx   ON revenue_schedule_line (opportunity_id);
 CREATE INDEX rsl_month_idx ON revenue_schedule_line (effective_month);
@@ -338,7 +332,7 @@ CREATE INDEX activity_open_idx ON activity (owner_id, due_date) WHERE completed_
 -- 'next_action' with a due_date. Exceptions surface on the hygiene report.
 
 -- ---------------------------------------------------------------------------
--- Tenders  (Spec §15) — the 13th entity
+-- Tenders
 -- ---------------------------------------------------------------------------
 CREATE TABLE tender (
   id                  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -420,7 +414,7 @@ CREATE TABLE budget_line (
 );
 
 -- ---------------------------------------------------------------------------
--- Forecast snapshots  (Spec §7) — immutable month-end copies
+-- Forecast snapshots. Immutable month-end copies.
 -- ---------------------------------------------------------------------------
 CREATE TABLE forecast_snapshot (
   id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -428,8 +422,9 @@ CREATE TABLE forecast_snapshot (
   taken_at       timestamptz NOT NULL DEFAULT now(),
   taken_by       bigint REFERENCES app_user(id)  -- NULL = scheduled job
 );
-CREATE TABLE forecast_snapshot_line (         -- denormalised on purpose: history must not
-  id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,   -- shift when masters change
+-- Denormalised: a snapshot keeps the values as they were.
+CREATE TABLE forecast_snapshot_line (
+  id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   snapshot_id      bigint NOT NULL REFERENCES forecast_snapshot(id),
   opportunity_id   bigint NOT NULL,
   schedule_line_id bigint,
@@ -451,7 +446,7 @@ CREATE INDEX fsl_snapshot_idx ON forecast_snapshot_line (snapshot_id);
 -- App role gets INSERT + SELECT only on both tables; no UPDATE/DELETE grants.
 
 -- ---------------------------------------------------------------------------
--- Audit log  (FR-AUD-01) — append-only, written in-transaction by middleware
+-- Audit log. Append-only, written in the same transaction as the change.
 -- ---------------------------------------------------------------------------
 CREATE TABLE audit_log (
   id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -467,8 +462,7 @@ CREATE TABLE audit_log (
 CREATE INDEX audit_entity_idx ON audit_log (entity, entity_id, changed_at);
 
 -- ---------------------------------------------------------------------------
--- Phase-2 landing zone (I1/I2): monthly actuals & proformas by revenue line.
--- Created now so a finance CSV can load without a schema change; unused in Phase 1 UI.
+-- Monthly actuals and proformas by revenue line. Loaded in Phase 2 (I1, I2).
 -- ---------------------------------------------------------------------------
 CREATE TABLE revenue_actual (
   id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -483,7 +477,7 @@ CREATE TABLE revenue_actual (
 );
 
 -- ---------------------------------------------------------------------------
--- Derived views — the single source of every formula (doc 08)
+-- Derived views. Every reporting formula is defined here (doc 08).
 -- ---------------------------------------------------------------------------
 CREATE VIEW v_schedule_line_weighted AS
 SELECT rsl.*,
@@ -531,7 +525,7 @@ WHERE o.outcome = 'open' AND o.archived_at IS NULL;
 
 COMMIT;
 
--- Seed the structural rows (stages per Spec §6) — reference, adjust at workshop:
+-- Stage rows are seeded by db/seed-reference.sql.
 -- INSERT INTO pipeline_stage (code,name,sort_order,default_probability,exit_criterion) VALUES
 --  ('PROSPECT','Prospecting',1,10,'A named contact has responded.'),
 --  ('INFO','Information gathering',2,20,'Enough information held to price or scope.'),

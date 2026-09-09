@@ -1,9 +1,5 @@
-# Build and run the console in one image. The image also carries db/ and
-# scripts/, so migrations run as a job from the same artefact that serves the
-# app and cannot drift from it.
-#
-# Debian slim rather than Alpine: Prisma's engines want glibc and openssl, and
-# the musl variants are a recurring source of runtime surprises.
+# Builds and runs the console. Carries db/ and scripts/ so migrations run from
+# the same image.
 
 FROM node:22-slim AS base
 RUN apt-get update \
@@ -32,6 +28,4 @@ COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/package.json ./package.json
 USER node
 EXPOSE 3000
-# Env is validated at startup, so a bad configuration stops here with a
-# readable message rather than serving broken pages.
 CMD ["pnpm", "start"]

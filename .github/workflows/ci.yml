@@ -44,8 +44,7 @@ jobs:
       - name: Build
         run: pnpm build
 
-  # Builds on every run so the Dockerfile is continuously exercised; publishes
-  # only from main. The registry is GHCR, which is free, rather than ACR.
+  # Builds on every run, publishes from main only.
   image:
     needs: verify
     runs-on: ubuntu-latest

@@ -1,9 +1,7 @@
--- Production-safe reference data, idempotent. Starting values from Spec §6
--- and §15; the controlled-list workshop (doc 09 §1) may amend them via the
--- admin UI.
+-- Reference data. Idempotent, safe in production.
 BEGIN;
 
--- Pipeline stages (Spec §6)
+-- Pipeline stages
 INSERT INTO pipeline_stage (code, name, sort_order, default_probability, exit_criterion) VALUES
   ('PROSPECT',  'Prospecting',                     1, 10, 'A named contact has responded.'),
   ('INFO',      'Information gathering',           2, 20, 'Enough information held to price or scope.'),
@@ -13,7 +11,7 @@ INSERT INTO pipeline_stage (code, name, sort_order, default_probability, exit_cr
   ('SHORTLIST', 'Shortlisted or final negotiation',6, 85, 'Award decision communicated.')
 ON CONFLICT (code) DO NOTHING;
 
--- Units and sectors (Spec §15: Unit 1 = EMT+IND, Unit 2 = SPE+SME, Unit 3 = EBM)
+-- Units and sectors
 INSERT INTO unit (code, name) VALUES
   ('UNIT1', 'Unit 1'), ('UNIT2', 'Unit 2'), ('UNIT3', 'Unit 3')
 ON CONFLICT (code) DO NOTHING;
@@ -30,7 +28,7 @@ FROM (VALUES
 JOIN unit u ON u.code = s.unit_code
 ON CONFLICT (code) DO NOTHING;
 
--- Managed picklists (Spec §5.1, §5.4, §8.2; workshop refines)
+-- Managed picklists
 INSERT INTO ref_list (code) VALUES
   ('lead_source'), ('loss_reason'), ('disqualification_reason'),
   ('hold_reason'), ('initiative_status'), ('cost_category'),
@@ -66,9 +64,9 @@ FROM (VALUES
 JOIN ref_list l ON l.code = v.list_code
 ON CONFLICT (list_id, code) DO NOTHING;
 -- loss_reason, disqualification_reason, hold_reason and tender_outcome_reason
--- are unseeded; their values come from the workshop (doc 09 §1, B3).
+-- are seeded from the controlled-list workshop (doc 09 §1).
 
--- System settings (FR-ADM-03; doc 08 thresholds)
+-- System settings (FR-ADM-03)
 INSERT INTO system_setting (key, value) VALUES
   ('committed_threshold_pct',    '50'),
   ('ageing_days',                '30'),

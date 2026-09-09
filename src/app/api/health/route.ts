@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-// Unauthenticated liveness/readiness probe (NFR-OPS-04).
+// Liveness and readiness probe (NFR-OPS-04).
 export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`;

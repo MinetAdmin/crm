@@ -66,10 +66,10 @@ function Arrow() {
 function SignInButton({
   children,
   tone = "brand",
-}: {
+}: Readonly<{
   children: React.ReactNode;
   tone?: "brand" | "ink";
-}) {
+}>) {
   const styles =
     tone === "brand"
       ? "h-12 bg-(--lp-brand) px-6 text-[15px] text-white hover:bg-(--lp-brand)/90"
@@ -97,9 +97,7 @@ function SiteHeader() {
   );
 }
 
-/**
- * The hero is the argument: one deal, four ways, resolving into one record.
- */
+/** Hero: the headline and the ledger figure. */
 function Hero() {
   return (
     <section className="mx-auto w-full max-w-[78rem] px-5 pt-16 pb-20 md:px-8 md:pt-24 md:pb-28">
@@ -139,7 +137,7 @@ function Hero() {
   );
 }
 
-/** Dark full-bleed band: the whole year in one line. */
+/** Dark band: the year in one line. */
 function Forecast() {
   return (
     <section className="bg-(--lp-panel) py-20 text-(--lp-panel-fg) md:py-28">
@@ -182,7 +180,7 @@ function Stages() {
   );
 }
 
-/** Defined by what it refuses: the save-time rules, stated plainly. */
+/** The save-time rules, stated as refusals. */
 function Refusals() {
   return (
     <section className="border-y border-(--lp-line-soft) bg-(--lp-wash) py-14 md:py-24">

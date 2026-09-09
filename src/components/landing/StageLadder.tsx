@@ -1,13 +1,4 @@
-/**
- * The six stages as a climb, each step as long as the probability it carries,
- * with the committed threshold marked at 50 percent. A pursuit only moves up
- * when its exit criterion is met, which is what makes one owner's "engaged"
- * mean the same as another's.
- *
- * Wide screens get the staircase, read left to right. Narrow screens get the
- * same figure turned on its side, because six columns of prose in 50 pixels
- * is not a staircase, it is a wall.
- */
+/** The six stages, each sized by its probability, with the 50% threshold marked. */
 
 const STAGES: ReadonlyArray<{ name: string; probability: number; exit: string }> = [
   { name: "Prospecting", probability: 10, exit: "A named contact has responded." },
@@ -37,7 +28,7 @@ export function StageLadder() {
   );
 }
 
-/** Narrow screens: one stage per row, bars running left to right. */
+/** One stage per row, bars running left to right. */
 function StackedStages() {
   return (
     <ol className="relative grid gap-3 pt-6 md:hidden">
@@ -52,7 +43,6 @@ function StackedStages() {
       </div>
       {STAGES.map((stage, index) => (
         <li key={stage.name} className="relative overflow-hidden rounded-sm py-1.5 pr-1 pl-2.5">
-          {/* The bar is the row's ground, so it costs no height of its own. */}
           <div
             className="lp-sweep absolute inset-y-0 left-0"
             style={
@@ -87,7 +77,7 @@ function StackedStages() {
   );
 }
 
-/** Wide screens: the staircase, each step as tall as its probability. */
+/** The staircase, each step as tall as its probability. */
 function Staircase() {
   return (
     <div className="hidden md:block">

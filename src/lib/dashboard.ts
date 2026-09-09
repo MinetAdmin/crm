@@ -7,10 +7,7 @@ export type DashboardSummary = {
   tendersDue: number;
 };
 
-/**
- * Counts for the dashboard tiles, read from the same views the reports will
- * use (doc 08), so the shell and the reports cannot disagree later.
- */
+/** Counts for the dashboard tiles, read from the reporting views (doc 08). */
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const [openPursuits, weighted, exceptions, tenders] = await Promise.all([
     prisma.opportunity.count({ where: { outcome: "open", archived_at: null } }),
