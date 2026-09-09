@@ -1,8 +1,12 @@
 import { auth, signOut } from "@/auth";
+import { LandingPage } from "@/components/landing/LandingPage";
 
-// Placeholder shell until the dashboard (doc 07 §2.1) lands.
+// Public route: the landing page for signed-out visitors, the console shell
+// for everyone else. The shell is a placeholder until the dashboard
+// (doc 07 §2.1) lands.
 export default async function Home() {
   const session = await auth();
+  if (!session?.user) return <LandingPage />;
 
   return (
     <main className="mx-auto max-w-3xl p-8">
@@ -14,7 +18,7 @@ export default async function Home() {
         <form
           action={async () => {
             "use server";
-            await signOut({ redirectTo: "/signin" });
+            await signOut({ redirectTo: "/" });
           }}
         >
           <button type="submit" className="text-sm underline hover:no-underline">
@@ -24,11 +28,11 @@ export default async function Home() {
       </header>
       <section className="mt-6 space-y-1 text-sm">
         <p>
-          Signed in as <strong>{session?.user?.email}</strong>
+          Signed in as <strong>{session.user.email}</strong>
         </p>
         <p>
-          Role: <code>{session?.user?.role || "unknown"}</code> · Unit:{" "}
-          <code>{session?.user?.unitId ?? "none"}</code>
+          Role: <code>{session.user.role || "unknown"}</code> · Unit:{" "}
+          <code>{session.user.unitId ?? "none"}</code>
         </p>
       </section>
     </main>
