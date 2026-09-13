@@ -20,6 +20,20 @@ document fixes *what each screen must contain and enforce*.
 - Concurrency conflicts (409) render as "Someone else changed this record — review and retry",
   showing whose change and when.
 
+### 1.1 Public landing palette (D-25)
+
+The landing page uses warm white (`#faf9f8`), neutral gray text and washes, and
+charcoal panels (`#1b1e22`). Dark mode uses a charcoal page (`#111316`) with lighter
+cards and panels. Sign-in buttons and text selection retain crimson (`#c8102e`)
+with white text in both themes. Red text on dark surfaces uses `#e85b60` independently
+of button backgrounds. Charts use muted sage (`#91bda5`), amber (`#d1ad68`), and slate
+(`#a5acb5`), with the existing category labels retained. Palette tokens remain scoped
+to `.landing` in `src/components/landing/landing.css`.
+
+Primary sign-in links use a white circular arrow inset at the right edge (D-26).
+On hover or keyboard focus the arrow slides right and re-enters from the left once;
+reduced-motion users see a static arrow.
+
 ## 2. Screens
 
 ### 2.1 Dashboard (per role)

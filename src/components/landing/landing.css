@@ -1,34 +1,27 @@
-/*
- * Scoped presentation layer for the public landing page.
- *
- * Everything lives under `.landing` so the marketing palette, typography and
- * motion never leak into the signed-in console.
- */
-
 .landing {
-  /* Two faces only: Bricolage Grotesque for display, Inter Tight for
-   * everything else, following the system stack in globals.css. */
   --lp-font-display: var(--font-display), "Bricolage Grotesque", var(--font-sans);
   --lp-font-body: var(--font-sans);
 
   --lp-page: #faf9f8;
   --lp-card: #ffffff;
-  --lp-fg: #1a1214;
-  --lp-fg-muted: #6b5c60;
-  --lp-line: rgb(26 18 20 / 0.1);
-  --lp-line-soft: rgb(26 18 20 / 0.06);
-  --lp-wash: #f1eceb;
+  --lp-fg: #202124;
+  --lp-fg-muted: #63666b;
+  --lp-line: rgb(32 33 36 / 0.1);
+  --lp-line-soft: rgb(32 33 36 / 0.06);
+  --lp-wash: #eeefed;
   --lp-brand: #c8102e;
+  --lp-action: #c8102e;
   --lp-accent: #2f5d7c;
 
-  --lp-panel: #17110f;
-  --lp-panel-fg: #f5f1ef;
-  --lp-panel-muted: #a2938e;
+  --lp-panel: #1b1e22;
+  --lp-panel-fg: #f3f4f2;
+  --lp-panel-muted: #a5a9ae;
+  --lp-panel-brand: #e85b60;
   --lp-panel-line: rgb(255 255 255 / 0.1);
-  --lp-panel-committed: #6ee7a8;
-  --lp-panel-play: #f0b429;
-  --lp-panel-early: #b9a9a4;
-  --lp-panel-now: #8fa9ff;
+  --lp-panel-committed: #91bda5;
+  --lp-panel-play: #d1ad68;
+  --lp-panel-early: #a5acb5;
+  --lp-panel-now: #98acc7;
 
   font-family: var(--lp-font-body);
   background-color: var(--lp-page);
@@ -38,22 +31,20 @@
 
 @media (prefers-color-scheme: dark) {
   .landing:not(.light) {
-    --lp-page: #0c0809;
-    --lp-card: #1a1315;
-    --lp-fg: #f2edee;
-    --lp-fg-muted: #a2918f;
+    --lp-page: #111316;
+    --lp-card: #1d2024;
+    --lp-fg: #f1f2ef;
+    --lp-fg-muted: #a4a8ae;
     --lp-line: rgb(255 255 255 / 0.11);
     --lp-line-soft: rgb(255 255 255 / 0.06);
-    --lp-wash: #151011;
-    --lp-brand: #ff6b7d;
+    --lp-wash: #191c20;
+    --lp-brand: #e85b60;
     --lp-accent: #8fb6d6;
-
-    --lp-panel: #140f10;
   }
 }
 
 .landing ::selection {
-  background-color: var(--lp-brand);
+  background-color: var(--lp-action);
   color: #fff;
 }
 
@@ -72,7 +63,6 @@
   text-wrap: balance;
 }
 
-/* Figures and codes: Inter Tight with its digits aligned, not a mono face. */
 .lp-num {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
@@ -93,7 +83,6 @@
   }
 }
 
-/* Segments and steps grow from their anchored edge. */
 @keyframes lp-sweep {
   from {
     transform: scale(0);
@@ -103,7 +92,26 @@
   }
 }
 
+@keyframes lp-arrow-pass {
+  0%, 100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  45% {
+    transform: translateX(28px);
+    opacity: 0;
+  }
+  46% {
+    transform: translateX(-28px);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .lp-sign-in:is(:hover, :focus-visible) .lp-arrow svg {
+    animation: lp-arrow-pass 0.45s ease-in-out;
+  }
+
   .lp-rise {
     animation: lp-rise 0.75s cubic-bezier(0.2, 0.75, 0.2, 1) both;
     animation-delay: var(--lp-delay, 0s);

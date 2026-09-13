@@ -34,6 +34,41 @@ answer changes.
 | D-23 | Entra "Assignment required" dropped as a required layer; access is decided by the `app_user` record alone, with a **first-run bootstrap** making the first person to sign in the administrator (audited, single-use, transaction-guarded) | Two systems to onboard one colleague is friction the admin will not sustain, and a fresh deployment otherwise has nobody able to issue the first invite. Assignment stays available as optional hardening | Sponsor (accepts that any tenant member could claim the untouched bootstrap between deploy and first admin login) | **Provisional** |
 | D-24 | Console UI standardised on **shadcn/ui** (radix-nova preset): components are added from the registry and themed through the token block in `globals.css`, never written from scratch. Shell layout: collapsible icon sidebar (state persisted in a cookie, toggle in the header, keyboard ⌘B) with tooltip labels when collapsed; page identity lives in the header breadcrumb and screens render no page headings of their own; global search is a placeholder control in the sidebar that relocates to the header centre while the sidebar is collapsed, until FR-RPT-12-adjacent global search is built | User direction 2026-09-10 against the reference set in `references/`; a single component vocabulary keeps future screens consistent and future work cheap | User (design owner) | **Confirmed** 2026-09-10 |
 
+### D-25: Public landing palette refinement
+
+- **Decision:** Adopt warm white, neutral grays, charcoal panels, quieter sage/amber/slate
+  chart accents, and crimson action backgrounds in both themes (doc 07 §1.1).
+  Use a lighter red for text on dark surfaces, separate from action backgrounds.
+- **Reason:** Reduce the brown cast and chart saturation while preserving the existing
+  crimson identity and readable white button labels. This is design judgment, not a
+  verified external brand standard.
+- **Assumptions:** The request to refine colors delegates shade selection within the
+  existing layout, content, and light/dark theme behavior.
+- **Consequences:** Changes are scoped to the landing page. Dark panels use their own
+  red text token in both themes; button backgrounds no longer inherit the dark text red.
+- **Status:** Adopted 2026-09-13 under user-delegated design authority.
+
+### D-26: Sign-in arrow treatment
+
+- **Decision:** Inset a white circular arrow in primary sign-in pills. Animate one
+  horizontal exit/re-entry on hover or keyboard focus, with no animation when the
+  user prefers reduced motion (doc 07 §1.1).
+- **Reason:** User requested an animated arrow based on the circular arrow in
+  [the supplied reference](https://i.pinimg.com/1200x/d2/40/8c/d2408cc038b3e0db2329018a1d4cf641.jpg).
+- **Assumptions:** The reference is a still image; the slide motion is an implementation
+  choice. Retain the adopted crimson palette and apply the treatment to both primary
+  landing sign-in links for consistency.
+- **Consequences:** CSS-only presentation, with the existing sign-in destination and
+  accessible link labels retained.
+- **Status:** Adopted 2026-09-13 under user-delegated design authority.
+
+### Engineering follow-up: Vitest configuration warning
+
+`pnpm verify` on 2026-09-13 passed all 100 tests, but Vite reported ESM syntax in
+`vitest.config.ts:1` being loaded as CommonJS. Follow-up: engineering should migrate
+that configuration to a supported ESM extension before Vite makes its native config
+loader the default. This warning is outside the landing presentation change.
+
 ## Part B — Open-question register
 
 Status: ⛔ **Blocker** (gates migration or scope) · ❗ High (changes design) · ◽ Normal
