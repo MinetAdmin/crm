@@ -1,38 +1,118 @@
+import { Prisma } from "@prisma/client";
+
 import { db } from "./db";
 import { writeAudit } from "./audit";
 import { findLikelyDuplicates, type AccountMatch } from "./account-name";
+import type { AccountRow } from "./account-table";
 
-export type AccountRow = {
-  id: string;
-  name: string;
-  sector: string | null;
-  unit: string | null;
-  contacts: number;
+export const ACCOUNT_LIST_CAP = 200;
+
+export type AccountFilters = {
+  search?: string;
+  unitId?: string;
+  sectorId?: string;
 };
 
-/** Active accounts, optionally narrowed by a name fragment. */
-export async function listAccounts(search?: string): Promise<AccountRow[]> {
+/** Active accounts with their contact, lead and pipeline standing at read time. */
+export async function listAccounts(filters: AccountFilters = {}): Promise<AccountRow[]> {
   const rows = await db().account.findMany({
     where: {
       archived_at: null,
-      ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
+      ...(filters.search
+        ? { name: { contains: filters.search, mode: "insensitive" as const } }
+        : {}),
+      ...(filters.unitId ? { unit_id: BigInt(filters.unitId) } : {}),
+      ...(filters.sectorId ? { sector_id: BigInt(filters.sectorId) } : {}),
     },
     orderBy: { name: "asc" },
-    take: 200,
+    take: ACCOUNT_LIST_CAP,
     include: {
       sector: { select: { code: true } },
       unit: { select: { code: true } },
       _count: { select: { contact: { where: { archived_at: null } } } },
+      contact: {
+        where: { archived_at: null, is_decision_maker: true },
+        select: { id: true },
+        take: 1,
+      },
     },
   });
+  if (rows.length === 0) return [];
 
-  return rows.map((row) => ({
-    id: row.id.toString(),
-    name: row.name,
-    sector: row.sector?.code ?? null,
-    unit: row.unit?.code ?? null,
-    contacts: row._count.contact,
-  }));
+  const ids = rows.map((row) => row.id);
+  const [pipeline, leads] = await Promise.all([
+    pipelineByAccountIds(ids),
+    openLeadsByAccountIds(ids),
+  ]);
+
+  return rows.map((row) => {
+    const id = row.id.toString();
+    const agg = pipeline.get(id);
+    return {
+      id,
+      name: row.name,
+      sector: row.sector?.code ?? null,
+      unit: row.unit?.code ?? null,
+      contacts: row._count.contact,
+      decisionMaker: row.contact.length > 0,
+      openLeads: leads.get(id) ?? 0,
+      openPursuits: agg?.openPursuits ?? 0,
+      weighted: agg?.weighted ?? 0,
+      lastMovement: agg?.lastMovement?.toISOString().slice(0, 10) ?? null,
+      createdAt: row.created_at.toISOString().slice(0, 10),
+    };
+  });
+}
+
+type PipelineAgg = { openPursuits: number; weighted: number; lastMovement: Date | null };
+
+/** Open-pursuit count, weighted pipeline and latest stage movement per account. */
+async function pipelineByAccountIds(ids: bigint[]): Promise<Map<string, PipelineAgg>> {
+  const rows = await db().$queryRaw<
+    { account_id: string; open_pursuits: number; weighted: string; last_movement: Date | null }[]
+  >`
+    SELECT o.account_id::text AS account_id,
+           COUNT(*) FILTER (WHERE o.outcome = 'open')::int AS open_pursuits,
+           COALESCE(SUM(w.weighted) FILTER (WHERE o.outcome = 'open'), 0)::text AS weighted,
+           MAX(m.last_move) AS last_movement
+    FROM opportunity o
+    LEFT JOIN (SELECT opportunity_id, SUM(weighted_amount) AS weighted
+               FROM v_schedule_line_weighted
+               GROUP BY opportunity_id) w ON w.opportunity_id = o.id
+    LEFT JOIN (SELECT opportunity_id, MAX(changed_at) AS last_move
+               FROM stage_history
+               GROUP BY opportunity_id) m ON m.opportunity_id = o.id
+    WHERE o.archived_at IS NULL AND o.account_id IN (${Prisma.join(ids)})
+    GROUP BY o.account_id`;
+
+  return new Map(
+    rows.map((row) => [
+      row.account_id,
+      {
+        openPursuits: row.open_pursuits,
+        weighted: Number(row.weighted),
+        lastMovement: row.last_movement,
+      },
+    ]),
+  );
+}
+
+/** Matched leads still in play, per account. */
+async function openLeadsByAccountIds(ids: bigint[]): Promise<Map<string, number>> {
+  const rows = await db().lead.groupBy({
+    by: ["matched_account_id"],
+    where: {
+      matched_account_id: { in: ids },
+      archived_at: null,
+      status: { notIn: ["converted", "disqualified"] },
+    },
+    _count: { _all: true },
+  });
+  return new Map(
+    rows
+      .filter((row) => row.matched_account_id !== null)
+      .map((row) => [String(row.matched_account_id), row._count._all]),
+  );
 }
 
 /** Candidates for the duplicate prompt, folded by comparisonKey. */

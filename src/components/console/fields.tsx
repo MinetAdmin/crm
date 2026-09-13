@@ -78,18 +78,22 @@ export function SelectField({
   defaultValue,
   options,
   emptyLabel = "Not set",
+  labelHidden,
 }: Readonly<{
   label: string;
   name: string;
   defaultValue?: string;
   options: ReadonlyArray<{ value: string; label: string }>;
   emptyLabel?: string;
+  labelHidden?: boolean;
 }>) {
   const id = React.useId();
   const [value, setValue] = React.useState(defaultValue || NONE);
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id} className={labelHidden ? "sr-only" : undefined}>
+        {label}
+      </Label>
       <Select value={value} onValueChange={setValue}>
         <SelectTrigger id={id} className="w-full">
           <SelectValue />
