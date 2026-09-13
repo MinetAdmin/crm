@@ -5,6 +5,7 @@ import {
   FileText,
   Flag,
   LayoutGrid,
+  Route,
   Settings2,
   Target,
   TrendingUp,
@@ -12,7 +13,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-/** The console's sections in the order doc 07 §1 sets out. No href means unbuilt. */
 export type NavItem = {
   label: string;
   icon: LucideIcon;
@@ -30,6 +30,7 @@ export const NAV: ReadonlyArray<NavItem> = [
   { label: "Tenders", icon: FileText, href: "/console/tenders" },
   { label: "Targets", icon: Target, href: "/console/targets" },
   { label: "Reports", icon: ChartColumn, href: "/console/reports" },
+  { label: "Roadmap", icon: Route, href: "/console/roadmap" },
   { label: "Admin", icon: Settings2, href: "/console/admin", adminOnly: true },
 ];
 

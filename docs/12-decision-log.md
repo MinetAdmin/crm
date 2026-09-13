@@ -149,6 +149,19 @@ loader the default. This warning is outside the landing presentation change.
   in force; servicing is not silently added to Phase 1. Doc 11 links the current sequence.
 - **Status:** Direction confirmed; detailed scope, measures, and estimates remain to be agreed.
 
+### D-31: Read-only roadmap in the console
+
+- **Decision:** Add Roadmap after Reports in the signed-in sidebar, available to all
+  console roles. It presents the doc 13 review snapshot: proposed gates, filterable
+  IP-01–12 priorities, D-30 relationship growth, decisions, and official research links.
+- **Reason:** The user requested the review and roadmap in the UI.
+- **Assumptions:** This is shared product planning information, with no business records
+  or live delivery data. Existing console authentication applies.
+- **Consequences:** No editing or progress mutations. Labels distinguish confirmed
+  direction, proposed work, and open-at-review findings. Keep the dated UI summary in
+  sync with doc 13 when the plan changes; do not imply automatic status tracking.
+- **Status:** Adopted 2026-09-13 under user-delegated design authority.
+
 ## Part B — Open-question register
 
 Status: ⛔ **Blocker** (gates migration or scope) · ❗ High (changes design) · ◽ Normal

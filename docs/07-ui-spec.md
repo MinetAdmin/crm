@@ -124,3 +124,12 @@ Everything else may degrade to "readable".
 Every list's empty state says what the list is for and what fills it. Report empty states
 follow FR-RPT-11. The first-quarter experience decides whether the team trusts the system
 (Spec §16) — empty states are part of the product, not polish.
+
+### Roadmap (D-31)
+
+`/console/roadmap` appears after Reports for all signed-in roles. Show the dated doc 13
+review summary, confirmed BD → account relationships → renewal/expansion direction,
+proposed release gates with selectable exit criteria, and findings filtered by All/P0/P1.
+Include relationship-growth increments, outstanding decisions, and official research links.
+Use the console palette and shadcn controls. This is read-only planning information;
+status is explicitly the review snapshot, not live implementation progress.
