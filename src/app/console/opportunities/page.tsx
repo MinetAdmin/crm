@@ -1,7 +1,9 @@
 import Link from "next/link";
 
+import { FlowStrip } from "@/components/console/FlowStrip";
 import { EmptyState } from "@/components/console/ui";
 import { formatAmount } from "@/lib/format";
+import { funnelCounts } from "@/lib/funnel";
 import { listOpportunities } from "@/lib/opportunities";
 
 const OUTCOMES = ["open", "won", "lost", "on_hold", "withdrawn"];
@@ -10,11 +12,12 @@ export default async function OpportunitiesPage({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ outcome?: string }> }>) {
   const { outcome } = await searchParams;
-  const opportunities = await listOpportunities(outcome);
+  const [opportunities, counts] = await Promise.all([listOpportunities(outcome), funnelCounts()]);
   const weighted = opportunities.reduce((sum, o) => sum + o.weighted, 0);
 
   return (
     <div className="w-full">
+      <FlowStrip counts={counts} active="pipeline" />
       <div className="flex flex-wrap items-center gap-3">
         <nav className="flex min-w-0 flex-1 flex-wrap gap-1" aria-label="Filter by outcome">
           <Filter label="All" href="/console/opportunities" active={!outcome} />

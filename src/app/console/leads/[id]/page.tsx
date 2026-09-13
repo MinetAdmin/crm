@@ -33,6 +33,16 @@ export default async function LeadPage({
       <p className="mt-1 text-sm text-(--c-muted)">
         {lead.status} · {lead.ref_value_lead_source_idToref_value.label} · {lead.app_user.full_name}{" "}
         · {lead.unit.code}
+        {lead.longlist_entry[0] && (
+          <>
+            {" · from the "}
+            <Link href="/console/longlist" className="underline underline-offset-2">
+              longlist
+            </Link>
+            {lead.longlist_entry[0].track === "planned" &&
+              ` (planned ${lead.longlist_entry[0].plan_year})`}
+          </>
+        )}
       </p>
 
       <dl className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-3">

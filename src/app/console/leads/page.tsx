@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { FlowStrip } from "@/components/console/FlowStrip";
 import { FormSheet } from "@/components/console/FormSheet";
 import { CheckboxField, SelectField, TextField } from "@/components/console/fields";
 import { EmptyState } from "@/components/console/ui";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
+import { funnelCounts } from "@/lib/funnel";
 import { leadAgeDays } from "@/lib/lead-rules";
 import { listLeads } from "@/lib/leads";
 import { submitLead } from "./actions";
@@ -15,7 +17,8 @@ export default async function LeadsPage({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ status?: string; new?: string }> }>) {
   const { status, new: openNew } = await searchParams;
-  const [leads, units, sectors, owners, sources, products, accounts] = await Promise.all([
+  const [counts, leads, units, sectors, owners, sources, products, accounts] = await Promise.all([
+    funnelCounts(),
     listLeads(status),
     db().unit.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
     db().sector.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
@@ -31,6 +34,7 @@ export default async function LeadsPage({
 
   return (
     <div className="w-full">
+      <FlowStrip counts={counts} active="leads" />
       <div className="flex flex-wrap items-center gap-3">
         <nav className="flex min-w-0 flex-1 flex-wrap gap-1" aria-label="Filter by status">
           <FilterLink label="All" active={!status} href="/console/leads" />

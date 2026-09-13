@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 import { db } from "./db";
 import { writeAudit } from "./audit";
 import { conversionConditions, type ConversionState, canConvert } from "./lead-rules";
@@ -46,6 +48,7 @@ export async function getLead(id: string) {
       app_user: { select: { full_name: true } },
       unit: { select: { id: true, code: true, name: true } },
       sector: { select: { id: true, code: true } },
+      longlist_entry: { select: { id: true, track: true, plan_year: true }, take: 1 },
       account: {
         select: {
           id: true,
@@ -87,36 +90,43 @@ export type NewLead = {
 };
 
 export async function createLead(input: NewLead, actorId: bigint): Promise<bigint> {
-  return db().$transaction(async (tx) => {
-    const lead = await tx.lead.create({
-      data: {
-        company_name: input.companyName.trim(),
-        matched_account_id: input.matchedAccountId ? BigInt(input.matchedAccountId) : null,
-        contact_name: input.contactName?.trim() || null,
-        contact_email: input.contactEmail?.trim().toLowerCase() || null,
-        contact_phone: input.contactPhone?.trim() || null,
-        source_id: BigInt(input.sourceId),
-        unit_id: BigInt(input.unitId),
-        sector_id: input.sectorId ? BigInt(input.sectorId) : null,
-        estimated_value: input.estimatedValue ?? null,
-        owner_id: BigInt(input.ownerId),
-        lead_product_interest: {
-          create: input.productIds.map((id) => ({ product_id: BigInt(id) })),
-        },
+  return db().$transaction((tx) => createLeadIn(tx, input, actorId));
+}
+
+/** Creates the lead inside a caller-owned transaction, audit included. */
+export async function createLeadIn(
+  tx: Prisma.TransactionClient,
+  input: NewLead,
+  actorId: bigint,
+): Promise<bigint> {
+  const lead = await tx.lead.create({
+    data: {
+      company_name: input.companyName.trim(),
+      matched_account_id: input.matchedAccountId ? BigInt(input.matchedAccountId) : null,
+      contact_name: input.contactName?.trim() || null,
+      contact_email: input.contactEmail?.trim().toLowerCase() || null,
+      contact_phone: input.contactPhone?.trim() || null,
+      source_id: BigInt(input.sourceId),
+      unit_id: BigInt(input.unitId),
+      sector_id: input.sectorId ? BigInt(input.sectorId) : null,
+      estimated_value: input.estimatedValue ?? null,
+      owner_id: BigInt(input.ownerId),
+      lead_product_interest: {
+        create: input.productIds.map((id) => ({ product_id: BigInt(id) })),
       },
-    });
-    await writeAudit(tx, {
-      entity: "lead",
-      entityId: lead.id,
-      changedBy: actorId,
-      changes: [
-        { field: "company_name", oldValue: null, newValue: lead.company_name },
-        { field: "owner_id", oldValue: null, newValue: lead.owner_id.toString() },
-        { field: "status", oldValue: null, newValue: lead.status },
-      ],
-    });
-    return lead.id;
+    },
   });
+  await writeAudit(tx, {
+    entity: "lead",
+    entityId: lead.id,
+    changedBy: actorId,
+    changes: [
+      { field: "company_name", oldValue: null, newValue: lead.company_name },
+      { field: "owner_id", oldValue: null, newValue: lead.owner_id.toString() },
+      { field: "status", oldValue: null, newValue: lead.status },
+    ],
+  });
+  return lead.id;
 }
 
 export type Conversion = {

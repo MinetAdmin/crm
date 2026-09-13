@@ -111,6 +111,31 @@ loader the default. This warning is outside the landing presentation change.
   create sheet needs.
 - **Status:** Adopted 2026-09-13 under user direction.
 
+### D-29: The longlist, a step-0 register before leads
+
+- **Decision:** Add a pre-lead register named the **longlist**: a deliberately dirty
+  list of company names worth pursuing, entered in bulk with no dedup or validation.
+  Two tracks: `planned` (the budget-year planning list, carrying its plan year,
+  BR-LL-01) and `anytime` (contingency and future work). Entries are promoted into
+  leads in one transaction with the link kept both ways (BR-LL-02), parked, or
+  dropped with a reason (BR-LL-03); never deleted. Progress (lead status, pipeline
+  stage, outcome) and the planned-book coverage per year are derived at read time
+  through the links, which is what makes the budget track automatically tracked.
+  The console maps the flow with a strip (Longlist, Leads, Pipeline, Won) across
+  the three pages, and the sidebar gains Longlist between Accounts and Leads.
+- **Reason:** User direction on 2026-09-13: the funnel needs a step 0 where scraped
+  lists, budget-planning names and someday names live before anyone types a lead.
+  The name "longlist" avoids colliding with the Prospecting stage and Targets.
+- **Assumptions:** Account-grain budget planning does not exist in the schema, so
+  automatic entry from the budget is out of scope; the planning list is imported
+  or pasted yearly and the tracking is automatic from there. Reads are shared
+  across BD (D-11), so longlist rows carry no per-row visibility scope.
+- **Consequences:** New `longlist_entry` table with `longlist_track_t` and
+  `longlist_status_t` enums (migration 0004). Leads gain a reverse link shown on
+  the lead page. Requirements recorded as FR-LL-01..03 and BR-LL-01..03 in doc 02
+  §4.1a. The nav order deviates from doc 07 §1 by one inserted item.
+- **Status:** Adopted 2026-09-13 under user direction.
+
 ## Part B — Open-question register
 
 Status: ⛔ **Blocker** (gates migration or scope) · ❗ High (changes design) · ◽ Normal

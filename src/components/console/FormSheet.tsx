@@ -35,7 +35,8 @@ function resolve<T>(value: StateRender<T>, state: FormSheetState): T {
 /**
  * A form in a right-hand sheet. Clicking outside or pressing Escape does not
  * close it; the close button and a successful save do. Reset restores every
- * field to its initial value.
+ * field to its initial value. Pass `open`/`onOpenChange` to control the sheet
+ * externally instead of through a trigger.
  */
 export function FormSheet({
   trigger,
@@ -45,28 +46,32 @@ export function FormSheet({
   submitLabel,
   wide,
   defaultOpen,
+  open: openProp,
+  onOpenChange,
   children,
 }: Readonly<{
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   title: string;
   description?: string;
   action: FormSheetAction;
   submitLabel: StateRender<string>;
   wide?: boolean;
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   children: StateRender<React.ReactNode>;
 }>) {
-  const [open, setOpen] = React.useState(defaultOpen ?? false);
-  const [epoch, setEpoch] = React.useState(0);
+  const [openState, setOpenState] = React.useState(defaultOpen ?? false);
+  const open = openProp ?? openState;
 
-  const onOpenChange = (next: boolean) => {
-    if (next) setEpoch((n) => n + 1);
-    setOpen(next);
+  const handleOpenChange = (next: boolean) => {
+    if (openProp === undefined) setOpenState(next);
+    onOpenChange?.(next);
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>{trigger}</SheetTrigger>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
+      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
       <SheetContent
         className={
           wide
@@ -77,12 +82,11 @@ export function FormSheet({
         onEscapeKeyDown={(event) => event.preventDefault()}
       >
         <SheetForm
-          key={epoch}
           title={title}
           description={description}
           action={action}
           submitLabel={submitLabel}
-          onSaved={() => setOpen(false)}
+          onSaved={() => handleOpenChange(false)}
         >
           {children}
         </SheetForm>

@@ -1,6 +1,7 @@
 import {
   Building2,
   ChartColumn,
+  ClipboardList,
   FileText,
   Flag,
   LayoutGrid,
@@ -22,6 +23,7 @@ export type NavItem = {
 export const NAV: ReadonlyArray<NavItem> = [
   { label: "Dashboard", icon: LayoutGrid, href: "/console" },
   { label: "Accounts", icon: Building2, href: "/console/accounts" },
+  { label: "Longlist", icon: ClipboardList, href: "/console/longlist" },
   { label: "Leads", icon: UserRoundPlus, href: "/console/leads" },
   { label: "Opportunities", icon: TrendingUp, href: "/console/opportunities" },
   { label: "Initiatives", icon: Flag, href: "/console/initiatives" },
