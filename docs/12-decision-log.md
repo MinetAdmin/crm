@@ -69,6 +69,24 @@ answer changes.
 that configuration to a supported ESM extension before Vite makes its native config
 loader the default. This warning is outside the landing presentation change.
 
+### D-27: Neutral signed-in palette
+
+- **Decision:** Align the console with D-25 through shared neutral surface and text
+  tokens; use progressively lighter charcoal surfaces for cards, popovers, and
+  interaction states (doc 07 §1.2). Keep crimson action fills separate from lighter
+  dark-mode red text. Soften dark-mode warning/success colors to amber/sage.
+- **Reason:** User requested removal of the brown cast from signed-in pages on
+  2026-09-13. The previous `globals.css` dark tokens used espresso `#17110f` for cards,
+  burgundy `#1a1315` for washes, and rose-taupe `#a2918f` for muted text.
+- **Assumptions:** The request covers shared presentation in both themes, retaining
+  the existing shell, density, chart categories, and business behavior. Shade and
+  surface hierarchy choices are design judgment, not external brand requirements.
+- **Consequences:** All consumers of the console tokens inherit the palette,
+  including sign-in. Link variants and active navigation icons use the text accent
+  instead of the darker button fill. Destructive button/badge tints use 5% at rest
+  and 10% on hover to retain label contrast. Landing tokens stay separately scoped.
+- **Status:** Adopted 2026-09-13 under user-delegated design authority.
+
 ## Part B — Open-question register
 
 Status: ⛔ **Blocker** (gates migration or scope) · ❗ High (changes design) · ◽ Normal

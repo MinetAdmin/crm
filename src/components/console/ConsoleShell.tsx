@@ -163,7 +163,7 @@ function NavEntry({
         asChild
         isActive={active}
         tooltip={item.label}
-        className="data-active:bg-card data-active:ring-1 data-active:ring-border [&[data-active=true]_svg]:text-primary"
+        className="data-active:bg-card data-active:ring-1 data-active:ring-border [&[data-active=true]_svg]:text-(--c-brand)"
       >
         <Link href={item.href}>
           <item.icon />

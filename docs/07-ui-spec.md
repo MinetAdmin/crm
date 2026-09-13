@@ -34,6 +34,17 @@ Primary sign-in links use a white circular arrow inset at the right edge (D-26).
 On hover or keyboard focus the arrow slides right and re-enters from the left once;
 reduced-motion users see a static arrow.
 
+### 1.2 Signed-in palette (D-27)
+
+The shared console tokens in `globals.css` use the same warm white, neutral gray,
+charcoal, and crimson family as the landing page. Dark surfaces step from page/sidebar
+(`#111316`) to cards/fields (`#1b1e22`), popovers (`#23272d`), and hover/selected washes
+(`#262a30`). Muted text is neutral gray (`#a4a8ae`). Buttons use crimson (`#c8102e`)
+with white labels in both themes; links, active navigation icons, and red status text
+use `--c-brand` (`#f0787c` in dark mode). Warning and success colors use muted amber
+and sage in dark mode. Existing blue chart scales retain their meaning. Destructive controls use a 5% tint,
+rising to 10% on hover, to keep red labels readable.
+
 ## 2. Screens
 
 ### 2.1 Dashboard (per role)
