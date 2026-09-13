@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { BackLink, Notice, PrimaryButton, SelectField } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { SelectField, TextField } from "@/components/console/fields";
+import { BackLink, PrimaryButton } from "@/components/console/ui";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { formatAmount } from "@/lib/format";
@@ -16,16 +18,10 @@ import {
   submitStageChange,
 } from "../actions";
 
-const FIELD = "mt-1 w-full rounded-md border border-(--c-line) bg-(--c-surface) px-3 py-2 text-sm";
-
 export default async function OpportunityPage({
   params,
-  searchParams,
-}: Readonly<{
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ blocked?: string }>;
-}>) {
-  const [{ id }, { blocked }] = await Promise.all([params, searchParams]);
+}: Readonly<{ params: Promise<{ id: string }> }>) {
+  const { id } = await params;
   const opportunity = await getOpportunity(id);
   if (!opportunity) notFound();
 
@@ -54,16 +50,6 @@ export default async function OpportunityPage({
         {opportunity.app_user_opportunity_owner_idToapp_user.full_name} ·{" "}
         {opportunity.outcome.replace("_", " ")}
       </p>
-
-      {blocked && (
-        <div className="mt-4">
-          <Notice>
-            Refused by {blocked}. A stage past Quotation prepared needs a schedule line, a
-            probability away from the stage default needs a note, and a lost or held deal needs a
-            reason.
-          </Notice>
-        </div>
-      )}
 
       <dl className="mt-6 grid gap-3 sm:grid-cols-3">
         <Figure label="Expected" value={formatAmount(totals.expected)} />
@@ -99,26 +85,25 @@ export default async function OpportunityPage({
               </form>
             </div>
           ) : (
-            <>
-              <p className="mt-1 text-[13px] text-(--c-warn)">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[13px] text-(--c-warn)">
                 An open pursuit with no next action is one nobody is working.
               </p>
-              <form
+              <FormSheet
+                trigger={
+                  <Button variant="outline" size="sm">
+                    Set next action
+                  </Button>
+                }
+                title="Set the next action"
                 action={submitNextAction}
-                className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end"
+                submitLabel="Set action"
               >
                 <input type="hidden" name="opportunityId" value={opportunity.id.toString()} />
-                <label className="block text-sm">
-                  <span className="font-medium">What happens next</span>
-                  <input name="subject" required className={FIELD} />
-                </label>
-                <label className="block text-sm">
-                  <span className="font-medium">Due</span>
-                  <input type="date" name="dueDate" required className={FIELD} />
-                </label>
-                <PrimaryButton>Set action</PrimaryButton>
-              </form>
-            </>
+                <TextField label="What happens next" name="subject" required />
+                <TextField label="Due" name="dueDate" type="date" required />
+              </FormSheet>
+            </div>
           )}
         </section>
       )}
@@ -162,52 +147,55 @@ export default async function OpportunityPage({
         )}
 
         {open && (
-          <form
-            action={submitScheduleLine}
-            className="mt-3 grid gap-3 rounded-md border border-(--c-line) bg-(--c-surface) p-4 sm:grid-cols-5 sm:items-end"
-          >
-            <input type="hidden" name="opportunityId" value={opportunity.id.toString()} />
-            <label className="block text-sm">
-              <span className="font-medium">Month</span>
-              <input type="month" name="effectiveMonth" required className={FIELD} />
-            </label>
-            <SelectField
-              label="Product"
-              name="productId"
-              emptyLabel="Choose"
-              options={products.map((p) => ({ value: p.id.toString(), label: p.name }))}
-            />
-            <SelectField
-              label="Type"
-              name="revenueType"
-              emptyLabel="New business"
-              options={[
-                { value: "new_business", label: "New business" },
-                { value: "renewal", label: "Renewal" },
-                { value: "cross_sell", label: "Cross-sell" },
-                { value: "upsell", label: "Upsell" },
-              ]}
-            />
-            <label className="block text-sm">
-              <span className="font-medium">Expected</span>
-              <input name="expectedAmount" required inputMode="numeric" className={FIELD} />
-            </label>
-            <PrimaryButton>Add line</PrimaryButton>
-          </form>
+          <div className="mt-3">
+            <FormSheet
+              trigger={
+                <Button variant="outline" size="sm">
+                  Add a line
+                </Button>
+              }
+              title="Add a revenue line"
+              description="The money lives here. Expected amounts phase by month."
+              action={submitScheduleLine}
+              submitLabel="Add line"
+            >
+              <input type="hidden" name="opportunityId" value={opportunity.id.toString()} />
+              <div className="grid grid-cols-2 gap-3">
+                <TextField label="Month" name="effectiveMonth" type="month" required />
+                <TextField label="Expected" name="expectedAmount" inputMode="numeric" required />
+              </div>
+              <SelectField
+                label="Product"
+                name="productId"
+                emptyLabel="Choose"
+                options={products.map((p) => ({ value: p.id.toString(), label: p.name }))}
+              />
+              <SelectField
+                label="Type"
+                name="revenueType"
+                emptyLabel="New business"
+                options={[
+                  { value: "new_business", label: "New business" },
+                  { value: "renewal", label: "Renewal" },
+                  { value: "cross_sell", label: "Cross-sell" },
+                  { value: "upsell", label: "Upsell" },
+                ]}
+              />
+            </FormSheet>
+          </div>
         )}
       </section>
 
       {open && (
-        <section className="mt-8 grid gap-4 sm:grid-cols-2">
-          <form
+        <section className="mt-8 flex flex-wrap items-center gap-2">
+          <FormSheet
+            trigger={<Button size="sm">Move stage</Button>}
+            title="Move stage"
+            description={opportunity.pipeline_stage.exit_criterion ?? undefined}
             action={submitStageChange}
-            className="grid gap-3 rounded-md border border-(--c-line) bg-(--c-surface) p-4"
+            submitLabel="Move stage"
           >
             <input type="hidden" name="opportunityId" value={opportunity.id.toString()} />
-            <h2 className="text-[15px] font-semibold">Move stage</h2>
-            <p className="text-[13px] text-(--c-muted)">
-              {opportunity.pipeline_stage.exit_criterion}
-            </p>
             <SelectField
               label="To stage"
               name="toStageId"
@@ -217,28 +205,27 @@ export default async function OpportunityPage({
                 label: `${s.name} · ${Number(s.default_probability)}%`,
               }))}
             />
-            <label className="block text-sm">
-              <span className="font-medium">Probability override</span>
-              <input name="probability" inputMode="numeric" placeholder="Stage default" className={FIELD} />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium">Note, if overriding</span>
-              <input name="note" className={FIELD} />
-            </label>
-            <div>
-              <PrimaryButton>Move stage</PrimaryButton>
-            </div>
-          </form>
+            <TextField
+              label="Probability override"
+              name="probability"
+              inputMode="numeric"
+              placeholder="Stage default"
+            />
+            <TextField label="Note, if overriding" name="note" />
+          </FormSheet>
 
-          <form
+          <FormSheet
+            trigger={
+              <Button variant="outline" size="sm">
+                Close
+              </Button>
+            }
+            title="Close the pursuit"
+            description="The stage is kept, so it stays visible where a deal was lost."
             action={submitClosure}
-            className="grid gap-3 rounded-md border border-(--c-line) bg-(--c-surface) p-4"
+            submitLabel="Close"
           >
             <input type="hidden" name="opportunityId" value={opportunity.id.toString()} />
-            <h2 className="text-[15px] font-semibold">Close</h2>
-            <p className="text-[13px] text-(--c-muted)">
-              The stage is kept, so it stays visible where a deal was lost.
-            </p>
             <SelectField
               label="Outcome"
               name="outcome"
@@ -255,10 +242,7 @@ export default async function OpportunityPage({
               name="reasonId"
               options={reasons.map((r) => ({ value: r.id.toString(), label: r.label }))}
             />
-            <div>
-              <PrimaryButton>Close</PrimaryButton>
-            </div>
-          </form>
+          </FormSheet>
         </section>
       )}
 

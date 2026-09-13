@@ -87,6 +87,30 @@ loader the default. This warning is outside the landing presentation change.
   and 10% on hover to retain label contrast. Landing tokens stay separately scoped.
 - **Status:** Adopted 2026-09-13 under user-delegated design authority.
 
+### D-28: Forms in non-dismissing sheets on shadcn primitives
+
+- **Decision:** Every data-entry form opens in a right-hand sheet (`FormSheet` on the
+  shadcn Sheet). The sheet does not close on click-away or Escape, so entered content
+  cannot be lost by accident; it closes on the explicit close control or a successful
+  save, and offers a Reset that restores initial values. Fields compose shadcn
+  Label/Input/Select/Checkbox/Textarea through `src/components/console/fields.tsx`.
+  Validation and rule refusals return action state rendered inside the sheet (rule ids
+  kept in the message per doc 05), replacing redirect query-param errors. The
+  dedicated `/new` routes are removed; creation happens on the list pages.
+  Single-control inline actions (search, a settings value, a toggle, the initiative
+  link) stay inline on shadcn Input/Button.
+- **Reason:** User direction on 2026-09-13: shadcn components only, all forms as
+  drawers/sheets that cannot lose content on click-away, with reset support, and
+  tight professional spacing.
+- **Assumptions:** The account duplicate check keeps its warn-then-confirm flow, now
+  in-sheet. The lead conversion banner and `?converted` param are superseded by the
+  revalidated page state.
+- **Consequences:** Server actions used by sheets take `(state, formData)` and return
+  `{ ok }` or `{ error }` instead of redirecting with query params; cross-route
+  creates still redirect to the new record. List pages load the reference data their
+  create sheet needs.
+- **Status:** Adopted 2026-09-13 under user direction.
+
 ## Part B — Open-question register
 
 Status: ⛔ **Blocker** (gates migration or scope) · ❗ High (changes design) · ◽ Normal
@@ -157,3 +181,18 @@ D-12) · J6 non-BD pursuit owners (◽ doc 06 note).
 An answer lands → update the question's status here, flip any linked D-xx to Confirmed/Revised,
 then propagate to the affected doc(s) in the same commit. This file's history *is* the
 decision history.
+
+## Implementation review follow-up, 2026-09-13
+
+The [CRM review and BD roadmap](13-bd-crm-review-and-roadmap.md) records IP-01–12
+against implementation commit `0c90465`. Engineering owns authorization, session
+revocation, concurrency, next-action invariants, auditing, validation, financial
+correctness, and job-delivery fixes. The BD lead and project lead own the documented
+policy/migration contradictions and release acceptance. Each finding includes evidence,
+a concrete follow-up, and a validation condition. All are open at review publication.
+
+The release sequence is proposed, not an approved reduction of Phase-1 scope. D-12
+leadership workload visibility, admin/business-role composition, Server Actions versus
+doc 05 REST transport, and migration grain guidance require explicit resolution.
+Existing D-15/D-16 and FR/BR requirements remain in force. Track closure in doc 13
+with implementation commits and evidence; do not silently mark these as implemented.

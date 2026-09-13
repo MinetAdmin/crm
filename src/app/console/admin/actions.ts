@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+import type { FormSheetState } from "@/components/console/FormSheet";
 import { writeAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/viewer";
@@ -13,14 +14,14 @@ function text(form: FormData, field: string): string {
 }
 
 /** Invites a person by creating their record; Entra links the identity later. */
-export async function submitUser(form: FormData) {
+export async function submitUser(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const viewer = await requireAdmin();
   const email = text(form, "email").toLowerCase();
   const fullName = text(form, "fullName");
-  if (!email || !fullName) redirect("/console/admin?error=required");
+  if (!email || !fullName) return { error: "A name and an email are required." };
 
   const existing = await db().app_user.findUnique({ where: { email } });
-  if (existing) redirect("/console/admin?error=exists");
+  if (existing) return { error: "Someone already has that email." };
 
   await db().$transaction(async (tx) => {
     const user = await tx.app_user.create({
@@ -42,7 +43,7 @@ export async function submitUser(form: FormData) {
     });
   });
   revalidatePath("/console/admin");
-  redirect("/console/admin");
+  return { ok: true };
 }
 
 /** Deactivation keeps the record and its history; nothing is deleted. */

@@ -1,8 +1,8 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+import type { FormSheetState } from "@/components/console/FormSheet";
 import { TargetRuleError, setTarget } from "@/lib/targets";
 import { evenPhasing } from "@/lib/target-rules";
 import { currentViewer } from "@/lib/viewer";
@@ -13,17 +13,17 @@ function text(form: FormData, field: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export async function submitTarget(form: FormData) {
+export async function submitTarget(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const viewer = await currentViewer();
   // Targets are leadership's to set (doc 06 §2).
   if (!canWrite(viewer, { ownerId: viewer.id, unitId: null })) {
-    redirect("/console/targets?error=forbidden");
+    return { error: "Targets are set by BD leadership." };
   }
 
   const year = Number(text(form, "year")) || new Date().getFullYear();
   const amount = Number(text(form, "amount"));
   const level = text(form, "level") as "company" | "unit" | "owner" | "initiative";
-  if (!Number.isFinite(amount) || amount <= 0) redirect("/console/targets?error=amount");
+  if (!Number.isFinite(amount) || amount <= 0) return { error: "An amount above zero is required." };
 
   try {
     await setTarget(
@@ -39,11 +39,9 @@ export async function submitTarget(form: FormData) {
       BigInt(viewer.id),
     );
   } catch (error) {
-    if (error instanceof TargetRuleError) {
-      redirect(`/console/targets?error=${encodeURIComponent(error.message)}`);
-    }
+    if (error instanceof TargetRuleError) return { error: error.message };
     throw error;
   }
   revalidatePath("/console/targets");
-  redirect("/console/targets");
+  return { ok: true };
 }

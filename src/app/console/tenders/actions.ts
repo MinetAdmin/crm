@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
+import type { FormSheetState } from "@/components/console/FormSheet";
 import { TenderRuleError, changeTenderStatus, createTender } from "@/lib/tenders";
 import type { ValueBasis } from "@/lib/tender-rules";
 
@@ -18,10 +19,10 @@ function text(form: FormData, field: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export async function submitTender(form: FormData) {
+export async function submitTender(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const value = Number(text(form, "recordedValue"));
   if (!text(form, "title") || !Number.isFinite(value) || value <= 0) {
-    redirect("/console/tenders/new?error=required");
+    return { error: "A title and a recorded value above zero are required." };
   }
   const id = await createTender(
     {
@@ -41,7 +42,7 @@ export async function submitTender(form: FormData) {
   redirect(`/console/tenders/${id}`);
 }
 
-export async function submitTenderStatus(form: FormData) {
+export async function submitTenderStatus(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const id = text(form, "tenderId");
   try {
     await changeTenderStatus(
@@ -53,9 +54,9 @@ export async function submitTenderStatus(form: FormData) {
       await actorId(),
     );
   } catch (error) {
-    if (error instanceof TenderRuleError) redirect(`/console/tenders/${id}?blocked=BR-TEN-02`);
+    if (error instanceof TenderRuleError) return { error: error.message };
     throw error;
   }
   revalidatePath(`/console/tenders/${id}`);
-  redirect(`/console/tenders/${id}`);
+  return { ok: true };
 }

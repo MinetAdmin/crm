@@ -97,7 +97,7 @@ export default async function ConsolePage() {
           {month}
         </Badge>
         <Button asChild size="sm">
-          <Link href="/console/leads/new">
+          <Link href="/console/leads?new=1">
             <Plus />
             New pursuit
           </Link>

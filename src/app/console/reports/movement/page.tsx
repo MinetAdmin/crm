@@ -1,18 +1,15 @@
-import { BackLink, EmptyState, Notice, PrimaryButton } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { TextField } from "@/components/console/fields";
+import { BackLink, EmptyState } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
 import { formatAmount } from "@/lib/format";
 import { listSnapshots, movementBetween } from "@/lib/snapshots";
 import { currentViewer } from "@/lib/viewer";
 import { canAdminister } from "@/lib/visibility";
 import { submitSnapshot } from "./actions";
 
-export default async function MovementPage({
-  searchParams,
-}: Readonly<{ searchParams: Promise<{ error?: string }> }>) {
-  const [{ error }, snapshots, viewer] = await Promise.all([
-    searchParams,
-    listSnapshots(),
-    currentViewer(),
-  ]);
+export default async function MovementPage() {
+  const [snapshots, viewer] = await Promise.all([listSnapshots(), currentViewer()]);
 
   const [closing, opening] = snapshots;
   const movement = opening && closing ? await movementBetween(opening.id, closing.id) : null;
@@ -21,12 +18,6 @@ export default async function MovementPage({
     <div className="w-full max-w-3xl">
       <BackLink href="/console/reports">Reports</BackLink>
       <h1 className="mt-3 text-2xl font-semibold tracking-[-0.01em]">Forecast movement</h1>
-
-      {error === "exists" && (
-        <div className="mt-4">
-          <Notice>A snapshot for that month already exists. A month is frozen once.</Notice>
-        </div>
-      )}
 
       {movement ? (
         <>
@@ -111,18 +102,21 @@ export default async function MovementPage({
         </p>
 
         {canAdminister(viewer) && (
-          <form action={submitSnapshot} className="mt-4 flex flex-wrap items-end gap-3">
-            <label className="block text-sm">
-              <span className="font-medium">Take a snapshot for</span>
-              <input
-                type="month"
-                name="month"
-                required
-                className="mt-1 rounded-md border border-(--c-line) bg-(--c-surface) px-3 py-2 text-sm"
-              />
-            </label>
-            <PrimaryButton>Take snapshot</PrimaryButton>
-          </form>
+          <div className="mt-4">
+            <FormSheet
+              trigger={
+                <Button variant="outline" size="sm">
+                  Take a snapshot
+                </Button>
+              }
+              title="Take a snapshot"
+              description="A snapshot is frozen once taken. The database refuses to change one."
+              action={submitSnapshot}
+              submitLabel="Take snapshot"
+            >
+              <TextField label="Month" name="month" type="month" required />
+            </FormSheet>
+          </div>
         )}
       </section>
     </div>

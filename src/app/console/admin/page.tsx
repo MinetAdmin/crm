@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { Notice, PrimaryButton, SelectField, TextField } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { SelectField, TextField } from "@/components/console/fields";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { db } from "@/lib/db";
 import { currentViewer } from "@/lib/viewer";
 import { canAdminister } from "@/lib/visibility";
@@ -9,14 +11,11 @@ import { submitRefValueActive, submitSetting, submitUser, submitUserActive } fro
 
 const ROLES = ["bd_owner", "unit_head", "bd_leadership", "executive_ro", "admin"];
 
-export default async function AdminPage({
-  searchParams,
-}: Readonly<{ searchParams: Promise<{ error?: string }> }>) {
+export default async function AdminPage() {
   const viewer = await currentViewer();
   if (!canAdminister(viewer)) notFound();
 
-  const [{ error }, users, units, settings, lists, audit] = await Promise.all([
-    searchParams,
+  const [users, units, settings, lists, audit] = await Promise.all([
     db().app_user.findMany({ orderBy: [{ active: "desc" }, { full_name: "asc" }], include: { unit: true } }),
     db().unit.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
     db().system_setting.findMany({ orderBy: { key: "asc" } }),
@@ -33,14 +32,6 @@ export default async function AdminPage({
 
   return (
     <div className="grid w-full max-w-4xl gap-8">
-      {error && (
-        <Notice>
-          {error === "exists"
-            ? "Someone already has that email."
-            : "A name and an email are required."}
-        </Notice>
-      )}
-
       <section>
         <h2 className="text-[15px] font-semibold">People</h2>
         <p className="mt-1 text-[13px] text-(--c-muted)">
@@ -83,24 +74,35 @@ export default async function AdminPage({
           </table>
         </div>
 
-        <form action={submitUser} className="mt-3 grid gap-3 rounded-md border border-(--c-line) bg-(--c-surface) p-4 sm:grid-cols-4 sm:items-end">
-          <TextField label="Full name" name="fullName" required />
-          <TextField label="Work email" name="email" type="email" required />
-          <SelectField
-            label="Role"
-            name="role"
-            emptyLabel="BD owner"
-            options={ROLES.map((r) => ({ value: r, label: r.replaceAll("_", " ") }))}
-          />
-          <SelectField
-            label="Unit"
-            name="unitId"
-            options={units.map((u) => ({ value: u.id.toString(), label: u.code }))}
-          />
-          <div className="sm:col-span-4">
-            <PrimaryButton>Invite</PrimaryButton>
-          </div>
-        </form>
+        <div className="mt-3">
+          <FormSheet
+            trigger={
+              <Button variant="outline" size="sm">
+                Invite a person
+              </Button>
+            }
+            title="Invite a person"
+            description="Creating the record is the invitation. They sign in with Microsoft."
+            action={submitUser}
+            submitLabel="Invite"
+          >
+            <TextField label="Full name" name="fullName" required />
+            <TextField label="Work email" name="email" type="email" required />
+            <div className="grid grid-cols-2 gap-3">
+              <SelectField
+                label="Role"
+                name="role"
+                emptyLabel="BD owner"
+                options={ROLES.map((r) => ({ value: r, label: r.replaceAll("_", " ") }))}
+              />
+              <SelectField
+                label="Unit"
+                name="unitId"
+                options={units.map((u) => ({ value: u.id.toString(), label: u.code }))}
+              />
+            </div>
+          </FormSheet>
+        </div>
       </section>
 
       <section>
@@ -111,11 +113,7 @@ export default async function AdminPage({
               <form action={submitSetting} className="flex flex-wrap items-center gap-3">
                 <input type="hidden" name="key" value={s.key} />
                 <span className="min-w-64 flex-1 text-sm">{s.key.replaceAll("_", " ")}</span>
-                <input
-                  name="value"
-                  defaultValue={s.value}
-                  className="w-28 rounded-md border border-(--c-line) bg-(--c-surface) px-2 py-1 text-sm tabular-nums"
-                />
+                <Input name="value" defaultValue={s.value} className="w-28 tabular-nums" />
                 <Button type="submit" variant="outline" size="xs">
                   Save
                 </Button>

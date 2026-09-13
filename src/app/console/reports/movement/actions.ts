@@ -1,20 +1,20 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+import type { FormSheetState } from "@/components/console/FormSheet";
 import { requireAdmin } from "@/lib/viewer";
 import { takeSnapshot } from "@/lib/snapshots";
 
-export async function submitSnapshot(form: FormData) {
+export async function submitSnapshot(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const viewer = await requireAdmin();
   const month = String(form.get("month") ?? "").trim();
-  if (!month) redirect("/console/reports/movement");
+  if (!month) return { error: "A month is required." };
   try {
     await takeSnapshot(month, BigInt(viewer.id));
   } catch {
-    redirect("/console/reports/movement?error=exists");
+    return { error: "That month already has a snapshot. Snapshots are immutable." };
   }
   revalidatePath("/console/reports/movement");
-  redirect("/console/reports/movement");
+  return { ok: true };
 }

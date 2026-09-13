@@ -1,11 +1,25 @@
 import Link from "next/link";
 
-import { EmptyState, PrimaryLink } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { SelectField, TextField } from "@/components/console/fields";
+import { EmptyState } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
+import { db } from "@/lib/db";
 import { formatAmount } from "@/lib/format";
 import { listInitiatives } from "@/lib/initiatives";
+import { submitInitiative } from "./actions";
 
 export default async function InitiativesPage() {
-  const initiatives = await listInitiatives();
+  const [initiatives, units, sectors, users, statuses] = await Promise.all([
+    listInitiatives(),
+    db().unit.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    db().sector.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    db().app_user.findMany({ where: { active: true }, orderBy: { full_name: "asc" } }),
+    db().ref_value.findMany({
+      where: { active: true, ref_list: { code: "initiative_status" } },
+      orderBy: { sort_order: "asc" },
+    }),
+  ]);
 
   return (
     <div className="w-full">
@@ -14,7 +28,47 @@ export default async function InitiativesPage() {
           Target is entered once. Delivered, expected and the gap are rolled up from the pursuits
           linked to each initiative.
         </span>
-        <PrimaryLink href="/console/initiatives/new">New initiative</PrimaryLink>
+        <FormSheet
+          trigger={<Button size="sm">New initiative</Button>}
+          title="New initiative"
+          action={submitInitiative}
+          submitLabel="Create initiative"
+        >
+          <TextField label="Name" name="name" required />
+          <div className="grid grid-cols-2 gap-3">
+            <SelectField
+              label="Unit"
+              name="unitId"
+              emptyLabel="Choose a unit"
+              options={units.map((u) => ({ value: u.id.toString(), label: u.name }))}
+            />
+            <SelectField
+              label="Sector"
+              name="sectorId"
+              emptyLabel="Choose a sector"
+              options={sectors.map((s) => ({ value: s.id.toString(), label: s.code }))}
+            />
+            <SelectField
+              label="Champion"
+              name="championId"
+              emptyLabel="Choose a champion"
+              options={users.map((u) => ({ value: u.id.toString(), label: u.full_name }))}
+            />
+            <SelectField
+              label="Status"
+              name="statusId"
+              emptyLabel="Choose a status"
+              options={statuses.map((s) => ({ value: s.id.toString(), label: s.label }))}
+            />
+            <TextField label="Annual target (UGX)" name="annualTarget" inputMode="numeric" required />
+            <TextField
+              label="Target year"
+              name="targetYear"
+              inputMode="numeric"
+              defaultValue={String(new Date().getFullYear())}
+            />
+          </div>
+        </FormSheet>
       </div>
 
       {initiatives.length === 0 ? (

@@ -1,15 +1,28 @@
 import Link from "next/link";
 
-import { EmptyState, PrimaryLink } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { SelectField, TextField } from "@/components/console/fields";
+import { EmptyState } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
+import { db } from "@/lib/db";
 import { formatAmount } from "@/lib/format";
 import { BASIS_LABEL, daysUntil, totalsByBasis, type ValueBasis } from "@/lib/tender-rules";
 import { listTenders } from "@/lib/tenders";
+import { submitTender } from "./actions";
 
 export default async function TendersPage({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ type?: string }> }>) {
   const { type } = await searchParams;
-  const tenders = await listTenders(type);
+  const [tenders, units, sectors, prequals] = await Promise.all([
+    listTenders(type),
+    db().unit.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    db().sector.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    db().tender.findMany({
+      where: { archived_at: null, tender_type: "prequalification" },
+      orderBy: { title: "asc" },
+    }),
+  ]);
   const now = new Date();
   const totals = totalsByBasis(
     tenders.map((t) => ({ basis: t.value_basis as ValueBasis, amount: Number(t.recorded_value) })),
@@ -27,7 +40,51 @@ export default async function TendersPage({
           />
           <Filter label="Tenders" href="/console/tenders?type=tender" active={type === "tender"} />
         </nav>
-        <PrimaryLink href="/console/tenders/new">New tender</PrimaryLink>
+        <FormSheet
+          trigger={<Button size="sm">New tender</Button>}
+          title="New tender"
+          action={submitTender}
+          submitLabel="Create tender"
+        >
+          <TextField label="Title or reference" name="title" required />
+          <TextField label="Issuing body" name="issuingBody" required />
+          <div className="grid grid-cols-2 gap-3">
+            <SelectField
+              label="Type"
+              name="tenderType"
+              emptyLabel="Tender"
+              options={[
+                { value: "tender", label: "Tender" },
+                { value: "prequalification", label: "Prequalification" },
+              ]}
+            />
+            <SelectField
+              label="Parent prequalification"
+              name="parentId"
+              options={prequals.map((p) => ({ value: p.id.toString(), label: p.title }))}
+            />
+            <SelectField
+              label="Unit"
+              name="unitId"
+              emptyLabel="Choose a unit"
+              options={units.map((u) => ({ value: u.id.toString(), label: u.name }))}
+            />
+            <SelectField
+              label="Sector"
+              name="sectorId"
+              emptyLabel="Choose a sector"
+              options={sectors.map((s) => ({ value: s.id.toString(), label: s.code }))}
+            />
+            <TextField label="Recorded value" name="recordedValue" inputMode="numeric" required />
+            <SelectField
+              label="Value basis"
+              name="valueBasis"
+              emptyLabel="Choose a basis"
+              options={Object.entries(BASIS_LABEL).map(([value, label]) => ({ value, label }))}
+            />
+          </div>
+          <TextField label="Submission deadline" name="submissionDeadline" type="date" />
+        </FormSheet>
       </div>
 
       {totals.length > 0 && (

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
+import type { FormSheetState } from "@/components/console/FormSheet";
 import { createAccount, createContact, duplicatesFor } from "@/lib/accounts";
 
 async function actorId(): Promise<bigint> {
@@ -17,26 +18,19 @@ function text(form: FormData, field: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export async function submitAccount(form: FormData) {
+export async function submitAccount(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const name = text(form, "name");
-  if (!name) redirect("/console/accounts/new?error=name");
-
-  const params = new URLSearchParams({ name });
-  const sectorId = text(form, "sectorId");
-  const unitId = text(form, "unitId");
-  if (sectorId) params.set("sectorId", sectorId);
-  if (unitId) params.set("unitId", unitId);
+  if (!name) return { error: "A name is required." };
 
   // The prompt is a warning, not a block: confirmed means the person looked
   // at the candidates and says this is a different client.
   if (text(form, "confirmed") !== "yes") {
     const duplicates = await duplicatesFor(name);
-    if (duplicates.length > 0) {
-      params.set("duplicates", duplicates.map((d) => d.id).join(","));
-      redirect(`/console/accounts/new?${params}`);
-    }
+    if (duplicates.length > 0) return { duplicates };
   }
 
+  const sectorId = text(form, "sectorId");
+  const unitId = text(form, "unitId");
   const id = await createAccount(
     { name, sectorId: sectorId || undefined, unitId: unitId || undefined },
     await actorId(),
@@ -45,11 +39,11 @@ export async function submitAccount(form: FormData) {
   redirect(`/console/accounts/${id}`);
 }
 
-export async function submitContact(form: FormData) {
+export async function submitContact(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const accountId = text(form, "accountId");
   const fullName = text(form, "fullName");
-  if (!accountId) redirect("/console/accounts");
-  if (!fullName) redirect(`/console/accounts/${accountId}?error=name`);
+  if (!accountId) return { error: "The account is missing." };
+  if (!fullName) return { error: "A full name is required." };
 
   await createContact(
     {
@@ -63,5 +57,5 @@ export async function submitContact(form: FormData) {
     await actorId(),
   );
   revalidatePath(`/console/accounts/${accountId}`);
-  redirect(`/console/accounts/${accountId}`);
+  return { ok: true };
 }

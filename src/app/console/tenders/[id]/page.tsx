@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { BackLink, Notice, PrimaryButton, SelectField } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { SelectField } from "@/components/console/fields";
+import { BackLink } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { formatAmount } from "@/lib/format";
 import { BASIS_LABEL, daysUntil, type ValueBasis } from "@/lib/tender-rules";
@@ -20,12 +23,8 @@ const STATUSES = [
 
 export default async function TenderPage({
   params,
-  searchParams,
-}: Readonly<{
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ blocked?: string }>;
-}>) {
-  const [{ id }, { blocked }] = await Promise.all([params, searchParams]);
+}: Readonly<{ params: Promise<{ id: string }> }>) {
+  const { id } = await params;
   const tender = await getTender(id);
   if (!tender) notFound();
 
@@ -43,12 +42,6 @@ export default async function TenderPage({
         {tender.issuing_body} · {tender.tender_type === "prequalification" ? "Prequalification" : "Tender"} ·{" "}
         {tender.unit.code} · {tender.sector.code} · {tender.status.replaceAll("_", " ")}
       </p>
-
-      {blocked === "BR-TEN-02" && (
-        <div className="mt-4">
-          <Notice>A won or lost tender needs a recorded outcome reason.</Notice>
-        </div>
-      )}
 
       <dl className="mt-6 grid gap-3 sm:grid-cols-3">
         <div className="rounded-md border border-(--c-line) bg-(--c-surface) p-4">
@@ -104,9 +97,18 @@ export default async function TenderPage({
         </div>
       </dl>
 
-      <section className="mt-8 rounded-md border border-(--c-line) bg-(--c-surface) p-5">
-        <h2 className="text-[15px] font-semibold">Move status</h2>
-        <form action={submitTenderStatus} className="mt-3 grid gap-3 sm:grid-cols-3 sm:items-end">
+      <section className="mt-8">
+        <FormSheet
+          trigger={
+            <Button variant="outline" size="sm">
+              Move status
+            </Button>
+          }
+          title="Move status"
+          description="A won or lost tender needs a recorded outcome reason."
+          action={submitTenderStatus}
+          submitLabel="Save status"
+        >
           <input type="hidden" name="tenderId" value={tender.id.toString()} />
           <SelectField
             label="Status"
@@ -121,8 +123,7 @@ export default async function TenderPage({
             defaultValue={tender.outcome_reason_id?.toString()}
             options={reasons.map((r) => ({ value: r.id.toString(), label: r.label }))}
           />
-          <PrimaryButton>Save status</PrimaryButton>
-        </form>
+        </FormSheet>
         {reasons.length === 0 && (
           <p className="mt-3 text-[13px] text-(--c-muted)">
             No outcome reasons configured yet, so a tender cannot be marked won or lost. An

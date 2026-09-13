@@ -1,16 +1,32 @@
 import Link from "next/link";
 
-import { EmptyState, PrimaryLink } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { CheckboxField, SelectField, TextField } from "@/components/console/fields";
+import { EmptyState } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
+import { db } from "@/lib/db";
 import { leadAgeDays } from "@/lib/lead-rules";
 import { listLeads } from "@/lib/leads";
+import { submitLead } from "./actions";
 
 const STATUSES = ["new", "contacted", "qualifying", "qualified", "disqualified", "converted"];
 
 export default async function LeadsPage({
   searchParams,
-}: Readonly<{ searchParams: Promise<{ status?: string }> }>) {
-  const { status } = await searchParams;
-  const leads = await listLeads(status);
+}: Readonly<{ searchParams: Promise<{ status?: string; new?: string }> }>) {
+  const { status, new: openNew } = await searchParams;
+  const [leads, units, sectors, owners, sources, products, accounts] = await Promise.all([
+    listLeads(status),
+    db().unit.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    db().sector.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    db().app_user.findMany({ where: { active: true }, orderBy: { full_name: "asc" } }),
+    db().ref_value.findMany({
+      where: { active: true, ref_list: { code: "lead_source" } },
+      orderBy: { sort_order: "asc" },
+    }),
+    db().product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    db().account.findMany({ where: { archived_at: null }, orderBy: { name: "asc" } }),
+  ]);
   const now = new Date();
 
   return (
@@ -30,7 +46,66 @@ export default async function LeadsPage({
         <span className="text-sm tabular-nums text-(--c-muted)">
           {leads.length} {leads.length === 1 ? "lead" : "leads"}
         </span>
-        <PrimaryLink href="/console/leads/new">New lead</PrimaryLink>
+        <FormSheet
+          trigger={<Button size="sm">New lead</Button>}
+          title="New lead"
+          action={submitLead}
+          submitLabel="Create lead"
+          defaultOpen={openNew === "1"}
+          wide
+        >
+          <TextField label="Company" name="companyName" required />
+          <div className="grid grid-cols-2 gap-3">
+            <SelectField
+              label="Source"
+              name="sourceId"
+              emptyLabel="Choose a source"
+              options={sources.map((s) => ({ value: s.id.toString(), label: s.label }))}
+            />
+            <SelectField
+              label="Owner"
+              name="ownerId"
+              emptyLabel="Choose an owner"
+              options={owners.map((o) => ({ value: o.id.toString(), label: o.full_name }))}
+            />
+            <SelectField
+              label="Unit"
+              name="unitId"
+              emptyLabel="Choose a unit"
+              options={units.map((u) => ({ value: u.id.toString(), label: u.name }))}
+            />
+            <SelectField
+              label="Sector"
+              name="sectorId"
+              options={sectors.map((s) => ({ value: s.id.toString(), label: s.code }))}
+            />
+          </div>
+          <SelectField
+            label="Existing account"
+            name="matchedAccountId"
+            emptyLabel="Not matched yet"
+            options={accounts.map((a) => ({ value: a.id.toString(), label: a.name }))}
+          />
+          <fieldset className="grid gap-2">
+            <legend className="mb-1.5 text-sm font-medium">Products of interest</legend>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {products.map((product) => (
+                <CheckboxField
+                  key={product.id.toString()}
+                  label={product.name}
+                  name="productIds"
+                  value={product.id.toString()}
+                />
+              ))}
+            </div>
+          </fieldset>
+          <TextField label="Contact name" name="contactName" />
+          <div className="grid grid-cols-2 gap-3">
+            <TextField label="Email" name="contactEmail" type="email" />
+            <TextField label="Phone" name="contactPhone" />
+          </div>
+          <TextField label="Estimated value (UGX)" name="estimatedValue" inputMode="numeric" />
+        </FormSheet>
       </div>
 
       {leads.length === 0 ? (

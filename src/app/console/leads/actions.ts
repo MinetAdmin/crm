@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
+import type { FormSheetState } from "@/components/console/FormSheet";
 import { convertLead, createLead } from "@/lib/leads";
 
 async function actorId(): Promise<bigint> {
@@ -17,13 +18,13 @@ function text(form: FormData, field: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export async function submitLead(form: FormData) {
+export async function submitLead(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const companyName = text(form, "companyName");
   const sourceId = text(form, "sourceId");
   const unitId = text(form, "unitId");
   const ownerId = text(form, "ownerId");
   if (!companyName || !sourceId || !unitId || !ownerId) {
-    redirect("/console/leads/new?error=required");
+    return { error: "Company, source, unit and owner are all required." };
   }
 
   const estimated = Number(text(form, "estimatedValue"));
@@ -47,11 +48,11 @@ export async function submitLead(form: FormData) {
   redirect(`/console/leads/${id}`);
 }
 
-export async function submitConversion(form: FormData) {
+export async function submitConversion(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const leadId = text(form, "leadId");
-  if (!leadId) redirect("/console/leads");
+  if (!leadId) return { error: "The lead is missing." };
 
-  const opportunityId = await convertLead(
+  await convertLead(
     {
       leadId,
       name: text(form, "name"),
@@ -62,5 +63,5 @@ export async function submitConversion(form: FormData) {
     await actorId(),
   );
   revalidatePath(`/console/leads/${leadId}`);
-  redirect(`/console/leads/${leadId}?converted=${opportunityId}`);
+  return { ok: true };
 }

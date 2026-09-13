@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { BackLink, EmptyState, PrimaryButton } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { TextareaField } from "@/components/console/fields";
+import { BackLink, EmptyState } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
 import { formatAmount } from "@/lib/format";
 import { getInitiative, initiativeRollup } from "@/lib/initiatives";
 import { submitNote } from "../actions";
@@ -69,22 +72,27 @@ export default async function InitiativePage({
 
       <section className="mt-8">
         <h2 className="text-[15px] font-semibold">Evidence</h2>
-        <form action={submitNote} className="mt-3 grid gap-3">
-          <input type="hidden" name="initiativeId" value={initiative.id.toString()} />
-          <label className="block text-sm">
-            <span className="sr-only">Note</span>
-            <textarea
+        <div className="mt-3">
+          <FormSheet
+            trigger={
+              <Button variant="outline" size="sm">
+                Add a note
+              </Button>
+            }
+            title="Add a note"
+            action={submitNote}
+            submitLabel="Add note"
+          >
+            <input type="hidden" name="initiativeId" value={initiative.id.toString()} />
+            <TextareaField
+              label="Note"
               name="body"
-              required
-              rows={2}
+              rows={4}
               placeholder="What happened, and what it means for the target"
-              className="mt-1 w-full rounded-md border border-(--c-line) bg-(--c-surface) px-3 py-2 text-sm"
+              required
             />
-          </label>
-          <div>
-            <PrimaryButton>Add note</PrimaryButton>
-          </div>
-        </form>
+          </FormSheet>
+        </div>
 
         {initiative.initiative_note.length > 0 && (
           <ol className="mt-4 grid gap-3">

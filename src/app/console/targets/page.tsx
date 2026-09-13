@@ -1,4 +1,7 @@
-import { EmptyState, Notice, PrimaryButton, SelectField, TextField } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { SelectField, TextField } from "@/components/console/fields";
+import { EmptyState } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { formatAmount } from "@/lib/format";
 import { listTargets, unitReconciliation } from "@/lib/targets";
@@ -8,8 +11,8 @@ import { submitTarget } from "./actions";
 
 export default async function TargetsPage({
   searchParams,
-}: Readonly<{ searchParams: Promise<{ year?: string; error?: string }> }>) {
-  const { year: yearParam, error } = await searchParams;
+}: Readonly<{ searchParams: Promise<{ year?: string }> }>) {
+  const { year: yearParam } = await searchParams;
   const year = Number(yearParam) || new Date().getFullYear();
   const [targets, reconciliation, units, owners, initiatives, viewer] = await Promise.all([
     listTargets(year),
@@ -28,12 +31,6 @@ export default async function TargetsPage({
           Targets for {year}. Unit targets have to add up to the company target.
         </span>
       </div>
-
-      {error && (
-        <div className="mt-4">
-          <Notice>{error === "amount" ? "An amount above zero is required." : error === "forbidden" ? "Targets are set by BD leadership." : error}</Notice>
-        </div>
-      )}
 
       <dl className="mt-4 grid gap-3 sm:grid-cols-3">
         <Stat label="Company target" value={formatAmount(reconciliation.companyTarget)} />
@@ -75,22 +72,29 @@ export default async function TargetsPage({
       )}
 
       {maySet && (
-        <form action={submitTarget} className="mt-6 grid gap-4 rounded-md border border-(--c-line) bg-(--c-surface) p-5">
-          <h2 className="text-[15px] font-semibold">Set a target</h2>
-          <input type="hidden" name="year" value={year} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField
-              label="Level"
-              name="level"
-              emptyLabel="Company"
-              options={[
-                { value: "company", label: "Company" },
-                { value: "unit", label: "Unit" },
-                { value: "owner", label: "Owner" },
-                { value: "initiative", label: "Initiative" },
-              ]}
-            />
-            <TextField label="Amount (UGX)" name="amount" required />
+        <div className="mt-6">
+          <FormSheet
+            trigger={<Button size="sm">Set a target</Button>}
+            title={`Set a target for ${year}`}
+            description="An even phasing is a starting point. The real monthly shape is entered once the finance phasing is confirmed."
+            action={submitTarget}
+            submitLabel="Save target"
+          >
+            <input type="hidden" name="year" value={year} />
+            <div className="grid grid-cols-2 gap-3">
+              <SelectField
+                label="Level"
+                name="level"
+                emptyLabel="Company"
+                options={[
+                  { value: "company", label: "Company" },
+                  { value: "unit", label: "Unit" },
+                  { value: "owner", label: "Owner" },
+                  { value: "initiative", label: "Initiative" },
+                ]}
+              />
+              <TextField label="Amount (UGX)" name="amount" inputMode="numeric" required />
+            </div>
             <SelectField
               label="Unit, for a unit target"
               name="unitId"
@@ -112,15 +116,8 @@ export default async function TargetsPage({
               emptyLabel="Annual only"
               options={[{ value: "even", label: "Even across twelve months" }]}
             />
-          </div>
-          <div>
-            <PrimaryButton>Save target</PrimaryButton>
-          </div>
-          <p className="text-[12px] text-(--c-muted)">
-            An even phasing is a starting point. The real shape, where January carries far more
-            than a twelfth, is entered per month once the finance phasing is confirmed.
-          </p>
-        </form>
+          </FormSheet>
+        </div>
       )}
     </div>
   );

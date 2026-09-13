@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
+import type { FormSheetState } from "@/components/console/FormSheet";
 import { addInitiativeNote, createInitiative, linkOpportunity } from "@/lib/initiatives";
 
 async function actorId(): Promise<bigint> {
@@ -17,11 +18,11 @@ function text(form: FormData, field: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export async function submitInitiative(form: FormData) {
+export async function submitInitiative(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const name = text(form, "name");
   const target = Number(text(form, "annualTarget"));
   if (!name || !Number.isFinite(target) || target <= 0) {
-    redirect("/console/initiatives/new?error=required");
+    return { error: "A name and an annual target above zero are required." };
   }
   const id = await createInitiative(
     {
@@ -39,14 +40,14 @@ export async function submitInitiative(form: FormData) {
   redirect(`/console/initiatives/${id}`);
 }
 
-export async function submitNote(form: FormData) {
+export async function submitNote(_state: FormSheetState, form: FormData): Promise<FormSheetState> {
   const initiativeId = text(form, "initiativeId");
   const body = text(form, "body");
-  if (initiativeId && body) {
-    await addInitiativeNote({ initiativeId, body }, await actorId());
-    revalidatePath(`/console/initiatives/${initiativeId}`);
-  }
-  redirect(`/console/initiatives/${initiativeId}`);
+  if (!initiativeId || !body) return { error: "A note needs a body." };
+
+  await addInitiativeNote({ initiativeId, body }, await actorId());
+  revalidatePath(`/console/initiatives/${initiativeId}`);
+  return { ok: true };
 }
 
 export async function submitOpportunityLink(form: FormData) {

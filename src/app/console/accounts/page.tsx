@@ -1,31 +1,41 @@
 import Link from "next/link";
 
-import { EmptyState, PrimaryLink } from "@/components/console/ui";
+import { EmptyState } from "@/components/console/ui";
+import { Input } from "@/components/ui/input";
 import { listAccounts } from "@/lib/accounts";
+import { db } from "@/lib/db";
+import { NewAccountSheet } from "./NewAccountSheet";
 
 export default async function AccountsPage({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ q?: string }> }>) {
   const { q } = await searchParams;
-  const accounts = await listAccounts(q);
+  const [accounts, units, sectors] = await Promise.all([
+    listAccounts(q),
+    db().unit.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    db().sector.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+  ]);
 
   return (
     <div className="w-full">
       <div className="flex flex-wrap items-center gap-3">
         <form role="search" className="min-w-0 flex-1">
-          <input
+          <Input
             type="search"
             name="q"
             defaultValue={q ?? ""}
             placeholder="Search accounts"
             aria-label="Search accounts by name"
-            className="w-full max-w-md rounded-md border border-(--c-line) bg-(--c-surface) px-3 py-2 text-sm"
+            className="max-w-md"
           />
         </form>
         <span className="text-sm text-(--c-muted) tabular-nums">
           {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
         </span>
-        <PrimaryLink href="/console/accounts/new">New account</PrimaryLink>
+        <NewAccountSheet
+          units={units.map((unit) => ({ value: unit.id.toString(), label: unit.name }))}
+          sectors={sectors.map((sector) => ({ value: sector.id.toString(), label: sector.code }))}
+        />
       </div>
 
       {accounts.length === 0 ? (

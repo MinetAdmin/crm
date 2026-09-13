@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { BackLink, Notice, PrimaryButton, SelectField, TextField } from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { SelectField, TextField } from "@/components/console/fields";
+import { BackLink, Notice } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { formatAmount } from "@/lib/format";
 import { canConvert, conversionConditions, hasContactMethod } from "@/lib/lead-rules";
@@ -10,12 +13,8 @@ import { submitConversion } from "../actions";
 
 export default async function LeadPage({
   params,
-  searchParams,
-}: Readonly<{
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ converted?: string }>;
-}>) {
-  const [{ id }, { converted }] = await Promise.all([params, searchParams]);
+}: Readonly<{ params: Promise<{ id: string }> }>) {
+  const { id } = await params;
   const lead = await getLead(id);
   if (!lead) notFound();
 
@@ -35,17 +34,6 @@ export default async function LeadPage({
         {lead.status} · {lead.ref_value_lead_source_idToref_value.label} · {lead.app_user.full_name}{" "}
         · {lead.unit.code}
       </p>
-
-      {converted && (
-        <div className="mt-4">
-          <Notice tone="warn">
-            Converted. The lead is kept, so the funnel stays measurable.{" "}
-            <Link href="/console/leads" className="underline underline-offset-2">
-              Back to leads
-            </Link>
-          </Notice>
-        </div>
-      )}
 
       <dl className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-3">
         <Detail label="Account">
@@ -114,17 +102,23 @@ export default async function LeadPage({
           </p>
         ) : (
           ready && (
-            <form action={submitConversion} className="mt-5 grid gap-4 border-t border-(--c-line-soft) pt-5">
-              <input type="hidden" name="leadId" value={lead.id.toString()} />
-              <TextField
-                label="Opportunity name"
-                name="name"
-                defaultValue={`${lead.account?.name ?? lead.company_name}, ${
-                  lead.lead_product_interest[0]?.product.name ?? "Pipeline"
-                } ${new Date().getFullYear()}`}
-                required
-              />
-              <div className="grid gap-4 sm:grid-cols-3">
+            <div className="mt-5 border-t border-(--c-line-soft) pt-5">
+              <FormSheet
+                trigger={<Button size="sm">Convert to an opportunity</Button>}
+                title="Convert to an opportunity"
+                description="The lead is kept, so the funnel stays measurable."
+                action={submitConversion}
+                submitLabel="Convert"
+              >
+                <input type="hidden" name="leadId" value={lead.id.toString()} />
+                <TextField
+                  label="Opportunity name"
+                  name="name"
+                  defaultValue={`${lead.account?.name ?? lead.company_name}, ${
+                    lead.lead_product_interest[0]?.product.name ?? "Pipeline"
+                  } ${new Date().getFullYear()}`}
+                  required
+                />
                 <SelectField
                   label="Stage"
                   name="stageId"
@@ -132,27 +126,18 @@ export default async function LeadPage({
                   emptyLabel="Choose a stage"
                   options={stages.map((s) => ({ value: s.id.toString(), label: s.name }))}
                 />
-                <SelectField
-                  label="Sector"
-                  name="sectorId"
-                  defaultValue={(lead.sector?.id ?? lead.account?.sector_id)?.toString()}
-                  emptyLabel="Choose a sector"
-                  options={sectors.map((s) => ({ value: s.id.toString(), label: s.code }))}
-                />
-                <label className="block text-sm">
-                  <span className="font-medium">Expected close</span>
-                  <input
-                    type="date"
-                    name="expectedCloseDate"
-                    required
-                    className="mt-1 w-full rounded-md border border-(--c-line) bg-(--c-surface) px-3 py-2 text-sm"
+                <div className="grid grid-cols-2 gap-3">
+                  <SelectField
+                    label="Sector"
+                    name="sectorId"
+                    defaultValue={(lead.sector?.id ?? lead.account?.sector_id)?.toString()}
+                    emptyLabel="Choose a sector"
+                    options={sectors.map((s) => ({ value: s.id.toString(), label: s.code }))}
                   />
-                </label>
-              </div>
-              <div>
-                <PrimaryButton>Convert</PrimaryButton>
-              </div>
-            </form>
+                  <TextField label="Expected close" name="expectedCloseDate" type="date" required />
+                </div>
+              </FormSheet>
+            </div>
           )
         )}
       </section>

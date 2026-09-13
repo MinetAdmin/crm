@@ -1,12 +1,9 @@
 import { notFound } from "next/navigation";
 
-import {
-  BackLink,
-  CheckboxField,
-  EmptyState,
-  PrimaryButton,
-  TextField,
-} from "@/components/console/ui";
+import { FormSheet } from "@/components/console/FormSheet";
+import { CheckboxField, TextField } from "@/components/console/fields";
+import { BackLink, EmptyState } from "@/components/console/ui";
+import { Button } from "@/components/ui/button";
 import { getAccount } from "@/lib/accounts";
 import { submitContact } from "../actions";
 
@@ -58,22 +55,28 @@ export default async function AccountPage({
         )}
       </section>
 
-      <section className="mt-6 rounded-md border border-(--c-line) bg-(--c-surface) p-5">
-        <h2 className="text-[15px] font-semibold">Add a contact</h2>
-        <form action={submitContact} className="mt-4 grid gap-4">
+      <div className="mt-4">
+        <FormSheet
+          trigger={
+            <Button variant="outline" size="sm">
+              Add a contact
+            </Button>
+          }
+          title="Add a contact"
+          description={`A new contact on ${account.name}.`}
+          action={submitContact}
+          submitLabel="Add contact"
+        >
           <input type="hidden" name="accountId" value={account.id.toString()} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField label="Full name" name="fullName" required />
-            <TextField label="Role" name="roleTitle" />
+          <TextField label="Full name" name="fullName" required />
+          <TextField label="Role" name="roleTitle" />
+          <div className="grid grid-cols-2 gap-3">
             <TextField label="Email" name="email" type="email" />
             <TextField label="Phone" name="phone" />
           </div>
           <CheckboxField label="Decision maker" name="isDecisionMaker" />
-          <div>
-            <PrimaryButton>Add contact</PrimaryButton>
-          </div>
-        </form>
-      </section>
+        </FormSheet>
+      </div>
     </div>
   );
 }
