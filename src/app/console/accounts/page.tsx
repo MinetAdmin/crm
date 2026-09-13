@@ -216,7 +216,7 @@ function SortHead({
       >
         <Icon className="size-3.5" aria-hidden />
         {label}
-        {active && <Arrow className="size-3" aria-hidden />}
+        {active && <Arrow className="size-2.5" aria-hidden />}
       </Link>
     </TableHead>
   );
