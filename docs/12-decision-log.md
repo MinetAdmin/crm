@@ -136,6 +136,19 @@ loader the default. This warning is outside the landing presentation change.
   §4.1a. The nav order deviates from doc 07 §1 by one inserted item.
 - **Status:** Adopted 2026-09-13 under user direction.
 
+### D-30: Account relationships and renewal/expansion follow BD
+
+- **Decision:** Keep the first release focused on Business Development. The next CRM
+  priority is account relationships and renewal/expansion opportunities.
+- **Reason:** The user explicitly selected this direction on 2026-09-13.
+- **Assumptions:** Shared account/contact identities remain the foundation. Commercial
+  renewal dates require a verified source; policy administration remains external.
+- **Consequences:** Doc 13 sequences relationship ownership and history, renewal worklists,
+  then expansion pursuits after BD acceptance. These are proposed work packages, not new
+  approved business rules. D-15 integration limits and D-16 conditional pack scope remain
+  in force; servicing is not silently added to Phase 1. Doc 11 links the current sequence.
+- **Status:** Direction confirmed; detailed scope, measures, and estimates remain to be agreed.
+
 ## Part B — Open-question register
 
 Status: ⛔ **Blocker** (gates migration or scope) · ❗ High (changes design) · ◽ Normal
@@ -210,8 +223,8 @@ decision history.
 ## Implementation review follow-up, 2026-09-13
 
 The [CRM review and BD roadmap](13-bd-crm-review-and-roadmap.md) records IP-01–12
-against implementation commit `0c90465`. Engineering owns authorization, session
-revocation, concurrency, next-action invariants, auditing, validation, financial
+against baseline `0c90465`, with targeted delta notes through `4e78cab`. Engineering
+owns authorization, session revocation, concurrency, next-action invariants, auditing, validation, financial
 correctness, and job-delivery fixes. The BD lead and project lead own the documented
 policy/migration contradictions and release acceptance. Each finding includes evidence,
 a concrete follow-up, and a validation condition. All are open at review publication.
