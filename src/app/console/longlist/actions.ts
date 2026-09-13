@@ -32,7 +32,7 @@ export async function submitNames(_state: FormSheetState, form: FormData): Promi
 
   const track = text(form, "track") === "planned" ? ("planned" as const) : ("anytime" as const);
   const planYear = Number(text(form, "planYear"));
-  if (track === "planned" && !Number.isInteger(planYear)) {
+  if (track === "planned" && (!Number.isInteger(planYear) || planYear < 2000 || planYear > 2100)) {
     return { error: "BR-LL-01: a planned entry names its budget year." };
   }
 
