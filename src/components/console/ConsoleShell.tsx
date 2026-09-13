@@ -2,9 +2,10 @@
 
 import * as React from "react";
 
-import { ChevronsUpDown, LogOut } from "lucide-react";
+import { ChevronsUpDown, LogOut, Moon, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 
 import { Logo } from "@/components/brand/Logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,6 +22,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -174,6 +177,24 @@ function NavEntry({
   );
 }
 
+function ThemeItems() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <>
+      <DropdownMenuLabel className="flex items-center gap-2 font-normal text-muted-foreground">
+        <Sun className="size-3.5 dark:hidden" />
+        <Moon className="hidden size-3.5 dark:block" />
+        Theme
+      </DropdownMenuLabel>
+      <DropdownMenuRadioGroup value={theme ?? "system"} onValueChange={setTheme}>
+        <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
+        <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
+        <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
+      </DropdownMenuRadioGroup>
+    </>
+  );
+}
+
 function UserMenu({
   user,
   signOutAction,
@@ -211,6 +232,8 @@ function UserMenu({
                 {user.email}
               </span>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <ThemeItems />
             <DropdownMenuSeparator />
             <form action={signOutAction}>
               <DropdownMenuItem asChild>

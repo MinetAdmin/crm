@@ -29,18 +29,16 @@
   letter-spacing: -0.005em;
 }
 
-@media (prefers-color-scheme: dark) {
-  .landing:not(.light) {
-    --lp-page: #111316;
-    --lp-card: #1d2024;
-    --lp-fg: #f1f2ef;
-    --lp-fg-muted: #a4a8ae;
-    --lp-line: rgb(255 255 255 / 0.11);
-    --lp-line-soft: rgb(255 255 255 / 0.06);
-    --lp-wash: #191c20;
-    --lp-brand: #e85b60;
-    --lp-accent: #8fb6d6;
-  }
+.dark .landing:not(.light) {
+  --lp-page: #111316;
+  --lp-card: #1d2024;
+  --lp-fg: #f1f2ef;
+  --lp-fg-muted: #a4a8ae;
+  --lp-line: rgb(255 255 255 / 0.11);
+  --lp-line-soft: rgb(255 255 255 / 0.06);
+  --lp-wash: #191c20;
+  --lp-brand: #e85b60;
+  --lp-accent: #8fb6d6;
 }
 
 .landing ::selection {
