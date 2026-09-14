@@ -58,25 +58,39 @@ export async function listAccounts(filters: AccountFilters = {}): Promise<Accoun
       openLeads: leads.get(id) ?? 0,
       openPursuits: agg?.openPursuits ?? 0,
       weighted: agg?.weighted ?? 0,
+      openValue: agg?.openValue ?? 0,
       lastMovement: agg?.lastMovement?.toISOString().slice(0, 10) ?? null,
       createdAt: row.created_at.toISOString().slice(0, 10),
     };
   });
 }
 
-type PipelineAgg = { openPursuits: number; weighted: number; lastMovement: Date | null };
+type PipelineAgg = {
+  openPursuits: number;
+  weighted: number;
+  openValue: number;
+  lastMovement: Date | null;
+};
 
-/** Open-pursuit count, weighted pipeline and latest stage movement per account. */
+/** Open-pursuit count, weighted and expected pipeline and latest stage movement per account. */
 async function pipelineByAccountIds(ids: bigint[]): Promise<Map<string, PipelineAgg>> {
   const rows = await db().$queryRaw<
-    { account_id: string; open_pursuits: number; weighted: string; last_movement: Date | null }[]
+    {
+      account_id: string;
+      open_pursuits: number;
+      weighted: string;
+      open_value: string;
+      last_movement: Date | null;
+    }[]
   >`
     SELECT o.account_id::text AS account_id,
            COUNT(*) FILTER (WHERE o.outcome = 'open')::int AS open_pursuits,
            COALESCE(SUM(w.weighted) FILTER (WHERE o.outcome = 'open'), 0)::text AS weighted,
+           COALESCE(SUM(w.expected) FILTER (WHERE o.outcome = 'open'), 0)::text AS open_value,
            MAX(m.last_move) AS last_movement
     FROM opportunity o
-    LEFT JOIN (SELECT opportunity_id, SUM(weighted_amount) AS weighted
+    LEFT JOIN (SELECT opportunity_id, SUM(weighted_amount) AS weighted,
+                      SUM(expected_amount) AS expected
                FROM v_schedule_line_weighted
                GROUP BY opportunity_id) w ON w.opportunity_id = o.id
     LEFT JOIN (SELECT opportunity_id, MAX(changed_at) AS last_move
@@ -91,6 +105,7 @@ async function pipelineByAccountIds(ids: bigint[]): Promise<Map<string, Pipeline
       {
         openPursuits: row.open_pursuits,
         weighted: Number(row.weighted),
+        openValue: Number(row.open_value),
         lastMovement: row.last_movement,
       },
     ]),

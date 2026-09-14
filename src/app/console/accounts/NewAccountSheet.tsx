@@ -1,8 +1,10 @@
 "use client";
 
+import { Plus } from "lucide-react";
+
 import { FormSheet } from "@/components/console/FormSheet";
 import { SelectField, TextField } from "@/components/console/fields";
-import { Notice } from "@/components/console/ui";
+import { Notice, pillPrimaryClass } from "@/components/console/ui";
 import { Button } from "@/components/ui/button";
 import { submitAccount } from "./actions";
 
@@ -14,7 +16,12 @@ export function NewAccountSheet({
 }: Readonly<{ units: ReadonlyArray<Option>; sectors: ReadonlyArray<Option> }>) {
   return (
     <FormSheet
-      trigger={<Button size="sm">New account</Button>}
+      trigger={
+        <Button size="sm" className={pillPrimaryClass}>
+          <Plus className="size-3" aria-hidden />
+          New account
+        </Button>
+      }
       title="New account"
       action={submitAccount}
       submitLabel={(state) => (state?.duplicates?.length ? "Create anyway" : "Create account")}

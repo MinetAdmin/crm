@@ -8,6 +8,7 @@ export type AccountRow = {
   openLeads: number;
   openPursuits: number;
   weighted: number;
+  openValue: number;
   lastMovement: string | null;
   createdAt: string;
 };
