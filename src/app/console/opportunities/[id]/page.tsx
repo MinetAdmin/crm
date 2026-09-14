@@ -116,7 +116,7 @@ export default async function OpportunityPage({
             without one.
           </p>
         ) : (
-          <div className="mt-3 overflow-x-auto rounded-md border border-(--c-line) bg-(--c-surface)">
+          <div className="mt-3 rounded-md border border-(--c-line) bg-(--c-surface)">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-(--c-line-soft) text-left text-[13px] text-(--c-muted)">

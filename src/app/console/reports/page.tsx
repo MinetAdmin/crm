@@ -182,7 +182,7 @@ function Table({
 }: Readonly<{ head: string[]; rows: string[][]; empty: string }>) {
   if (rows.length === 0) return <div className="mt-3"><EmptyState>{empty}</EmptyState></div>;
   return (
-    <div className="mt-3 overflow-x-auto rounded-md border border-(--c-line) bg-(--c-surface)">
+    <div className="mt-3 rounded-md border border-(--c-line) bg-(--c-surface)">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-(--c-line-soft) text-left text-[13px] text-(--c-muted)">

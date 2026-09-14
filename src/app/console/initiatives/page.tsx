@@ -76,7 +76,7 @@ export default async function InitiativesPage() {
           <EmptyState>No initiatives yet.</EmptyState>
         </div>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-md border border-(--c-line) bg-(--c-surface)">
+        <div className="mt-4 rounded-md border border-(--c-line) bg-(--c-surface)">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-(--c-line-soft) text-left text-[13px] text-(--c-muted)">

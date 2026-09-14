@@ -38,7 +38,7 @@ export default async function AdminPage() {
           Creating a record is the invitation. The person signs in with Microsoft and the identity
           links itself on first use. Deactivating keeps the record and its history.
         </p>
-        <div className="mt-3 overflow-x-auto rounded-md border border-(--c-line) bg-(--c-surface)">
+        <div className="mt-3 rounded-md border border-(--c-line) bg-(--c-surface)">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-(--c-line-soft) text-left text-[13px] text-(--c-muted)">
@@ -163,7 +163,7 @@ export default async function AdminPage() {
 
       <section>
         <h2 className="text-[15px] font-semibold">Audit trail</h2>
-        <div className="mt-3 overflow-x-auto rounded-md border border-(--c-line) bg-(--c-surface)">
+        <div className="mt-3 rounded-md border border-(--c-line) bg-(--c-surface)">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-(--c-line-soft) text-left text-[13px] text-(--c-muted)">

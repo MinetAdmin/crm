@@ -253,7 +253,7 @@ export default async function AccountPage({
 
 function PursuitsTable({ pursuits }: Readonly<{ pursuits: ReadonlyArray<AccountPursuit> }>) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <div className="rounded-lg border border-border">
       <Table className="text-sm leading-none [&_td]:h-[42px] [&_td]:px-3 [&_td]:py-0 [&_th]:h-[38px] [&_th]:px-3">
         <TableHeader>
           <TableRow className="hover:bg-transparent">

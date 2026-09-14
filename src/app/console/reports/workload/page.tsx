@@ -41,7 +41,7 @@ export default async function WorkloadPage() {
       {rows.length === 0 ? (
         <div className="mt-4"><EmptyState>No workload rows are visible to you.</EmptyState></div>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-md border border-(--c-line) bg-(--c-surface)">
+        <div className="mt-4 rounded-md border border-(--c-line) bg-(--c-surface)">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-(--c-line-soft) text-left text-[13px] text-(--c-muted)">
