@@ -1,3 +1,6 @@
+import * as React from "react";
+
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 import type { FunnelCounts } from "@/lib/funnel";
@@ -10,34 +13,34 @@ const STEPS = [
 
 type StepKey = (typeof STEPS)[number]["key"];
 
-/** The funnel as a tab strip: longlist, leads, and pipeline, with counts. */
+/** The funnel in one line: longlist to leads to pipeline to won, with counts. */
 export function FlowStrip({
   counts,
   active,
 }: Readonly<{ counts: FunnelCounts; active: StepKey }>) {
   return (
-    <nav
-      aria-label="Funnel"
-      className="flex shrink-0 items-center gap-4 border-b border-border px-4 md:px-6"
-    >
-      {STEPS.map((step) => (
-        <Link
-          key={step.key}
-          href={step.href}
-          title={step.hint}
-          aria-current={active === step.key ? "page" : undefined}
-          className={`-mb-px inline-flex items-center gap-1.5 border-b py-3 text-sm leading-none transition-colors duration-150 ease-(--ease-out-strong) ${
-            active === step.key
-              ? "border-foreground font-medium text-foreground"
-              : "border-transparent text-(--subtle) hover:text-(--soft)"
-          }`}
-        >
-          {step.label}
-          <CountChip value={counts[step.key]} />
-        </Link>
+    <nav aria-label="Funnel" className="flex flex-wrap items-center gap-1 text-xs">
+      {STEPS.map((step, index) => (
+        <React.Fragment key={step.key}>
+          {index > 0 && <ChevronRight className="size-3 text-(--faint)" aria-hidden />}
+          <Link
+            href={step.href}
+            title={step.hint}
+            aria-current={active === step.key ? "page" : undefined}
+            className={`inline-flex h-[30px] items-center gap-1.5 rounded-full px-3 transition-[background-color,color,box-shadow] duration-150 ease-(--ease-out-strong) ${
+              active === step.key
+                ? "bg-secondary font-medium text-foreground shadow-(--pill-shadow)"
+                : "text-(--subtle) hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            {step.label}
+            <CountChip value={counts[step.key]} />
+          </Link>
+        </React.Fragment>
       ))}
+      <ChevronRight className="size-3 text-(--faint)" aria-hidden />
       <span
-        className="ml-auto inline-flex items-center gap-1.5 py-3 text-sm leading-none text-(--subtle)"
+        className="inline-flex h-[30px] items-center gap-1.5 px-3 text-(--subtle)"
         title="Won pursuits, all time"
       >
         Won

@@ -57,7 +57,9 @@ export default async function LeadsPage({
 
   return (
     <div className="-m-4 flex min-h-0 flex-1 flex-col md:-mx-6">
-      <FlowStrip counts={counts} active="leads" />
+      <div className="shrink-0 px-4 pt-4 md:px-6">
+        <FlowStrip counts={counts} active="leads" />
+      </div>
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-4 md:px-6">
         <nav className="flex min-w-0 flex-wrap items-center gap-1" aria-label="Filter by status">
           <StatusPill label="All" count={total} active={!status} href="/console/leads" />

@@ -2,13 +2,13 @@
 
 import * as React from "react";
 
+import { CirclePause, CircleX, RotateCcw, UserRoundPlus } from "lucide-react";
 import Link from "next/link";
 
 import { FormSheet } from "@/components/console/FormSheet";
 import { FormSection } from "@/components/console/fields";
 import { SelectField, TextField, TextareaField } from "@/components/console/fields";
 import { TagPill, tagToneFor } from "@/components/console/ui";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -207,6 +207,9 @@ function dropTitle(entry: LonglistEntryRow): string | undefined {
     : undefined;
 }
 
+const ICON_ACTION_CLASS =
+  "inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-(--soft) transition-colors duration-150 ease-(--ease-out-strong) hover:bg-foreground/6 hover:text-foreground";
+
 function RowActions({
   entry,
   onPromote,
@@ -214,22 +217,42 @@ function RowActions({
 }: Readonly<{ entry: LonglistEntryRow; onPromote: () => void; onDrop: () => void }>) {
   if (entry.status === "picked") return null;
   return (
-    <span className="inline-flex items-center gap-1">
+    <span className="inline-flex items-center gap-0.5">
       {entry.status !== "dropped" && (
-        <Button variant="outline" size="xs" onClick={onPromote}>
-          Promote
-        </Button>
+        <button
+          type="button"
+          onClick={onPromote}
+          title="Promote to lead"
+          aria-label={`Promote ${entry.companyName} to a lead`}
+          className={ICON_ACTION_CLASS}
+        >
+          <UserRoundPlus className="size-3.5" aria-hidden />
+        </button>
       )}
       {entry.status === "unworked" && (
-        <StatusButton action={submitPark} entryId={entry.id} label="Park" />
+        <StatusButton action={submitPark} entryId={entry.id} label={`Park ${entry.companyName}`}>
+          <CirclePause className="size-3.5" aria-hidden />
+        </StatusButton>
       )}
       {(entry.status === "parked" || entry.status === "dropped") && (
-        <StatusButton action={submitRestore} entryId={entry.id} label="Restore" />
+        <StatusButton
+          action={submitRestore}
+          entryId={entry.id}
+          label={`Restore ${entry.companyName}`}
+        >
+          <RotateCcw className="size-3.5" aria-hidden />
+        </StatusButton>
       )}
       {entry.status !== "dropped" && (
-        <Button variant="ghost" size="xs" onClick={onDrop}>
-          Drop
-        </Button>
+        <button
+          type="button"
+          onClick={onDrop}
+          title="Drop with a reason"
+          aria-label={`Drop ${entry.companyName}`}
+          className={ICON_ACTION_CLASS}
+        >
+          <CircleX className="size-3.5" aria-hidden />
+        </button>
       )}
     </span>
   );
@@ -239,13 +262,24 @@ function StatusButton({
   action,
   entryId,
   label,
-}: Readonly<{ action: (form: FormData) => Promise<void>; entryId: string; label: string }>) {
+  children,
+}: Readonly<{
+  action: (form: FormData) => Promise<void>;
+  entryId: string;
+  label: string;
+  children: React.ReactNode;
+}>) {
   return (
     <form action={action} className="inline">
       <input type="hidden" name="entryId" value={entryId} />
-      <Button type="submit" variant="ghost" size="xs">
-        {label}
-      </Button>
+      <button
+        type="submit"
+        title={label.split(" ")[0]}
+        aria-label={label}
+        className={ICON_ACTION_CLASS}
+      >
+        {children}
+      </button>
     </form>
   );
 }
