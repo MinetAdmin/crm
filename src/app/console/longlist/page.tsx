@@ -61,9 +61,7 @@ export default async function LonglistPage({
 
   return (
     <div className="-m-4 flex min-h-0 flex-1 flex-col md:-mx-6">
-      <div className="shrink-0 px-4 pt-4 md:px-6">
-        <FlowStrip counts={counts} active="longlist" />
-      </div>
+      <FlowStrip counts={counts} active="longlist" />
 
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-4 md:px-6">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
