@@ -2,11 +2,12 @@
 
 import * as React from "react";
 
-import { CalendarDays, Ellipsis } from "lucide-react";
+import { ArrowUpRight, CalendarDays } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { UserSheet } from "@/components/console/ProfileSheet";
+
+import { AccountDetailSheet } from "./AccountDetailSheet";
 import { TagPill, tagToneFor } from "@/components/console/ui";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -28,6 +29,7 @@ export function AccountsTable({
 }: Readonly<{ accounts: ReadonlyArray<AccountRow>; summary: AccountSummary }>) {
   const [selected, setSelected] = React.useState<ReadonlySet<string>>(new Set());
   const [owner, setOwner] = React.useState<{ id: string; name: string } | null>(null);
+  const [detail, setDetail] = React.useState<{ id: string; name: string } | null>(null);
   const allSelected = accounts.length > 0 && selected.size === accounts.length;
   const headerState: boolean | "indeterminate" = allSelected
     ? true
@@ -83,6 +85,7 @@ export function AccountsTable({
                 selected={selected.has(account.id)}
                 onToggle={() => toggleOne(account.id)}
                 onOwnerClick={setOwner}
+                onOpen={() => setDetail({ id: account.id, name: account.name })}
               />
             ))}
           </TableBody>
@@ -113,6 +116,7 @@ export function AccountsTable({
       </div>
 
       <UserSheet owner={owner} onClose={() => setOwner(null)} />
+      <AccountDetailSheet target={detail} onClose={() => setDetail(null)} />
     </div>
   );
 }
@@ -143,18 +147,19 @@ function AccountTableRow({
   selected,
   onToggle,
   onOwnerClick,
+  onOpen,
 }: Readonly<{
   account: AccountRow;
   selected: boolean;
   onToggle: () => void;
   onOwnerClick: (owner: { id: string; name: string }) => void;
+  onOpen: () => void;
 }>) {
-  const router = useRouter();
   const owner = account.owner;
   const openAccount = (event: React.MouseEvent<HTMLTableRowElement>) => {
     const target = event.target as HTMLElement;
     if (target.closest("a,button,input,label,[role=checkbox]")) return;
-    router.push(`/console/accounts/${account.id}`);
+    onOpen();
   };
 
   return (
@@ -170,12 +175,13 @@ function AccountTableRow({
             onCheckedChange={onToggle}
             aria-label={`Select ${account.name}`}
           />
-          <Link
-            href={`/console/accounts/${account.id}`}
-            className="font-medium underline-offset-2 hover:underline"
+          <button
+            type="button"
+            onClick={onOpen}
+            className="cursor-pointer font-medium underline-offset-2 hover:underline"
           >
             {account.name}
-          </Link>
+          </button>
         </span>
       </TableCell>
       <TableCell>
@@ -250,10 +256,11 @@ function AccountTableRow({
       <TableCell>
         <Link
           href={`/console/accounts/${account.id}`}
-          aria-label={`Open ${account.name} details`}
+          aria-label={`Open the full record for ${account.name}`}
+          title="Open full record"
           className="inline-flex size-6 items-center justify-center rounded-full transition-colors duration-150 hover:bg-foreground/6"
         >
-          <Ellipsis className="size-3" aria-hidden />
+          <ArrowUpRight className="size-3" aria-hidden />
         </Link>
       </TableCell>
     </TableRow>

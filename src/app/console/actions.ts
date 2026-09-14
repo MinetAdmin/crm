@@ -2,7 +2,13 @@
 
 import { auth } from "@/auth";
 import { sortAccounts, summarizeAccounts, winProbability } from "@/lib/account-table";
-import { listAccounts, ownerPipeline } from "@/lib/accounts";
+import {
+  accountPanelStats,
+  getAccount,
+  listAccounts,
+  ownerPipeline,
+  type AccountPanelStats,
+} from "@/lib/accounts";
 import { db } from "@/lib/db";
 
 export type ProfilePanel = {
@@ -88,6 +94,54 @@ export async function getUserPanel(userId: string): Promise<UserPanel | null> {
         probability: winProbability(row.weighted, row.openValue),
       })),
     },
+  };
+}
+
+export type AccountPanel = {
+  id: string;
+  name: string;
+  unit: string | null;
+  sector: string | null;
+  country: string;
+  createdAt: string;
+  contacts: Array<{
+    id: string;
+    name: string;
+    role: string | null;
+    email: string | null;
+    phone: string | null;
+    decisionMaker: boolean;
+  }>;
+};
+
+/** Account summary and pipeline stats for the detail drawer. */
+export async function getAccountPanel(
+  id: string,
+): Promise<{ account: AccountPanel; stats: AccountPanelStats } | null> {
+  const session = await auth();
+  if (!session?.user) throw new Error("Not signed in");
+
+  const [account, stats] = await Promise.all([getAccount(id), accountPanelStats(id)]);
+  if (!account) return null;
+
+  return {
+    account: {
+      id: account.id.toString(),
+      name: account.name,
+      unit: account.unit?.code ?? null,
+      sector: account.sector?.code ?? null,
+      country: account.country,
+      createdAt: account.created_at.toISOString().slice(0, 10),
+      contacts: account.contact.map((contact) => ({
+        id: contact.id.toString(),
+        name: contact.full_name,
+        role: contact.role_title,
+        email: contact.email,
+        phone: contact.phone,
+        decisionMaker: contact.is_decision_maker,
+      })),
+    },
+    stats,
   };
 }
 
