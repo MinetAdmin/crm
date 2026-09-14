@@ -30,7 +30,7 @@ SELECT a.id, 'Memnon Capital Medical 2026', u.id, s.id, o.id, st.id, st.default_
 FROM account a, unit u, sector s, app_user o, pipeline_stage st
 WHERE a.name='Memnon Capital' AND u.code='UNIT1' AND s.code='EMT'
   AND o.email='dev.owner1@example.test' AND st.code='QUOTE'
-ON CONFLICT DO NOTHING;
+  AND NOT EXISTS (SELECT 1 FROM opportunity WHERE name='Memnon Capital Medical 2026');
 
 INSERT INTO revenue_schedule_line (opportunity_id, product_id, effective_month, expected_amount)
 SELECT o.id, p.id, m.month::date, m.amount
@@ -53,7 +53,7 @@ SELECT a.id, 'Nile Microfinance Credit Life 2026', u.id, s.id, o.id, st.id, st.d
 FROM account a, unit u, sector s, app_user o, pipeline_stage st
 WHERE a.name='Nile Microfinance' AND u.code='UNIT3' AND s.code='EBM'
   AND o.email='dev.owner2@example.test' AND st.code='PROSPECT'
-ON CONFLICT DO NOTHING;
+  AND NOT EXISTS (SELECT 1 FROM opportunity WHERE name='Nile Microfinance Credit Life 2026');
 
 -- Initiative
 INSERT INTO strategic_initiative (name, unit_id, sector_id, champion_id, annual_target, target_year, status_id)

@@ -89,6 +89,16 @@ from `main` only. Hosting target is Azure Container Apps, with the scheduled
 worker as a Container Apps Job and migrations as a job before each release
 (docs/03 §8, decision D-21).
 
+## Scheduled work
+
+Run from the same image as the app, as container jobs:
+
+```bash
+pnpm job snapshot     # freeze last month; refuses a month already taken
+pnpm job hygiene      # exceptions per owner
+pnpm job deadlines    # tenders due in 14, 7 or 2 days
+```
+
 ## Working rules (solo-dev discipline, docs/03 §2.2)
 
 - Schema changes: new numbered file in `db/migrations/`, update `docs/schema.sql` to match,

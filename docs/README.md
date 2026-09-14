@@ -39,3 +39,10 @@ throughout as **the Spec**.
 
 Draft v1.0, generated 2026-09-09. Blocking inputs before migration (not before build start):
 Spec questions **C1, C2, F1, F2, A1** and scope question **I1** — see [12-decision-log.md](12-decision-log.md).
+
+## Current implementation review
+
+[CRM review and BD roadmap](13-bd-crm-review-and-roadmap.md) compares the build pack
+with baseline `0c90465`, targeted updates through `4e78cab`, and official CRM product
+documentation, reviewed 2026-09-13. D-30 records the confirmed post-BD direction. It records findings IP-01–12, release gates, and proposed sequencing.
+Recommendations do not supersede accepted requirements without a decision-log update.

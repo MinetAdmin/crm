@@ -8,6 +8,8 @@ export const authConfig = {
       issuer: process.env.AUTH_MICROSOFT_ENTRA_ID_ISSUER,
     }),
   ],
+  // Self-hosted behind a proxy, so the Host header is how callback URLs are built.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/signin",

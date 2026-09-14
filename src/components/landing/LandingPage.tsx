@@ -51,15 +51,17 @@ export function LandingPage() {
 
 function Arrow() {
   return (
-    <svg viewBox="0 0 16 16" className="size-4" fill="none" aria-hidden>
-      <path
-        d="M3 8h10m0 0-4-4m4 4-4 4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <span className="lp-arrow grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-white text-(--lp-action)" aria-hidden="true">
+      <svg viewBox="0 0 16 16" className="size-4" fill="none">
+        <path
+          d="M3 8h10m0 0-4-4m4 4-4 4"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -72,12 +74,12 @@ function SignInButton({
 }>) {
   const styles =
     tone === "brand"
-      ? "h-12 bg-(--lp-brand) px-6 text-[15px] text-white hover:bg-(--lp-brand)/90"
-      : "h-9 bg-(--lp-fg) px-4 text-sm text-(--lp-page) hover:bg-(--lp-fg)/85";
+      ? "h-12 gap-4 bg-(--lp-action) pr-1.5 pl-5 text-[15px] text-white hover:bg-(--lp-action)/90"
+      : "h-9 gap-2 bg-(--lp-fg) px-4 text-sm text-(--lp-page) hover:bg-(--lp-fg)/85";
   return (
     <Link
       href="/signin"
-      className={`inline-flex items-center gap-2 rounded-full font-medium transition-colors ${styles}`}
+      className={`lp-sign-in inline-flex items-center rounded-full font-medium transition-colors ${styles}`}
     >
       {children}
     </Link>
@@ -97,7 +99,6 @@ function SiteHeader() {
   );
 }
 
-/** Hero: the headline and the ledger figure. */
 function Hero() {
   return (
     <section className="mx-auto w-full max-w-[78rem] px-5 pt-16 pb-20 md:px-8 md:pt-24 md:pb-28">
@@ -137,7 +138,6 @@ function Hero() {
   );
 }
 
-/** Dark band: the year in one line. */
 function Forecast() {
   return (
     <section className="bg-(--lp-panel) py-20 text-(--lp-panel-fg) md:py-28">
@@ -180,7 +180,6 @@ function Stages() {
   );
 }
 
-/** The save-time rules, stated as refusals. */
 function Refusals() {
   return (
     <section className="border-y border-(--lp-line-soft) bg-(--lp-wash) py-14 md:py-24">

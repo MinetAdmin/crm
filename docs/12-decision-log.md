@@ -32,6 +32,192 @@ answer changes.
 | D-21 | Hosting: **Azure**. Container Apps consumption for app and worker (inside the free grant), **Azure Database for PostgreSQL Flexible Server B1ms + 32GB at ~US$15–20/mo** for the data. Prefer the South Africa North region if both services are available there. Alternatives priced and rejected: *Azure SQL free tier* ($0, but a dialect port; keeps Prisma, which does support `sqlserver`); *Oracle Always Free Ampere A1 + self-hosted Postgres* ($0, no port at all, but you own backups, restores, patching and TLS, and Oracle reclaims instances idle over 7 days at under 20% CPU, network and memory — an office-hours CRM fits that profile); *Oracle Autonomous AI Database* (rejected: Prisma ships no Oracle connector, verified against the installed package, so it costs a dialect port **and** an ORM replacement **and** wallet-based connectivity; Oracle's docs confirm PostgreSQL is not in Always Free); *external free-tier Postgres* (rejected on data protection) | Identity, licensing and the org standard are already Microsoft (H5); a solo developer on a 22-week build should not also be the DBA (doc 11 bus-factor risk); ~US$200/yr is less than an hour of team time per month | Sponsor/boss — **deadline: end of Sprint 0** | Provisional — recommendation, verified 2026-09-09 |
 | D-22 | Auth: **Entra ID SSO only, single-tenant, invite-only in the app** (admin-created `app_user` record; no Azure portal assignment step); no password path; roles/units live in-app, not in Entra app roles; OID is the identity key with the recycled-email relink guard | Doc 03 §2.1; improves on the EAP pattern (standard OIDC library, no parallel password auth) | Sponsor + Entra admin (needs the app registration) | **Confirmed**, revised 2026-09-09 (see D-23) |
 | D-23 | Entra "Assignment required" dropped as a required layer; access is decided by the `app_user` record alone, with a **first-run bootstrap** making the first person to sign in the administrator (audited, single-use, transaction-guarded) | Two systems to onboard one colleague is friction the admin will not sustain, and a fresh deployment otherwise has nobody able to issue the first invite. Assignment stays available as optional hardening | Sponsor (accepts that any tenant member could claim the untouched bootstrap between deploy and first admin login) | **Provisional** |
+| D-24 | Console UI standardised on **shadcn/ui** (radix-nova preset): components are added from the registry and themed through the token block in `globals.css`, never written from scratch. Shell layout: collapsible icon sidebar (state persisted in a cookie, toggle in the header, keyboard ⌘B) with tooltip labels when collapsed; page identity lives in the header breadcrumb and screens render no page headings of their own; global search is a placeholder control in the sidebar that relocates to the header centre while the sidebar is collapsed, until FR-RPT-12-adjacent global search is built | User direction 2026-09-10 against the reference set in `references/`; a single component vocabulary keeps future screens consistent and future work cheap | User (design owner) | **Confirmed** 2026-09-10 |
+
+### D-25: Public landing palette refinement
+
+- **Decision:** Adopt warm white, neutral grays, charcoal panels, quieter sage/amber/slate
+  chart accents, and crimson action backgrounds in both themes (doc 07 §1.1).
+  Use a lighter red for text on dark surfaces, separate from action backgrounds.
+- **Reason:** Reduce the brown cast and chart saturation while preserving the existing
+  crimson identity and readable white button labels. This is design judgment, not a
+  verified external brand standard.
+- **Assumptions:** The request to refine colors delegates shade selection within the
+  existing layout, content, and light/dark theme behavior.
+- **Consequences:** Changes are scoped to the landing page. Dark panels use their own
+  red text token in both themes; button backgrounds no longer inherit the dark text red.
+- **Status:** Adopted 2026-09-13 under user-delegated design authority.
+
+### D-26: Sign-in arrow treatment
+
+- **Decision:** Inset a white circular arrow in primary sign-in pills. Animate one
+  horizontal exit/re-entry on hover or keyboard focus, with no animation when the
+  user prefers reduced motion (doc 07 §1.1).
+- **Reason:** User requested an animated arrow based on the circular arrow in
+  [the supplied reference](https://i.pinimg.com/1200x/d2/40/8c/d2408cc038b3e0db2329018a1d4cf641.jpg).
+- **Assumptions:** The reference is a still image; the slide motion is an implementation
+  choice. Retain the adopted crimson palette and apply the treatment to both primary
+  landing sign-in links for consistency.
+- **Consequences:** CSS-only presentation, with the existing sign-in destination and
+  accessible link labels retained.
+- **Status:** Adopted 2026-09-13 under user-delegated design authority.
+
+### Engineering follow-up: Vitest configuration warning
+
+`pnpm verify` on 2026-09-13 passed all 100 tests, but Vite reported ESM syntax in
+`vitest.config.ts:1` being loaded as CommonJS. Follow-up: engineering should migrate
+that configuration to a supported ESM extension before Vite makes its native config
+loader the default. This warning is outside the landing presentation change.
+
+### D-27: Neutral signed-in palette
+
+- **Decision:** Align the console with D-25 through shared neutral surface and text
+  tokens; use progressively lighter charcoal surfaces for cards, popovers, and
+  interaction states (doc 07 §1.2). Keep crimson action fills separate from lighter
+  dark-mode red text. Soften dark-mode warning/success colors to amber/sage.
+- **Reason:** User requested removal of the brown cast from signed-in pages on
+  2026-09-13. The previous `globals.css` dark tokens used espresso `#17110f` for cards,
+  burgundy `#1a1315` for washes, and rose-taupe `#a2918f` for muted text.
+- **Assumptions:** The request covers shared presentation in both themes, retaining
+  the existing shell, density, chart categories, and business behavior. Shade and
+  surface hierarchy choices are design judgment, not external brand requirements.
+- **Consequences:** All consumers of the console tokens inherit the palette,
+  including sign-in. Link variants and active navigation icons use the text accent
+  instead of the darker button fill. Destructive button/badge tints use 5% at rest
+  and 10% on hover to retain label contrast. Landing tokens stay separately scoped.
+- **Status:** Adopted 2026-09-13 under user-delegated design authority.
+
+### D-28: Forms in non-dismissing sheets on shadcn primitives
+
+- **Decision:** Every data-entry form opens in a right-hand sheet (`FormSheet` on the
+  shadcn Sheet). The sheet does not close on click-away or Escape, so entered content
+  cannot be lost by accident; it closes on the explicit close control or a successful
+  save, and offers a Reset that restores initial values. Fields compose shadcn
+  Label/Input/Select/Checkbox/Textarea through `src/components/console/fields.tsx`.
+  Validation and rule refusals return action state rendered inside the sheet (rule ids
+  kept in the message per doc 05), replacing redirect query-param errors. The
+  dedicated `/new` routes are removed; creation happens on the list pages.
+  Single-control inline actions (search, a settings value, a toggle, the initiative
+  link) stay inline on shadcn Input/Button.
+- **Reason:** User direction on 2026-09-13: shadcn components only, all forms as
+  drawers/sheets that cannot lose content on click-away, with reset support, and
+  tight professional spacing.
+- **Assumptions:** The account duplicate check keeps its warn-then-confirm flow, now
+  in-sheet. The lead conversion banner and `?converted` param are superseded by the
+  revalidated page state.
+- **Consequences:** Server actions used by sheets take `(state, formData)` and return
+  `{ ok }` or `{ error }` instead of redirecting with query params; cross-route
+  creates still redirect to the new record. List pages load the reference data their
+  create sheet needs.
+- **Status:** Adopted 2026-09-13 under user direction.
+
+### D-29: The longlist, a step-0 register before leads
+
+- **Decision:** Add a pre-lead register named the **longlist**: a deliberately dirty
+  list of company names worth pursuing, entered in bulk with no dedup or validation.
+  Two tracks: `planned` (the budget-year planning list, carrying its plan year,
+  BR-LL-01) and `anytime` (contingency and future work). Entries are promoted into
+  leads in one transaction with the link kept both ways (BR-LL-02), parked, or
+  dropped with a reason (BR-LL-03); never deleted. Progress (lead status, pipeline
+  stage, outcome) and the planned-book coverage per year are derived at read time
+  through the links, which is what makes the budget track automatically tracked.
+  The console maps the flow with a strip (Longlist, Leads, Pipeline, Won) across
+  the three pages, and the sidebar gains Longlist between Accounts and Leads.
+- **Reason:** User direction on 2026-09-13: the funnel needs a step 0 where scraped
+  lists, budget-planning names and someday names live before anyone types a lead.
+  The name "longlist" avoids colliding with the Prospecting stage and Targets.
+- **Assumptions:** Account-grain budget planning does not exist in the schema, so
+  automatic entry from the budget is out of scope; the planning list is imported
+  or pasted yearly and the tracking is automatic from there. Reads are shared
+  across BD (D-11), so longlist rows carry no per-row visibility scope.
+- **Consequences:** New `longlist_entry` table with `longlist_track_t` and
+  `longlist_status_t` enums (migration 0004). Leads gain a reverse link shown on
+  the lead page. Requirements recorded as FR-LL-01..03 and BR-LL-01..03 in doc 02
+  §4.1a. The nav order deviates from doc 07 §1 by one inserted item.
+- **Status:** Adopted 2026-09-13 under user direction.
+
+### D-30: Account relationships and renewal/expansion follow BD
+
+- **Decision:** Keep the first release focused on Business Development. The next CRM
+  priority is account relationships and renewal/expansion opportunities.
+- **Reason:** The user explicitly selected this direction on 2026-09-13.
+- **Assumptions:** Shared account/contact identities remain the foundation. Commercial
+  renewal dates require a verified source; policy administration remains external.
+- **Consequences:** Doc 13 sequences relationship ownership and history, renewal worklists,
+  then expansion pursuits after BD acceptance. These are proposed work packages, not new
+  approved business rules. D-15 integration limits and D-16 conditional pack scope remain
+  in force; servicing is not silently added to Phase 1. Doc 11 links the current sequence.
+- **Status:** Direction confirmed; detailed scope, measures, and estimates remain to be agreed.
+
+### D-31: Read-only roadmap in the console
+
+- **Decision:** Add Roadmap after Reports in the signed-in sidebar, available to all
+  console roles. It presents the doc 13 review snapshot: proposed gates, filterable
+  IP-01–12 priorities, D-30 relationship growth, decisions, and official research links.
+- **Reason:** The user requested the review and roadmap in the UI.
+- **Assumptions:** This is shared product planning information, with no business records
+  or live delivery data. Existing console authentication applies.
+- **Consequences:** No editing or progress mutations. Labels distinguish confirmed
+  direction, proposed work, and open-at-review findings. Keep the dated UI summary in
+  sync with doc 13 when the plan changes; do not imply automatic status tracking.
+- **Status:** Adopted 2026-09-13 under user-delegated design authority.
+
+### D-32: Console restyled after the Kargul Studio sales CRM reference
+
+- **Decision:** Adopt the design language of the supplied reference
+  (sales-crm-kargulstudio.vercel.app) as the console standard, starting with the shell
+  and the accounts page: dark-first token set with a derived light variant, pill-shaped
+  controls with layered shadows, split label/value filter dropdowns applied on click,
+  a 254px sectioned sidebar, flat 12px column captions with 42px data rows, colored tag
+  pills for sector and unit, a segmented win-probability meter, and a summary strip
+  under the table. The primary accent stays Minet crimson; the console default theme
+  becomes dark with the switcher retained.
+- **Reason:** The user supplied the reference and asked that the accounts page and the
+  shell follow it, as the design baseline for subsequent pages. Dark default with a
+  light variant and the crimson accent were confirmed by the user.
+- **Assumptions:** The light variant is a derivation, not a copy, since the reference
+  ships dark only. Sector tags map to tag hues by a stable name hash; units use the
+  neutral tag. Win probability per account is weighted open pipeline divided by
+  expected open pipeline, computed at read time from v_schedule_line_weighted, never
+  stored. Sorting moved from column headers into the Sort by dropdown. Row selection
+  is visual only until bulk actions exist.
+- **Consequences:** Shared shadcn tokens changed, so all console pages inherit the
+  palette immediately and should be brought onto the pill/table patterns as they are
+  touched. The landing page does not use these tokens and is unaffected. Reference
+  elements without a real backing feature (Export, tabs, notifications, avatars) were
+  omitted rather than rendered dead.
+- **Status:** Adopted 2026-09-14 under user-delegated design authority.
+
+### D-33: Account details page as the management workspace
+
+- **Decision:** With the list-side detail drawer covering the read-only glance, the
+  account page is the management surface: header with edit and add-contact sheets, an
+  overview tile strip sharing the drawer's derived figures, a pursuits table from the
+  account's opportunities, matched open leads, contact cards, a stage-movement
+  timeline, and engagement counts from the activity table over the last 30 days.
+- **Reason:** The user approved this structure after the reference-derived proposal,
+  and asked for engagement counts now with score cards to follow.
+- **Assumptions:** Engagement tiles show real activity rows and read zero until
+  activities are captured in the UI. Score cards and health grades wait for a defined
+  scoring model; none is invented. Account edits go through withAudit, and a unique
+  name collision is rejected citing FR-ACC-02.
+- **Consequences:** New opportunity creation is absent from the page until a creation
+  flow exists. All figures remain derived at read time.
+- **Status:** Adopted 2026-09-15 under user-delegated design authority.
+
+### D-34: Account merge runs from the duplicate toward a survivor
+
+- **Decision:** Implement FR-ACC-04 as a Merge sheet on the account page: pick the
+  surviving account, confirm archiving, then contacts, opportunities, activities,
+  lead matches, and longlist matches move to the survivor and the source is archived,
+  all in one transaction with audit entries on both accounts.
+- **Reason:** The user asked for the missing merge after reviewing how accounts come
+  about. Running the merge from the duplicate's page matches how duplicates are found.
+- **Assumptions:** Archiving frees the source name under the partial unique index, so
+  no rename is needed. No unmerge is provided; the audit trail records both sides.
+- **Consequences:** Derived figures move with the children automatically. The survivor
+  picker lists the first 200 active accounts alphabetically.
+- **Status:** Adopted 2026-09-15 under user-delegated design authority.
 
 ## Part B — Open-question register
 
@@ -103,3 +289,18 @@ D-12) · J6 non-BD pursuit owners (◽ doc 06 note).
 An answer lands → update the question's status here, flip any linked D-xx to Confirmed/Revised,
 then propagate to the affected doc(s) in the same commit. This file's history *is* the
 decision history.
+
+## Implementation review follow-up, 2026-09-13
+
+The [CRM review and BD roadmap](13-bd-crm-review-and-roadmap.md) records IP-01–12
+against baseline `0c90465`, with targeted delta notes through `4e78cab`. Engineering
+owns authorization, session revocation, concurrency, next-action invariants, auditing, validation, financial
+correctness, and job-delivery fixes. The BD lead and project lead own the documented
+policy/migration contradictions and release acceptance. Each finding includes evidence,
+a concrete follow-up, and a validation condition. All are open at review publication.
+
+The release sequence is proposed, not an approved reduction of Phase-1 scope. D-12
+leadership workload visibility, admin/business-role composition, Server Actions versus
+doc 05 REST transport, and migration grain guidance require explicit resolution.
+Existing D-15/D-16 and FR/BR requirements remain in force. Track closure in doc 13
+with implementation commits and evidence; do not silently mark these as implemented.

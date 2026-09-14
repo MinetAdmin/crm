@@ -8,6 +8,9 @@ document fixes *what each screen must contain and enforce*.
 
 - **Navigation:** Dashboard · Leads · Opportunities · Initiatives · Tenders · Reports ·
   Targets · Admin (role-dependent).
+- **Shell (D-24):** shadcn/ui throughout; collapsible icon sidebar with tooltip labels when
+  collapsed; page identity lives in the header breadcrumb, so screens render no page headings
+  of their own.
 - **Global search** across accounts, opportunities, leads, tenders by name/ID.
 - **Exception badge** in the nav: count of the user's hygiene exceptions (FR-RPT-12).
 - Every derived figure is visually distinct from entered figures (subtle "calculated" styling) —
@@ -16,6 +19,39 @@ document fixes *what each screen must contain and enforce*.
   with the "meaningful from" date, never an empty chart or a zero.
 - Concurrency conflicts (409) render as "Someone else changed this record — review and retry",
   showing whose change and when.
+
+### 1.1 Public landing palette (D-25)
+
+The landing page uses warm white (`#faf9f8`), neutral gray text and washes, and
+charcoal panels (`#1b1e22`). Dark mode uses a charcoal page (`#111316`) with lighter
+cards and panels. Sign-in buttons and text selection retain crimson (`#c8102e`)
+with white text in both themes. Red text on dark surfaces uses `#e85b60` independently
+of button backgrounds. Charts use muted sage (`#91bda5`), amber (`#d1ad68`), and slate
+(`#a5acb5`), with the existing category labels retained. Palette tokens remain scoped
+to `.landing` in `src/components/landing/landing.css`.
+
+Primary sign-in links use a white circular arrow inset at the right edge (D-26).
+On hover or keyboard focus the arrow slides right and re-enters from the left once;
+reduced-motion users see a static arrow.
+
+### 1.2 Signed-in palette and console design language (D-27, superseded by D-32)
+
+The console follows the Kargul Studio sales CRM reference (D-32): dark-first with a
+derived light variant, defaulting to dark. Dark surfaces step from page (`#161616`)
+and sidebar (`#171717`) to cards (`#1b1d20`), pills (`#1e1e1e`), and hover/selected
+washes (`#2a2a2a`); borders are `#232323` and muted text `#7f7f7f`. Buttons stay
+crimson (`#c8102e`) with white labels in both themes; links, active navigation icons,
+and red status text use `--c-brand` (`#f0787c` in dark mode).
+
+Console controls are 30px pills with layered shadows (`--pill-shadow`,
+`--pill-shadow-primary`) and a 0.96 press scale. List filters are split label/value
+dropdown pills that apply on click; sorting lives in a Sort by pill, not column
+headers. Tables use 12px muted column captions on 38px header rows, 42px data rows,
+full-bleed borders, colored tag pills (`--tag-*`) for categorical values, tabular
+numerals right-aligned with a muted currency prefix, and a summary strip of outlined
+cells under the table. Semantic accents use `--success`, `--warning`, `--danger`,
+`--track`, and `--status`. Destructive controls use a 5% tint, rising to 10% on
+hover, to keep red labels readable.
 
 ## 2. Screens
 
@@ -96,3 +132,12 @@ Everything else may degrade to "readable".
 Every list's empty state says what the list is for and what fills it. Report empty states
 follow FR-RPT-11. The first-quarter experience decides whether the team trusts the system
 (Spec §16) — empty states are part of the product, not polish.
+
+### Roadmap (D-31)
+
+`/console/roadmap` appears after Reports for all signed-in roles. Show the dated doc 13
+review summary, confirmed BD → account relationships → renewal/expansion direction,
+proposed release gates with selectable exit criteria, and findings filtered by All/P0/P1.
+Include relationship-growth increments, outstanding decisions, and official research links.
+Use the console palette and shadcn controls. This is read-only planning information;
+status is explicitly the review snapshot, not live implementation progress.

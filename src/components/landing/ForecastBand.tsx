@@ -1,5 +1,3 @@
-/** The full-year target as won, committed, weighted and gap. Illustrative figures. */
-
 const SEGMENTS: ReadonlyArray<{
   key: string;
   label: string;
@@ -55,7 +53,7 @@ export function ForecastBand() {
               {
                 flexGrow: segment.share,
                 backgroundColor: segment.fill,
-                border: segment.open ? "1px dashed var(--lp-brand)" : "none",
+                border: segment.open ? "1px dashed var(--lp-panel-brand)" : "none",
                 "--lp-delay": `${0.35 + index * 0.14}s`,
               } as React.CSSProperties
             }
@@ -70,13 +68,13 @@ export function ForecastBand() {
               className="mt-1 size-2 shrink-0 rounded-full"
               style={{
                 backgroundColor: segment.open ? "transparent" : segment.fill,
-                border: segment.open ? "1px dashed var(--lp-brand)" : "none",
+                border: segment.open ? "1px dashed var(--lp-panel-brand)" : "none",
               }}
               aria-hidden
             />
             <div className="grid content-start gap-0.5">
               <dt className="lp-num text-[11px] text-(--lp-panel-muted)">{segment.label}</dt>
-              <dd className={`lp-num text-sm ${segment.open ? "text-(--lp-brand)" : ""}`}>
+              <dd className={`lp-num text-sm ${segment.open ? "text-(--lp-panel-brand)" : ""}`}>
                 {segment.amount}
               </dd>
             </div>
@@ -96,7 +94,7 @@ export function ForecastBand() {
             <dt className="lp-num truncate text-[11px] text-(--lp-panel-muted)">
               {segment.label}
             </dt>
-            <dd className={`lp-num text-base ${segment.open ? "text-(--lp-brand)" : ""}`}>
+            <dd className={`lp-num text-base ${segment.open ? "text-(--lp-panel-brand)" : ""}`}>
               {segment.amount}
             </dd>
           </div>

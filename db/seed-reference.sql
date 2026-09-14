@@ -63,8 +63,28 @@ FROM (VALUES
 ) AS v(list_code, code, label, sort_order)
 JOIN ref_list l ON l.code = v.list_code
 ON CONFLICT (list_id, code) DO NOTHING;
--- loss_reason, disqualification_reason, hold_reason and tender_outcome_reason
--- are seeded from the controlled-list workshop (doc 09 §1).
+-- Starting values pending the controlled-list workshop (doc 09 §1, B3), which
+-- replaces them with the reasons the team actually uses.
+INSERT INTO ref_value (list_id, code, label, sort_order)
+SELECT l.id, v.code, v.label, v.sort_order
+FROM (VALUES
+  ('loss_reason', 'price',        'Price',                      1),
+  ('loss_reason', 'incumbent',    'Incumbent retained',         2),
+  ('loss_reason', 'cover_terms',  'Cover or terms',             3),
+  ('loss_reason', 'no_decision',  'No decision taken',          4),
+  ('loss_reason', 'relationship', 'Relationship or influence',  5),
+  ('loss_reason', 'other',        'Other',                      9),
+  ('hold_reason', 'client_delay', 'Client deferred',            1),
+  ('hold_reason', 'budget',       'Budget not released',        2),
+  ('hold_reason', 'awaiting_info','Awaiting information',       3),
+  ('hold_reason', 'other',        'Other',                      9),
+  ('disqualification_reason', 'no_budget',   'No budget',        1),
+  ('disqualification_reason', 'no_need',     'No need',          2),
+  ('disqualification_reason', 'unreachable', 'Unreachable',      3),
+  ('disqualification_reason', 'other',       'Other',            9)
+) AS v(list_code, code, label, sort_order)
+JOIN ref_list l ON l.code = v.list_code
+ON CONFLICT (list_id, code) DO NOTHING;
 
 -- System settings (FR-ADM-03)
 INSERT INTO system_setting (key, value) VALUES

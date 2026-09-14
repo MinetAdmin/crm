@@ -15,21 +15,22 @@ model migrations {
 }
 
 model account {
-  id              BigInt        @id @default(autoincrement())
+  id              BigInt           @id @default(autoincrement())
   name            String
-  normalized_name String?       @default(dbgenerated("lower(regexp_replace(name, '\\s+'::text, ' '::text, 'g'::text))"))
+  normalized_name String?          @default(dbgenerated("lower(regexp_replace(name, '\\s+'::text, ' '::text, 'g'::text))"))
   sector_id       BigInt?
   unit_id         BigInt?
-  country         String        @default("UG") @db.Char(2)
+  country         String           @default("UG") @db.Char(2)
   operations_ref  String?
-  created_at      DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime      @default(now()) @db.Timestamptz(6)
-  archived_at     DateTime?     @db.Timestamptz(6)
-  sector          sector?       @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  unit            unit?         @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  created_at      DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime         @default(now()) @db.Timestamptz(6)
+  archived_at     DateTime?        @db.Timestamptz(6)
+  sector          sector?          @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit            unit?            @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   activity        activity[]
   contact         contact[]
   lead            lead[]
+  longlist_entry  longlist_entry[]
   opportunity     opportunity[]
 }
 
@@ -73,6 +74,7 @@ model app_user {
   initiative_co_champion                                        initiative_co_champion[]
   initiative_note                                               initiative_note[]
   lead                                                          lead[]
+  longlist_entry                                                longlist_entry[]
   opportunity_opportunity_created_byToapp_user                  opportunity[]            @relation("opportunity_created_byToapp_user")
   opportunity_opportunity_owner_idToapp_user                    opportunity[]            @relation("opportunity_owner_idToapp_user")
   opportunity_opportunity_updated_byToapp_user                  opportunity[]            @relation("opportunity_updated_byToapp_user")
@@ -218,6 +220,7 @@ model lead {
   ref_value_lead_source_idToref_value                    ref_value               @relation("lead_source_idToref_value", fields: [source_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   unit                                                   unit                    @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lead_product_interest                                  lead_product_interest[]
+  longlist_entry                                         longlist_entry[]
   opportunity_opportunity_source_lead_idTolead           opportunity[]           @relation("opportunity_source_lead_idTolead")
 }
 
@@ -404,6 +407,7 @@ model sector {
   active               Boolean                @default(true)
   account              account[]
   lead                 lead[]
+  longlist_entry       longlist_entry[]
   opportunity          opportunity[]
   revenue_actual       revenue_actual[]
   unit                 unit                   @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -549,11 +553,37 @@ model unit {
   app_user             app_user[]
   budget_line          budget_line[]
   lead                 lead[]
+  longlist_entry       longlist_entry[]
   opportunity          opportunity[]
   sector               sector[]
   strategic_initiative strategic_initiative[]
   target               target[]
   tender               tender[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model longlist_entry {
+  id                 BigInt            @id @default(autoincrement())
+  company_name       String
+  track              longlist_track_t  @default(anytime)
+  plan_year          Int?              @db.SmallInt
+  source             String?
+  sector_id          BigInt?
+  unit_id            BigInt?
+  notes              String?
+  status             longlist_status_t @default(unworked)
+  drop_reason        String?
+  matched_account_id BigInt?
+  promoted_lead_id   BigInt?
+  created_by         BigInt
+  created_at         DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime          @default(now()) @db.Timestamptz(6)
+  archived_at        DateTime?         @db.Timestamptz(6)
+  app_user           app_user          @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account            account?          @relation(fields: [matched_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lead               lead?             @relation(fields: [promoted_lead_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sector             sector?           @relation(fields: [sector_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit               unit?             @relation(fields: [unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum activity_type_t {
@@ -646,4 +676,16 @@ enum value_basis_t {
   brokerage_income
   sum_insured
   premium
+}
+
+enum longlist_status_t {
+  unworked
+  picked
+  parked
+  dropped
+}
+
+enum longlist_track_t {
+  planned
+  anytime
 }

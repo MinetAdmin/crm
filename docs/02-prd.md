@@ -54,6 +54,20 @@ reference to the resulting account.
   decision-maker flag.
 - **FR-ACC-04** SHOULD support account merge (survivor keeps all children; merge is audited).
 
+### 4.1a Longlist (LL) — D-29
+
+- **FR-LL-01** MUST hold the pre-lead register: company name (free text, deliberately
+  unvalidated), track (`planned` | `anytime`), plan year for planned entries, source,
+  optional unit and sector, notes. Bulk paste is the primary entry path.
+- **FR-LL-02** MUST promote an entry into a lead in one transaction, marking the entry
+  *picked* and linking entry→lead. Entries are never deleted; parked and dropped names
+  stay on the register.
+- **FR-LL-03** MUST derive each entry's onward progress (lead status, pipeline stage,
+  outcome) and the planned-book coverage per budget year at read time via the links.
+- **BR-LL-01** A planned entry names its budget year.
+- **BR-LL-02** Status *picked* requires the promoted lead link.
+- **BR-LL-03** Dropping a name requires a reason.
+
 ### 4.2 Leads (LEAD) — Spec §5.1
 
 - **FR-LEAD-01** MUST capture leads with the §5.1 field set; company name checked against

@@ -9,6 +9,15 @@ project lead, not the developer, or the build stalls every time a workshop needs
 (b) scope relief comes from *deferring whole blocks* (budget lines per D3, the rebalancing
 view, XLSX polish), never from thinning the three §11 non-negotiables or stage history.
 
+## Current roadmap review, 2026-09-13
+
+The [implementation review and roadmap](13-bd-crm-review-and-roadmap.md) records the
+remaining BE/FE gaps and proposes evidence-based release gates. D-30 confirms the
+post-BD direction: account relationships, then renewal/expansion opportunities. The
+calendar below is historical planning context, not a current remaining-effort estimate;
+re-estimate after the foundation findings are sized. Existing Phase-1 acceptance criteria
+remain in force. Servicing and pack production are separate scope decisions.
+
 ## 0. Two tracks
 
 - **Build track** — starts immediately; blocked by nothing in the question list.

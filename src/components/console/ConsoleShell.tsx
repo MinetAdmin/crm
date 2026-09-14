@@ -1,79 +1,276 @@
+"use client";
+
+import * as React from "react";
+
+import { Search } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-import { Wordmark } from "@/components/brand/Wordmark";
-import { navFor } from "./nav";
+import { Logo } from "@/components/brand/Logo";
+import { NotificationsMenu } from "@/components/console/NotificationsMenu";
+import { ProfileSheet } from "@/components/console/ProfileSheet";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-/** Console chrome: sections, the signed-in person, and the page. */
+import { HEADER_ACTIONS_ID } from "./HeaderActions";
+import { navFor, navSectionsFor, type NavItem } from "./nav";
+
+type ConsoleUser = { name: string; email: string; role: string };
+
+type NavCounts = Readonly<Record<string, number>>;
+
 export function ConsoleShell({
   user,
   signOutAction,
+  defaultSidebarOpen = true,
+  counts = {},
+  freshActivity = false,
   children,
 }: Readonly<{
-  user: { name: string; email: string; role: string };
+  user: ConsoleUser;
   signOutAction: () => Promise<void>;
+  defaultSidebarOpen?: boolean;
+  counts?: NavCounts;
+  freshActivity?: boolean;
   children: React.ReactNode;
 }>) {
-  const items = navFor(user.role);
+  return (
+    <TooltipProvider>
+      <SidebarProvider defaultOpen={defaultSidebarOpen}>
+        <ConsoleSidebar user={user} counts={counts} />
+        <SidebarInset className="h-svh">
+          <ConsoleHeader
+            user={user}
+            signOutAction={signOutAction}
+            freshActivity={freshActivity}
+          />
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:px-6">
+            {children}
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
+  );
+}
+
+function ConsoleSidebar({
+  user,
+  counts,
+}: Readonly<{ user: ConsoleUser; counts: NavCounts }>) {
+  const pathname = usePathname();
+  const sections = navSectionsFor(user.role);
 
   return (
-    <div className="flex min-h-svh flex-col lg:flex-row">
-      <aside className="shrink-0 border-b border-(--c-line-soft) bg-(--c-surface) lg:w-60 lg:border-r lg:border-b-0">
-        <div className="px-5 py-4 lg:px-6">
-          <Link href="/console">
-            <Wordmark />
-          </Link>
-        </div>
-
-        <nav aria-label="Sections" className="px-2 pb-3 lg:px-3">
-          <ul className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
-            {items.map((item) => (
-              <li key={item.label} className="shrink-0 lg:shrink">
-                {item.href ? (
-                  <Link
-                    href={item.href}
-                    aria-current="page"
-                    className="block rounded-md bg-(--c-wash) px-3 py-2 text-sm font-medium whitespace-nowrap"
-                  >
-                    {item.label}
-                  </Link>
-                ) : (
-                  <span
-                    aria-disabled="true"
-                    title="Not built yet"
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap text-(--c-muted)"
-                  >
-                    {item.label}
-                    <span className="rounded border border-(--c-line) px-1 text-[10px] tracking-wide">
-                      soon
-                    </span>
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b border-(--c-line-soft) px-5 py-3.5 md:px-8">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{user.name}</p>
-            <p className="truncate text-[13px] text-(--c-muted)">
-              {user.email} · {user.role.replaceAll("_", " ")}
-            </p>
-          </div>
-          <form action={signOutAction}>
-            <button
-              type="submit"
-              className="rounded-full border border-(--c-line) px-4 py-1.5 text-sm font-medium transition-colors hover:bg-(--c-wash)"
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="h-14 shrink-0 justify-center border-b border-sidebar-border bg-sidebar-accent px-3 py-0 group-data-[collapsible=icon]:px-2">
+        <SidebarMenu>
+          <CenteredMenuItem>
+            <SidebarMenuButton
+              asChild
+              size="lg"
+              className="hover:bg-transparent active:bg-transparent group-data-[collapsible=icon]:p-0!"
             >
-              Sign out
-            </button>
-          </form>
-        </header>
+              <Link href="/console">
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary shadow-(--pill-shadow)">
+                  <Logo size={18} />
+                </span>
+                <span className="grid min-w-0 flex-1 gap-1 leading-none">
+                  <span className="truncate text-sm font-medium">Minet CRM</span>
+                  <span className="truncate text-xs text-(--subtle)">Business development</span>
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </CenteredMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-        <main className="flex-1 px-5 py-8 md:px-8 md:py-10">{children}</main>
+      <SidebarContent>
+        {sections.map((section) => (
+          <SidebarGroup
+            key={section.label ?? "main"}
+            className="border-b border-sidebar-border px-3 py-2 last:border-b-0 group-data-[collapsible=icon]:px-2"
+          >
+            {section.label && (
+              <SidebarGroupLabel className="h-6 px-2 text-[11px] font-medium tracking-[0.08em] text-(--subtle) uppercase">
+                {section.label}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                {section.items.map((item) => (
+                  <NavEntry
+                    key={item.label}
+                    item={item}
+                    pathname={pathname}
+                    count={item.href ? counts[item.href] : undefined}
+                  />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+      <SidebarRail />
+    </Sidebar>
+  );
+}
+
+function CenteredMenuItem({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+      {children}
+    </SidebarMenuItem>
+  );
+}
+
+function NavEntry({
+  item,
+  pathname,
+  count,
+}: Readonly<{ item: NavItem; pathname: string; count?: number }>) {
+  if (!item.href) {
+    return (
+      <CenteredMenuItem>
+        <SidebarMenuButton disabled tooltip={`${item.label} (not built yet)`}>
+          <item.icon />
+          <span>{item.label}</span>
+        </SidebarMenuButton>
+      </CenteredMenuItem>
+    );
+  }
+
+  const active =
+    item.href === "/console"
+      ? pathname === "/console"
+      : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+  return (
+    <CenteredMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={active}
+        tooltip={item.label}
+        className="h-[30px] rounded-lg text-sidebar-foreground transition-[background-color,color,box-shadow] duration-150 ease-(--ease-out-strong) hover:bg-transparent hover:text-foreground data-active:h-8 data-active:bg-sidebar-primary data-active:text-foreground data-active:shadow-(--pill-shadow) [&_svg]:size-3.5 [&_svg]:text-(--subtle) [&[data-active=true]_svg]:text-(--icon)"
+      >
+        <Link href={item.href}>
+          <item.icon />
+          <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+          {count !== undefined && (
+            <span className="inline-flex h-4 min-w-6 shrink-0 items-center justify-center rounded-full border border-(--faint)/50 bg-muted px-1 text-[11px] leading-none text-(--chip) tabular-nums group-data-[collapsible=icon]:hidden">
+              {count}
+            </span>
+          )}
+        </Link>
+      </SidebarMenuButton>
+    </CenteredMenuItem>
+  );
+}
+
+function ConsoleHeader({
+  user,
+  signOutAction,
+  freshActivity,
+}: Readonly<{
+  user: ConsoleUser;
+  signOutAction: () => Promise<void>;
+  freshActivity: boolean;
+}>) {
+  return (
+    <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-4 md:px-6">
+      <div className="flex min-w-0 items-center gap-2">
+        <SidebarTrigger className="-ml-1.5" />
+        <HeaderTitle />
       </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <div id={HEADER_ACTIONS_ID} className="flex items-center gap-2" />
+        <button
+          type="button"
+          aria-label="Search (not built yet)"
+          title="Not built yet"
+          disabled
+          className="inline-flex size-[30px] shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground shadow-(--pill-shadow) disabled:opacity-50"
+        >
+          <Search className="size-3.5" aria-hidden />
+        </button>
+        <NotificationsMenu unread={freshActivity} />
+        <ProfileSheet user={user} signOutAction={signOutAction} />
+      </div>
+    </header>
+  );
+}
+
+const PAGE_STATUS: Readonly<Record<string, string>> = {
+  "/console/accounts": "Active",
+};
+
+function HeaderTitle() {
+  const pathname = usePathname();
+  const { crumbs, page } = crumbsFor(pathname);
+  const status = PAGE_STATUS[pathname];
+
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      {crumbs.slice(1).map((crumb) => (
+        <React.Fragment key={crumb.href}>
+          <Link
+            href={crumb.href}
+            className="truncate text-xs text-(--subtle) transition-colors duration-150 hover:text-foreground"
+          >
+            {crumb.label}
+          </Link>
+          <span aria-hidden className="text-xs text-(--faint)">
+            /
+          </span>
+        </React.Fragment>
+      ))}
+      <h1 className="truncate text-[16px] leading-none font-medium">{page}</h1>
+      {status && (
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-(--faint)/50 bg-muted py-[3px] pr-[7px] pl-[6px] text-[11px] leading-none">
+          <span aria-hidden className="size-2 rounded-full bg-(--status)" />
+          {status}
+        </span>
+      )}
     </div>
   );
+}
+
+function crumbsFor(pathname: string): {
+  crumbs: Array<{ label: string; href: string }>;
+  page: string;
+} {
+  const crumbs = [{ label: "Console", href: "/console" }];
+  const section = navFor("admin").find(
+    (item) =>
+      item.href &&
+      item.href !== "/console" &&
+      (pathname === item.href || pathname.startsWith(`${item.href}/`)),
+  );
+  if (!section?.href) return { crumbs, page: "Dashboard" };
+
+  const rest = pathname.slice(section.href.length).split("/").filter(Boolean);
+  if (rest.length === 0) return { crumbs, page: section.label };
+
+  crumbs.push({ label: section.label, href: section.href });
+  return { crumbs, page: prettify(rest[rest.length - 1]) };
+}
+
+function prettify(segment: string): string {
+  const text = decodeURIComponent(segment).replaceAll("-", " ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }

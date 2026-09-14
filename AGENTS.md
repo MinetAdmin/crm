@@ -35,6 +35,22 @@ without being asked.
   "looks safe".
 - Keep the CI workflow passing. If a change breaks a CI step, fix the change or
   the workflow in the same commit; never commit knowing CI will fail.
+- Leave no linter or SonarQube warning behind. Check the diagnostics for every
+  file you touch and clear them before committing, rather than leaving them for
+  the next agent.
+
+## UI
+
+- Build on shadcn/ui primitives from `src/components/ui`, composed through the
+  wrappers in `src/components/console`. Do not hand-roll inputs, selects,
+  checkboxes, buttons, or overlays; tweak the shadcn base instead.
+- Every data-entry form lives in a `FormSheet` drawer (D-28): no dismissal on
+  click-away or Escape, explicit close or successful save only, with a Reset.
+  Single-control inline actions stay inline.
+- Sheet form errors are returned action state rendered inside the sheet, never
+  redirect query params.
+- Keep spacing tight and consistent: gap-3 between fields, gap-1.5 from label
+  to control. Do not add extra gaps between elements; clean and professional.
 
 ## Writing
 
