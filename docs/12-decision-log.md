@@ -188,6 +188,23 @@ loader the default. This warning is outside the landing presentation change.
   omitted rather than rendered dead.
 - **Status:** Adopted 2026-09-14 under user-delegated design authority.
 
+### D-33: Account details page as the management workspace
+
+- **Decision:** With the list-side detail drawer covering the read-only glance, the
+  account page is the management surface: header with edit and add-contact sheets, an
+  overview tile strip sharing the drawer's derived figures, a pursuits table from the
+  account's opportunities, matched open leads, contact cards, a stage-movement
+  timeline, and engagement counts from the activity table over the last 30 days.
+- **Reason:** The user approved this structure after the reference-derived proposal,
+  and asked for engagement counts now with score cards to follow.
+- **Assumptions:** Engagement tiles show real activity rows and read zero until
+  activities are captured in the UI. Score cards and health grades wait for a defined
+  scoring model; none is invented. Account edits go through withAudit, and a unique
+  name collision is rejected citing FR-ACC-02.
+- **Consequences:** New opportunity creation is absent from the page until a creation
+  flow exists. All figures remain derived at read time.
+- **Status:** Adopted 2026-09-15 under user-delegated design authority.
+
 ## Part B — Open-question register
 
 Status: ⛔ **Blocker** (gates migration or scope) · ❗ High (changes design) · ◽ Normal

@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import type { FormSheetState } from "@/components/console/FormSheet";
-import { createAccount, createContact, duplicatesFor } from "@/lib/accounts";
+import { Prisma } from "@prisma/client";
+
+import { createAccount, createContact, duplicatesFor, updateAccount } from "@/lib/accounts";
 
 async function actorId(): Promise<bigint> {
   const session = await auth();
@@ -37,6 +39,36 @@ export async function submitAccount(_state: FormSheetState, form: FormData): Pro
   );
   revalidatePath("/console/accounts");
   redirect(`/console/accounts/${id}`);
+}
+
+export async function submitAccountEdit(
+  _state: FormSheetState,
+  form: FormData,
+): Promise<FormSheetState> {
+  const accountId = text(form, "accountId");
+  const name = text(form, "name");
+  if (!accountId) return { error: "The account is missing." };
+  if (!name) return { error: "A name is required." };
+
+  try {
+    await updateAccount(
+      accountId,
+      {
+        name,
+        sectorId: text(form, "sectorId") || undefined,
+        unitId: text(form, "unitId") || undefined,
+      },
+      await actorId(),
+    );
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { error: "An active account with this name already exists (FR-ACC-02)." };
+    }
+    throw error;
+  }
+  revalidatePath("/console/accounts");
+  revalidatePath(`/console/accounts/${accountId}`);
+  return { ok: true };
 }
 
 export async function submitContact(_state: FormSheetState, form: FormData): Promise<FormSheetState> {

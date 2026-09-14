@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import { db } from "./db";
-import { writeAudit } from "./audit";
+import { withAudit, writeAudit } from "./audit";
 import { findLikelyDuplicates, type AccountMatch } from "./account-name";
 import { TREND_WEEKS, type AccountRow } from "./account-table";
 
@@ -317,6 +317,194 @@ export async function accountPanelStats(id: string): Promise<AccountPanelStats> 
     trend: trends.get(id) ?? [],
     lastMovement: agg?.lastMovement?.toISOString().slice(0, 10) ?? null,
   };
+}
+
+export type AccountPursuit = {
+  id: string;
+  name: string;
+  outcome: string;
+  stageCode: string;
+  stage: string;
+  owner: string;
+  expected: number;
+  weighted: number;
+  probability: number;
+  lastMovement: string | null;
+};
+
+/** The account's opportunities with stage, owner, and money, open first. */
+export async function accountPursuits(accountId: string): Promise<AccountPursuit[]> {
+  const rows = await db().$queryRaw<
+    {
+      id: string;
+      name: string;
+      outcome: string;
+      stage_code: string;
+      stage: string;
+      owner: string;
+      expected: string;
+      weighted: string;
+      probability: number;
+      last_movement: Date | null;
+    }[]
+  >`
+    SELECT o.id::text AS id,
+           o.name,
+           o.outcome::text AS outcome,
+           ps.code AS stage_code,
+           ps.name AS stage,
+           u.full_name AS owner,
+           COALESCE(w.expected, 0)::text AS expected,
+           COALESCE(w.weighted, 0)::text AS weighted,
+           o.probability::float8 AS probability,
+           m.last_move AS last_movement
+    FROM opportunity o
+    JOIN pipeline_stage ps ON ps.id = o.stage_id
+    JOIN app_user u ON u.id = o.owner_id
+    LEFT JOIN (SELECT opportunity_id, SUM(expected_amount) AS expected,
+                      SUM(weighted_amount) AS weighted
+               FROM v_schedule_line_weighted
+               GROUP BY opportunity_id) w ON w.opportunity_id = o.id
+    LEFT JOIN (SELECT opportunity_id, MAX(changed_at) AS last_move
+               FROM stage_history
+               GROUP BY opportunity_id) m ON m.opportunity_id = o.id
+    WHERE o.archived_at IS NULL AND o.account_id = ${BigInt(accountId)}
+    ORDER BY (o.outcome = 'open') DESC, COALESCE(w.weighted, 0) DESC, o.name ASC`;
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    outcome: row.outcome,
+    stageCode: row.stage_code,
+    stage: row.stage,
+    owner: row.owner,
+    expected: Number(row.expected),
+    weighted: Number(row.weighted),
+    probability: Number(row.probability),
+    lastMovement: row.last_movement?.toISOString().slice(0, 10) ?? null,
+  }));
+}
+
+export type AccountLead = {
+  id: string;
+  name: string;
+  status: string;
+  owner: string;
+  createdAt: string;
+};
+
+/** Matched leads still in play on this account. */
+export async function accountLeads(accountId: string): Promise<AccountLead[]> {
+  const rows = await db().$queryRaw<
+    { id: string; company_name: string; status: string; owner: string; created_at: Date }[]
+  >`
+    SELECT l.id::text AS id, l.company_name, l.status::text AS status,
+           u.full_name AS owner, l.created_at
+    FROM lead l
+    JOIN app_user u ON u.id = l.owner_id
+    WHERE l.matched_account_id = ${BigInt(accountId)}
+      AND l.archived_at IS NULL
+      AND l.status NOT IN ('converted', 'disqualified')
+    ORDER BY l.created_at DESC`;
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.company_name,
+    status: row.status,
+    owner: row.owner,
+    createdAt: row.created_at.toISOString().slice(0, 10),
+  }));
+}
+
+export type AccountMovement = {
+  id: string;
+  opportunity: string;
+  stage: string;
+  actor: string;
+  changedAt: string;
+};
+
+/** Stage movement timeline for the account, newest first. */
+export async function accountTimeline(accountId: string): Promise<AccountMovement[]> {
+  const rows = await db().$queryRaw<
+    { id: string; opportunity: string; stage: string; actor: string; changed_at: Date }[]
+  >`
+    SELECT sh.id::text AS id, o.name AS opportunity, ps.name AS stage,
+           u.full_name AS actor, sh.changed_at
+    FROM stage_history sh
+    JOIN opportunity o ON o.id = sh.opportunity_id
+    JOIN pipeline_stage ps ON ps.id = sh.to_stage_id
+    JOIN app_user u ON u.id = sh.changed_by
+    WHERE o.account_id = ${BigInt(accountId)} AND o.archived_at IS NULL
+    ORDER BY sh.changed_at DESC
+    LIMIT 12`;
+
+  return rows.map((row) => ({
+    id: row.id,
+    opportunity: row.opportunity,
+    stage: row.stage,
+    actor: row.actor,
+    changedAt: row.changed_at.toISOString().slice(0, 10),
+  }));
+}
+
+export type AccountEngagement = {
+  total: number;
+  meetings: number;
+  calls: number;
+  submissions: number;
+};
+
+/** Activity counts on the account over the last 30 days. */
+export async function accountEngagement(accountId: string): Promise<AccountEngagement> {
+  const id = BigInt(accountId);
+  const rows = await db().$queryRaw<{ type: string; count: number }[]>`
+    SELECT act.activity_type::text AS type, COUNT(*)::int AS count
+    FROM activity act
+    LEFT JOIN opportunity o ON o.id = act.opportunity_id
+    LEFT JOIN lead l ON l.id = act.lead_id
+    WHERE act.created_at > now() - interval '30 days'
+      AND (act.account_id = ${id} OR o.account_id = ${id} OR l.matched_account_id = ${id})
+    GROUP BY act.activity_type`;
+
+  const byType = new Map(rows.map((row) => [row.type, row.count]));
+  return {
+    total: rows.reduce((sum, row) => sum + row.count, 0),
+    meetings: byType.get("meeting") ?? 0,
+    calls: byType.get("call") ?? 0,
+    submissions: byType.get("submission") ?? 0,
+  };
+}
+
+export type AccountEdit = { name: string; sectorId?: string; unitId?: string };
+
+/** Updates the account's name and classification inside the audit transaction. */
+export async function updateAccount(
+  id: string,
+  input: AccountEdit,
+  actorId: bigint,
+): Promise<void> {
+  const accountId = BigInt(id);
+  const before = await db().account.findUniqueOrThrow({
+    where: { id: accountId },
+    select: { name: true, sector_id: true, unit_id: true },
+  });
+  await withAudit(db(), {
+    entity: "account",
+    entityId: accountId,
+    changedBy: actorId,
+    before,
+    mutate: (tx) =>
+      tx.account.update({
+        where: { id: accountId },
+        data: {
+          name: input.name.trim(),
+          sector_id: input.sectorId ? BigInt(input.sectorId) : null,
+          unit_id: input.unitId ? BigInt(input.unitId) : null,
+        },
+        select: { name: true, sector_id: true, unit_id: true },
+      }),
+  });
 }
 
 export type NewContact = {

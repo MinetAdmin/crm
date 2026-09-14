@@ -6,6 +6,7 @@ import { Mail, Phone } from "lucide-react";
 
 import { getAccountPanel, type AccountPanel } from "@/app/console/actions";
 import { pillClass, pillPrimaryClass, TagPill, tagToneFor } from "@/components/console/ui";
+import { PanelSection, StatTile } from "@/components/console/panel";
 import { ProbabilityMeter, TrendBars } from "@/components/console/viz";
 import { Button } from "@/components/ui/button";
 import {
@@ -195,28 +196,7 @@ function PanelContent({
   );
 }
 
-function PanelSection({
-  title,
-  children,
-}: Readonly<{ title: string; children: React.ReactNode }>) {
-  return (
-    <section className="grid content-start gap-2 border-t border-border pt-4">
-      <h3 className="text-[11px] font-medium tracking-[0.08em] text-(--subtle) uppercase">
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-}
 
-function StatTile({ label, value }: Readonly<{ label: string; value: string }>) {
-  return (
-    <div className="grid gap-1.5 rounded-lg border border-border p-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm leading-none font-medium tabular-nums">{value}</span>
-    </div>
-  );
-}
 
 function ContactLine({
   contact,
