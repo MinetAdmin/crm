@@ -51,9 +51,17 @@ export function Notice({
   );
 }
 
-export function EmptyState({ children }: Readonly<{ children: React.ReactNode }>) {
+export function EmptyState({
+  className,
+  children,
+}: Readonly<{ className?: string; children: React.ReactNode }>) {
   return (
-    <p className="rounded-md border border-dashed border-(--c-line) p-8 text-center text-sm text-(--c-muted)">
+    <p
+      className={cn(
+        "grid place-content-center rounded-md border border-dashed border-(--c-line) p-8 text-center text-sm text-(--c-muted)",
+        className,
+      )}
+    >
       {children}
     </p>
   );
@@ -94,6 +102,34 @@ const HASH_TONES: ReadonlyArray<TagTone> = [
   "teal",
   "yellow",
 ];
+
+export function leadStatusTone(status: string): TagTone {
+  switch (status) {
+    case "new":
+      return "blue";
+    case "contacted":
+      return "teal";
+    case "qualifying":
+      return "amber";
+    case "qualified":
+      return "green";
+    default:
+      return "neutral";
+  }
+}
+
+export function outcomeTone(outcome: string): TagTone {
+  switch (outcome) {
+    case "won":
+      return "green";
+    case "lost":
+      return "red";
+    case "on_hold":
+      return "amber";
+    default:
+      return "neutral";
+  }
+}
 
 export function tagToneFor(code: string): TagTone {
   let hash = 0;

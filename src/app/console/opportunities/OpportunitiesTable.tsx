@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 import { UserSheet } from "@/components/console/ProfileSheet";
-import { TagPill, tagToneFor } from "@/components/console/ui";
+import { outcomeTone, TagPill, tagToneFor } from "@/components/console/ui";
 import { ProbabilityMeter } from "@/components/console/viz";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -21,7 +21,7 @@ import { winProbability } from "@/lib/account-table";
 import { formatAmount, formatShortDate } from "@/lib/format";
 import type { OpportunityRow } from "@/lib/opportunities";
 
-import { OpportunityDetailSheet, outcomeTone } from "./OpportunityDetailSheet";
+import { OpportunityDetailSheet } from "./OpportunityDetailSheet";
 
 export type OpportunitySummary = {
   count: number;

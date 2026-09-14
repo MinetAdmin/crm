@@ -5,7 +5,14 @@ import { notFound } from "next/navigation";
 import { FormSheet } from "@/components/console/FormSheet";
 import { CheckboxField, FormSection, TextField } from "@/components/console/fields";
 import { PanelSection, StatTile } from "@/components/console/panel";
-import { EmptyState, pillClass, TagPill, tagToneFor, type TagTone } from "@/components/console/ui";
+import {
+  EmptyState,
+  leadStatusTone,
+  outcomeTone,
+  pillClass,
+  TagPill,
+  tagToneFor,
+} from "@/components/console/ui";
 import { ProbabilityMeter, TrendBars } from "@/components/console/viz";
 import { Button } from "@/components/ui/button";
 import {
@@ -143,7 +150,7 @@ export default async function AccountPage({
                     >
                       <span className="flex min-w-0 items-center gap-2">
                         <span className="truncate text-sm font-medium">{lead.name}</span>
-                        <TagPill tone={leadTone(lead.status)}>{lead.status}</TagPill>
+                        <TagPill tone={leadStatusTone(lead.status)}>{lead.status}</TagPill>
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {lead.owner} · {formatShortDate(lead.createdAt)}
@@ -375,30 +382,4 @@ function Muted({ children }: Readonly<{ children: React.ReactNode }>) {
   return <span className="text-(--c-muted)">{children}</span>;
 }
 
-function leadTone(status: string): TagTone {
-  switch (status) {
-    case "new":
-      return "blue";
-    case "contacted":
-      return "teal";
-    case "qualifying":
-      return "amber";
-    case "qualified":
-      return "green";
-    default:
-      return "neutral";
-  }
-}
 
-function outcomeTone(outcome: string): TagTone {
-  switch (outcome) {
-    case "won":
-      return "green";
-    case "lost":
-      return "red";
-    case "on_hold":
-      return "amber";
-    default:
-      return "neutral";
-  }
-}

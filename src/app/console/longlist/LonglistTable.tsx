@@ -5,8 +5,9 @@ import * as React from "react";
 import Link from "next/link";
 
 import { FormSheet } from "@/components/console/FormSheet";
+import { FormSection } from "@/components/console/fields";
 import { SelectField, TextField, TextareaField } from "@/components/console/fields";
-import { Badge } from "@/components/ui/badge";
+import { TagPill, tagToneFor } from "@/components/console/ui";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -36,10 +37,11 @@ export function LonglistTable({
   const [dropping, setDropping] = React.useState<LonglistEntryRow | null>(null);
 
   return (
-    <div className="overflow-x-auto rounded-md border border-(--c-line) bg-(--c-surface)">
-      <Table className="[&_td]:border-l [&_td]:border-(--c-line-soft) [&_td:first-child]:border-l-0 [&_th]:border-l [&_th]:border-(--c-line-soft) [&_th:first-child]:border-l-0">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-auto border-y border-border">
+      <Table className="text-sm leading-none [&_td]:h-[42px] [&_td]:px-3 [&_td]:py-0 [&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:h-[38px] [&_th]:border-b [&_th]:border-border [&_th]:bg-background [&_th]:px-3 [&_th]:text-xs [&_th]:font-normal [&_th]:whitespace-nowrap [&_th]:text-(--subtle)">
         <TableHeader>
-          <TableRow>
+          <TableRow className="hover:bg-transparent">
             <TableHead>Company</TableHead>
             <TableHead>Track</TableHead>
             <TableHead>Source</TableHead>
@@ -52,17 +54,28 @@ export function LonglistTable({
         </TableHeader>
         <TableBody>
           {entries.map((entry) => (
-            <TableRow key={entry.id}>
+            <TableRow
+              key={entry.id}
+              className="transition-colors duration-150 ease-(--ease-out-strong) hover:bg-card/60"
+            >
               <TableCell className="font-medium">{entry.companyName}</TableCell>
               <TableCell>
-                <Badge variant="outline">
+                <TagPill tone={entry.track === "planned" ? "blue" : "neutral"}>
                   {TRACK_LABEL[entry.track]}
                   {entry.planYear ? ` ${entry.planYear}` : ""}
-                </Badge>
+                </TagPill>
               </TableCell>
               <TableCell className="text-(--c-muted)">{entry.source ?? "Unknown"}</TableCell>
-              <TableCell className="text-(--c-muted)">{entry.unit ?? "Not set"}</TableCell>
-              <TableCell className="text-(--c-muted)">{entry.sector ?? "Not set"}</TableCell>
+              <TableCell>
+                {entry.unit ? <TagPill>{entry.unit}</TagPill> : <span className="text-(--c-muted)">Not set</span>}
+              </TableCell>
+              <TableCell>
+                {entry.sector ? (
+                  <TagPill tone={tagToneFor(entry.sector)}>{entry.sector}</TagPill>
+                ) : (
+                  <span className="text-(--c-muted)">Not set</span>
+                )}
+              </TableCell>
               <TableCell>
                 <ProgressCell entry={entry} />
               </TableCell>
@@ -78,6 +91,17 @@ export function LonglistTable({
           ))}
         </TableBody>
       </Table>
+      </div>
+
+      <div className="grid shrink-0 grid-cols-2 gap-px border-b border-border bg-background p-px text-xs sm:grid-cols-4">
+        <SummaryCell value={entries.length} label="names in view" />
+        <SummaryCell value={countByStatus(entries, "unworked")} label="unworked" />
+        <SummaryCell value={countByStatus(entries, "picked")} label="picked" />
+        <SummaryCell
+          value={countByStatus(entries, "parked") + countByStatus(entries, "dropped")}
+          label="parked or dropped"
+        />
+      </div>
 
       <FormSheet
         open={promoting !== null}
@@ -92,34 +116,38 @@ export function LonglistTable({
         {promoting && (
           <>
             <input type="hidden" name="entryId" value={promoting.id} />
-            <SelectField
-              label="Source"
-              name="sourceId"
-              emptyLabel="Choose a source"
-              options={options.sources}
-            />
-            <SelectField
-              label="Owner"
-              name="ownerId"
-              emptyLabel="Choose an owner"
-              options={options.owners}
-            />
-            <div className="grid grid-cols-2 gap-3">
+            <FormSection title="Routing">
               <SelectField
-                label="Unit"
-                name="unitId"
-                defaultValue={promoting.unitId ?? undefined}
-                emptyLabel="Choose a unit"
-                options={options.units}
+                label="Source"
+                name="sourceId"
+                emptyLabel="Choose a source"
+                options={options.sources}
               />
               <SelectField
-                label="Sector"
-                name="sectorId"
-                defaultValue={promoting.sectorId ?? undefined}
-                options={options.sectors}
+                label="Owner"
+                name="ownerId"
+                emptyLabel="Choose an owner"
+                options={options.owners}
               />
-            </div>
-            <TextField label="Estimated value (UGX)" name="estimatedValue" inputMode="numeric" />
+              <div className="grid grid-cols-2 gap-3">
+                <SelectField
+                  label="Unit"
+                  name="unitId"
+                  defaultValue={promoting.unitId ?? undefined}
+                  emptyLabel="Choose a unit"
+                  options={options.units}
+                />
+                <SelectField
+                  label="Sector"
+                  name="sectorId"
+                  defaultValue={promoting.sectorId ?? undefined}
+                  options={options.sectors}
+                />
+              </div>
+            </FormSection>
+            <FormSection title="Value">
+              <TextField label="Estimated value (UGX)" name="estimatedValue" inputMode="numeric" />
+            </FormSection>
           </>
         )}
       </FormSheet>
@@ -219,5 +247,21 @@ function StatusButton({
         {label}
       </Button>
     </form>
+  );
+}
+
+function countByStatus(
+  entries: ReadonlyArray<LonglistEntryRow>,
+  status: LonglistEntryRow["status"],
+): number {
+  return entries.filter((entry) => entry.status === status).length;
+}
+
+function SummaryCell({ value, label }: Readonly<{ value: number; label: string }>) {
+  return (
+    <div className="flex items-center gap-2 p-3 outline-1 outline-border">
+      <span className="text-foreground tabular-nums">{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+    </div>
   );
 }

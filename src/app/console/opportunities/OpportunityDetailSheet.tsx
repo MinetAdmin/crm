@@ -7,7 +7,7 @@ import Link from "next/link";
 
 import { getOpportunityPanel, type OpportunityPanel } from "@/app/console/actions";
 import { PanelSection, StatTile } from "@/components/console/panel";
-import { pillClass, pillPrimaryClass, TagPill, tagToneFor, type TagTone } from "@/components/console/ui";
+import { outcomeTone, pillClass, pillPrimaryClass, TagPill, tagToneFor } from "@/components/console/ui";
 import { ProbabilityMeter } from "@/components/console/viz";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,15 +209,3 @@ function PanelContent({
   );
 }
 
-export function outcomeTone(outcome: string): TagTone {
-  switch (outcome) {
-    case "won":
-      return "green";
-    case "lost":
-      return "red";
-    case "on_hold":
-      return "amber";
-    default:
-      return "neutral";
-  }
-}

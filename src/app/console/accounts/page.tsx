@@ -133,8 +133,8 @@ export default async function AccountsPage({
       </div>
 
       {accounts.length === 0 ? (
-        <div className="px-4 md:px-6">
-          <EmptyState>
+        <div className="grid flex-1 px-4 pb-4 md:px-6">
+          <EmptyState className="h-full">
             {filtered
               ? "No account matches these filters."
               : "No accounts yet. The first one starts here."}

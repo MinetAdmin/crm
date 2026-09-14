@@ -147,8 +147,8 @@ export default async function OpportunitiesPage({
       </div>
 
       {opportunities.length === 0 ? (
-        <div className="px-4 md:px-6">
-          <EmptyState>
+        <div className="grid flex-1 px-4 pb-4 md:px-6">
+          <EmptyState className="h-full">
             {filtered
               ? "No pursuit matches these filters."
               : "No opportunities here. They arrive by converting a lead."}
