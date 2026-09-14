@@ -6,6 +6,7 @@ import { CalendarDays, Ellipsis } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { UserSheet } from "@/components/console/ProfileSheet";
 import { TagPill, tagToneFor } from "@/components/console/ui";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -26,6 +27,7 @@ export function AccountsTable({
   summary,
 }: Readonly<{ accounts: ReadonlyArray<AccountRow>; summary: AccountSummary }>) {
   const [selected, setSelected] = React.useState<ReadonlySet<string>>(new Set());
+  const [owner, setOwner] = React.useState<{ id: string; name: string } | null>(null);
   const allSelected = accounts.length > 0 && selected.size === accounts.length;
   const headerState: boolean | "indeterminate" = allSelected
     ? true
@@ -62,14 +64,12 @@ export function AccountsTable({
               <HeadCell>Sector &amp; Unit</HeadCell>
               <HeadCell>Account owner</HeadCell>
               <HeadCell align="right">Contacts</HeadCell>
-              <HeadCell>Decision maker</HeadCell>
               <HeadCell align="right">Open leads</HeadCell>
               <HeadCell align="right">Open pursuits</HeadCell>
               <HeadCell align="right">Weighted (UGX)</HeadCell>
               <HeadCell align="right">Win probability</HeadCell>
-              <HeadCell align="center">Movement trend</HeadCell>
+              <HeadCell align="center">Trend</HeadCell>
               <HeadCell>Last movement</HeadCell>
-              <HeadCell>Created</HeadCell>
               <HeadCell>
                 <span className="sr-only">Actions</span>
               </HeadCell>
@@ -82,6 +82,7 @@ export function AccountsTable({
                 account={account}
                 selected={selected.has(account.id)}
                 onToggle={() => toggleOne(account.id)}
+                onOwnerClick={setOwner}
               />
             ))}
           </TableBody>
@@ -110,6 +111,8 @@ export function AccountsTable({
           <span className="text-muted-foreground">open leads</span>
         </SummaryCell>
       </div>
+
+      <UserSheet owner={owner} onClose={() => setOwner(null)} />
     </div>
   );
 }
@@ -139,8 +142,15 @@ function AccountTableRow({
   account,
   selected,
   onToggle,
-}: Readonly<{ account: AccountRow; selected: boolean; onToggle: () => void }>) {
+  onOwnerClick,
+}: Readonly<{
+  account: AccountRow;
+  selected: boolean;
+  onToggle: () => void;
+  onOwnerClick: (owner: { id: string; name: string }) => void;
+}>) {
   const router = useRouter();
+  const owner = account.owner;
   const openAccount = (event: React.MouseEvent<HTMLTableRowElement>) => {
     const target = event.target as HTMLElement;
     if (target.closest("a,button,input,label,[role=checkbox]")) return;
@@ -176,30 +186,37 @@ function AccountTableRow({
         </span>
       </TableCell>
       <TableCell>
-        {account.owner ? (
-          <span className="inline-flex items-center gap-1.5">
+        {owner ? (
+          <button
+            type="button"
+            onClick={() => onOwnerClick(owner)}
+            aria-label={`Open profile for ${owner.name}`}
+            className="-mx-1.5 inline-flex cursor-pointer items-center gap-1.5 rounded-full px-1.5 py-1 transition-colors duration-150 ease-(--ease-out-strong) hover:bg-foreground/6"
+          >
             <span
               aria-hidden
               className="grid size-5 shrink-0 place-items-center rounded-full bg-muted text-[9px] font-medium text-(--chip) outline-1 -outline-offset-1 outline-white/10"
             >
-              {initialsOf(account.owner)}
+              {initialsOf(owner.name)}
             </span>
-            {account.owner}
-          </span>
+            {owner.name}
+          </button>
         ) : (
           <Empty>None</Empty>
         )}
       </TableCell>
-      <Count value={account.contacts} />
-      <TableCell>
-        <span className="inline-flex items-center gap-1.5">
+      <TableCell className="text-right tabular-nums">
+        <span
+          className="inline-flex items-center gap-1.5"
+          title={account.decisionMaker ? "Decision maker named" : "No decision maker"}
+        >
           <span
             aria-hidden
             className={`size-1.5 rounded-full ${
               account.decisionMaker ? "bg-(--status)" : "bg-(--track)"
             }`}
           />
-          {account.decisionMaker ? "Named" : <Empty>None</Empty>}
+          {account.contacts > 0 ? account.contacts : <Empty>0</Empty>}
         </span>
       </TableCell>
       <Count value={account.openLeads} />
@@ -229,9 +246,6 @@ function AccountTableRow({
         ) : (
           <Empty>No movement</Empty>
         )}
-      </TableCell>
-      <TableCell className="tabular-nums text-(--c-muted)">
-        {formatShortDate(account.createdAt)}
       </TableCell>
       <TableCell>
         <Link

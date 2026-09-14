@@ -6,7 +6,11 @@ import { LogOut, Mail } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 
-import { getProfilePanel, type ProfilePanel } from "@/app/console/actions";
+import {
+  getProfilePanel,
+  getUserPanel,
+  type ProfilePanel,
+} from "@/app/console/actions";
 import { pillClass, pillPrimaryClass } from "@/components/console/ui";
 import { ProbabilityMeter } from "@/components/console/viz";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -24,14 +28,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
 
 type ConsoleUser = { name: string; email: string; role: string };
+type PanelState = ProfilePanel | "error" | null;
 
 export function ProfileSheet({
   user,
   signOutAction,
 }: Readonly<{ user: ConsoleUser; signOutAction: () => Promise<void> }>) {
   const [open, setOpen] = React.useState(false);
-  const [panel, setPanel] = React.useState<ProfilePanel | "error" | null>(null);
-  const initials = initialsOf(user.name);
+  const [panel, setPanel] = React.useState<PanelState>(null);
 
   React.useEffect(() => {
     if (!open || panel !== null) return;
@@ -49,7 +53,7 @@ export function ProfileSheet({
           className="inline-flex h-[30px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-secondary py-[5px] pr-[9px] pl-[5px] text-xs text-secondary-foreground shadow-(--pill-shadow) transition-[background-color,color,box-shadow,scale] duration-150 ease-(--ease-out-strong) outline-none select-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/60 active:scale-[0.96] data-[state=open]:bg-muted"
         >
           <Avatar className="size-5">
-            <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
+            <AvatarFallback className="text-[9px]">{initialsOf(user.name)}</AvatarFallback>
           </Avatar>
           <span className="hidden max-w-32 truncate sm:inline">{user.name}</span>
         </button>
@@ -63,33 +67,13 @@ export function ProfileSheet({
         </SheetHeader>
 
         <div className="grid flex-1 content-start gap-4 overflow-y-auto p-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="size-12">
-              <AvatarFallback className="text-sm">{initials}</AvatarFallback>
-            </Avatar>
-            <span className="grid min-w-0 gap-1">
-              <span className="truncate text-[16px] leading-none font-medium">{user.name}</span>
-              <span className="truncate text-xs text-muted-foreground capitalize">
-                {user.role.replaceAll("_", " ")}
-              </span>
-            </span>
-          </div>
-
-          <PanelSection title="Contact">
-            <span className="inline-flex items-center gap-1.5 text-sm text-(--c-muted)">
-              <Mail className="size-3.5" aria-hidden />
-              {user.email}
-            </span>
-          </PanelSection>
-
-          <PanelSection title="Pipeline">
-            <PipelineTiles panel={panel} />
-          </PanelSection>
-
-          <PanelSection title="Top accounts">
-            <TopAccounts panel={panel} onNavigate={() => setOpen(false)} />
-          </PanelSection>
-
+          <PanelBody
+            name={user.name}
+            subtitle={roleLabel(user.role)}
+            email={user.email}
+            panel={panel}
+            onNavigate={() => setOpen(false)}
+          />
           <PanelSection title="Theme">
             <ThemeSwitch />
           </PanelSection>
@@ -129,7 +113,125 @@ export function ProfileSheet({
   );
 }
 
-function PipelineTiles({ panel }: Readonly<{ panel: ProfilePanel | "error" | null }>) {
+/** Read-only profile drawer for another user, opened from an account owner. */
+export function UserSheet({
+  owner,
+  onClose,
+}: Readonly<{ owner: { id: string; name: string } | null; onClose: () => void }>) {
+  const [loaded, setLoaded] = React.useState<{
+    id: string;
+    identity: { name: string; role: string; email: string } | null;
+    panel: PanelState;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (!owner || loaded?.id === owner.id) return;
+    let stale = false;
+    getUserPanel(owner.id)
+      .then((result) => {
+        if (stale) return;
+        setLoaded(
+          result
+            ? { id: owner.id, identity: result.identity, panel: result.panel }
+            : { id: owner.id, identity: null, panel: "error" },
+        );
+      })
+      .catch(() => {
+        if (!stale) setLoaded({ id: owner.id, identity: null, panel: "error" });
+      });
+    return () => {
+      stale = true;
+    };
+  }, [owner, loaded]);
+
+  if (!owner) return null;
+  const identity = loaded?.id === owner.id ? loaded.identity : null;
+  const panel = loaded?.id === owner.id ? loaded.panel : null;
+
+  return (
+    <Sheet open onOpenChange={(next) => !next && onClose()}>
+      <SheetContent className="w-full gap-0 data-[side=right]:sm:max-w-md">
+        <SheetHeader className="gap-1 border-b border-border pr-12">
+          <SheetTitle className="text-[16px] leading-none font-medium">Profile</SheetTitle>
+          <SheetDescription className="sr-only">
+            Contact details and pipeline summary for {owner.name}.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="grid flex-1 content-start gap-4 overflow-y-auto p-4">
+          <PanelBody
+            name={owner.name}
+            subtitle={identity ? roleLabel(identity.role) : ""}
+            email={identity?.email}
+            panel={panel}
+            onNavigate={onClose}
+          />
+        </div>
+
+        <SheetFooter className="flex-row items-center justify-end border-t border-border">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            className={pillClass}
+            onClick={onClose}
+          >
+            Close
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function PanelBody({
+  name,
+  subtitle,
+  email,
+  panel,
+  onNavigate,
+}: Readonly<{
+  name: string;
+  subtitle: string;
+  email?: string;
+  panel: PanelState;
+  onNavigate: () => void;
+}>) {
+  return (
+    <>
+      <div className="flex items-center gap-3">
+        <Avatar className="size-12">
+          <AvatarFallback className="text-sm">{initialsOf(name)}</AvatarFallback>
+        </Avatar>
+        <span className="grid min-w-0 gap-1">
+          <span className="truncate text-[16px] leading-none font-medium">{name}</span>
+          <span className="truncate text-xs text-muted-foreground capitalize">{subtitle}</span>
+        </span>
+      </div>
+
+      <PanelSection title="Contact">
+        {email ? (
+          <span className="inline-flex items-center gap-1.5 text-sm text-(--c-muted)">
+            <Mail className="size-3.5" aria-hidden />
+            {email}
+          </span>
+        ) : (
+          <Skeleton className="h-5 w-48" />
+        )}
+      </PanelSection>
+
+      <PanelSection title="Pipeline">
+        <PipelineTiles panel={panel} />
+      </PanelSection>
+
+      <PanelSection title="Top accounts">
+        <TopAccounts panel={panel} onNavigate={onNavigate} />
+      </PanelSection>
+    </>
+  );
+}
+
+function PipelineTiles({ panel }: Readonly<{ panel: PanelState }>) {
   if (panel === "error") {
     return <p className="text-sm text-(--c-muted)">Could not load pipeline figures.</p>;
   }
@@ -155,7 +257,7 @@ function PipelineTiles({ panel }: Readonly<{ panel: ProfilePanel | "error" | nul
 function TopAccounts({
   panel,
   onNavigate,
-}: Readonly<{ panel: ProfilePanel | "error" | null; onNavigate: () => void }>) {
+}: Readonly<{ panel: PanelState; onNavigate: () => void }>) {
   if (panel === "error") {
     return <p className="text-sm text-(--c-muted)">Could not load accounts.</p>;
   }
@@ -259,6 +361,10 @@ function StatTile({ label, value }: Readonly<{ label: string; value: string }>) 
       <span className="text-sm leading-none font-medium tabular-nums">{value}</span>
     </div>
   );
+}
+
+function roleLabel(role: string): string {
+  return role.replaceAll("_", " ");
 }
 
 function initialsOf(name: string): string {

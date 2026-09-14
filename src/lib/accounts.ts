@@ -116,11 +116,16 @@ async function pipelineByAccountIds(ids: bigint[]): Promise<Map<string, Pipeline
   );
 }
 
+export type AccountOwner = { id: string; name: string };
+
 /** The BD owner holding the most open pursuits on each account (D-30). */
-async function ownersByAccountIds(ids: bigint[]): Promise<Map<string, string>> {
-  const rows = await db().$queryRaw<{ account_id: string; owner: string }[]>`
+async function ownersByAccountIds(ids: bigint[]): Promise<Map<string, AccountOwner>> {
+  const rows = await db().$queryRaw<
+    { account_id: string; owner_id: string; owner: string }[]
+  >`
     SELECT DISTINCT ON (o.account_id)
            o.account_id::text AS account_id,
+           u.id::text AS owner_id,
            u.full_name AS owner
     FROM opportunity o
     JOIN app_user u ON u.id = o.owner_id
@@ -130,7 +135,62 @@ async function ownersByAccountIds(ids: bigint[]): Promise<Map<string, string>> {
     GROUP BY o.account_id, u.id, u.full_name
     ORDER BY o.account_id, COUNT(*) DESC, MAX(o.created_at) DESC`;
 
-  return new Map(rows.map((row) => [row.account_id, row.owner]));
+  return new Map(rows.map((row) => [row.account_id, { id: row.owner_id, name: row.owner }]));
+}
+
+export type OwnerAccountRow = {
+  id: string;
+  name: string;
+  sector: string | null;
+  unit: string | null;
+  openPursuits: number;
+  weighted: number;
+  openValue: number;
+};
+
+/** Accounts where the given user holds open pursuits, with their share of the pipeline. */
+export async function ownerPipeline(userId: string): Promise<OwnerAccountRow[]> {
+  const rows = await db().$queryRaw<
+    {
+      id: string;
+      name: string;
+      sector: string | null;
+      unit: string | null;
+      open_pursuits: number;
+      weighted: string;
+      expected: string;
+    }[]
+  >`
+    SELECT a.id::text AS id,
+           a.name,
+           s.code AS sector,
+           un.code AS unit,
+           COUNT(*) FILTER (WHERE o.outcome = 'open')::int AS open_pursuits,
+           COALESCE(SUM(w.weighted) FILTER (WHERE o.outcome = 'open'), 0)::text AS weighted,
+           COALESCE(SUM(w.expected) FILTER (WHERE o.outcome = 'open'), 0)::text AS expected
+    FROM opportunity o
+    JOIN account a ON a.id = o.account_id AND a.archived_at IS NULL
+    LEFT JOIN sector s ON s.id = a.sector_id
+    LEFT JOIN unit un ON un.id = a.unit_id
+    LEFT JOIN (SELECT opportunity_id, SUM(weighted_amount) AS weighted,
+                      SUM(expected_amount) AS expected
+               FROM v_schedule_line_weighted
+               GROUP BY opportunity_id) w ON w.opportunity_id = o.id
+    WHERE o.archived_at IS NULL AND o.owner_id = ${BigInt(userId)}
+    GROUP BY a.id, a.name, s.code, un.code
+    HAVING COUNT(*) FILTER (WHERE o.outcome = 'open') > 0`;
+
+  return rows
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      sector: row.sector,
+      unit: row.unit,
+      openPursuits: row.open_pursuits,
+      weighted: Number(row.weighted),
+      openValue: Number(row.expected),
+    }))
+    .sort((a, b) => b.weighted - a.weighted);
 }
 
 /** Stage movements per week for the trend bars, oldest week first. */

@@ -38,7 +38,7 @@ export async function GET(request: Request): Promise<Response> {
       account.name,
       account.sector ?? "",
       account.unit ?? "",
-      account.owner ?? "",
+      account.owner?.name ?? "",
       String(account.contacts),
       account.decisionMaker ? "Named" : "",
       String(account.openLeads),

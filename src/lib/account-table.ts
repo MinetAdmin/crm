@@ -5,7 +5,7 @@ export type AccountRow = {
   name: string;
   unit: string | null;
   sector: string | null;
-  owner: string | null;
+  owner: { id: string; name: string } | null;
   contacts: number;
   decisionMaker: boolean;
   openLeads: number;
