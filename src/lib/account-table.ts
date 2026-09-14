@@ -16,6 +16,12 @@ export type AccountRow = {
   createdAt: string;
 };
 
+/** Weighted over expected open pipeline as a rounded percentage, or null without open value. */
+export function winProbability(weighted: number, openValue: number): number | null {
+  if (openValue <= 0) return null;
+  return Math.min(100, Math.max(0, Math.round((weighted / openValue) * 100)));
+}
+
 export const SORT_KEYS = [
   "name",
   "unit",

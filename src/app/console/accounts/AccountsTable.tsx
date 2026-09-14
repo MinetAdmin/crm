@@ -16,8 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TREND_WEEKS, type AccountRow, type AccountSummary } from "@/lib/account-table";
+import { winProbability, type AccountRow, type AccountSummary } from "@/lib/account-table";
 import { formatAmount, formatShortDate } from "@/lib/format";
+
+import { ProbabilityMeter, TrendBars } from "./viz";
 
 export function AccountsTable({
   accounts,
@@ -228,68 +230,16 @@ function AccountTableRow({
   );
 }
 
-const METER_SEGMENTS = 18;
-
 function WinProbability({ account }: Readonly<{ account: AccountRow }>) {
-  if (account.openValue <= 0) return <Empty>No open value</Empty>;
-  const value = Math.min(100, Math.max(0, Math.round((account.weighted / account.openValue) * 100)));
-  const filled = Math.round((value / 100) * METER_SEGMENTS);
+  const value = winProbability(account.weighted, account.openValue);
+  if (value === null) return <Empty>No open value</Empty>;
 
   return (
     <span className="inline-flex items-center gap-2">
-      <span
-        role="meter"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={value}
-        aria-label={`Win probability ${value} percent`}
-        className="flex h-3.5 w-[74px] items-center gap-[2px] overflow-hidden rounded-[2px] bg-foreground/8 px-[2px]"
-      >
-        {Array.from({ length: METER_SEGMENTS }, (_, index) => (
-          <span
-            key={index}
-            className={`h-2.5 min-w-px flex-1 rounded-[1px] ${segmentClass(index, filled)}`}
-          />
-        ))}
-      </span>
+      <ProbabilityMeter value={value} />
       <span className="w-[4ch] text-right">{value}%</span>
     </span>
   );
-}
-
-function TrendBars({ trend }: Readonly<{ trend: ReadonlyArray<number> }>) {
-  const values =
-    trend.length === TREND_WEEKS ? trend : new Array<number>(TREND_WEEKS).fill(0);
-  const max = Math.max(...values, 1);
-  const total = values.reduce((sum, value) => sum + value, 0);
-
-  return (
-    <span
-      className="inline-flex h-3.5 items-end gap-px"
-      aria-label={`${total} stage movements in the last ${TREND_WEEKS} weeks`}
-    >
-      {values.map((value, index) => (
-        <span
-          key={index}
-          aria-hidden
-          className={`w-1 shrink-0 rounded-[1px] ${barClass(value, max)}`}
-          style={{ height: value === 0 ? 2 : 3 + Math.round((value / max) * 11) }}
-        />
-      ))}
-    </span>
-  );
-}
-
-function barClass(value: number, max: number): string {
-  if (value === 0) return "bg-(--track)";
-  return value >= max / 2 ? "bg-(--trend)" : "bg-(--trend-muted)";
-}
-
-function segmentClass(index: number, filled: number): string {
-  if (index >= filled) return "bg-(--track)";
-  if (index < METER_SEGMENTS * 0.25) return "bg-(--danger)";
-  if (index < METER_SEGMENTS * 0.55) return "bg-(--warning)";
-  return "bg-(--success)";
 }
 
 function Count({ value }: Readonly<{ value: number }>) {

@@ -212,6 +212,34 @@ export async function getAccount(id: string) {
   });
 }
 
+export type AccountPanelStats = {
+  openPursuits: number;
+  weighted: number;
+  openValue: number;
+  openLeads: number;
+  trend: number[];
+  lastMovement: string | null;
+};
+
+/** Pipeline numbers for the account detail drawer. */
+export async function accountPanelStats(id: string): Promise<AccountPanelStats> {
+  const ids = [BigInt(id)];
+  const [pipeline, leads, trends] = await Promise.all([
+    pipelineByAccountIds(ids),
+    openLeadsByAccountIds(ids),
+    movementTrendByAccountIds(ids),
+  ]);
+  const agg = pipeline.get(id);
+  return {
+    openPursuits: agg?.openPursuits ?? 0,
+    weighted: agg?.weighted ?? 0,
+    openValue: agg?.openValue ?? 0,
+    openLeads: leads.get(id) ?? 0,
+    trend: trends.get(id) ?? [],
+    lastMovement: agg?.lastMovement?.toISOString().slice(0, 10) ?? null,
+  };
+}
+
 export type NewContact = {
   accountId: string;
   fullName: string;
