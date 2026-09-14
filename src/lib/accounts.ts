@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { writeAudit } from "./audit";
 import { findLikelyDuplicates, type AccountMatch } from "./account-name";
-import type { AccountRow } from "./account-table";
+import { TREND_WEEKS, type AccountRow } from "./account-table";
 
 export const ACCOUNT_LIST_CAP = 200;
 
@@ -40,9 +40,10 @@ export async function listAccounts(filters: AccountFilters = {}): Promise<Accoun
   if (rows.length === 0) return [];
 
   const ids = rows.map((row) => row.id);
-  const [pipeline, leads] = await Promise.all([
+  const [pipeline, leads, trends] = await Promise.all([
     pipelineByAccountIds(ids),
     openLeadsByAccountIds(ids),
+    movementTrendByAccountIds(ids),
   ]);
 
   return rows.map((row) => {
@@ -59,6 +60,7 @@ export async function listAccounts(filters: AccountFilters = {}): Promise<Accoun
       openPursuits: agg?.openPursuits ?? 0,
       weighted: agg?.weighted ?? 0,
       openValue: agg?.openValue ?? 0,
+      trend: trends.get(id) ?? [],
       lastMovement: agg?.lastMovement?.toISOString().slice(0, 10) ?? null,
       createdAt: row.created_at.toISOString().slice(0, 10),
     };
@@ -110,6 +112,31 @@ async function pipelineByAccountIds(ids: bigint[]): Promise<Map<string, Pipeline
       },
     ]),
   );
+}
+
+/** Stage movements per week for the trend bars, oldest week first. */
+async function movementTrendByAccountIds(ids: bigint[]): Promise<Map<string, number[]>> {
+  const rows = await db().$queryRaw<
+    { account_id: string; weeks_ago: number; moves: number }[]
+  >`
+    SELECT o.account_id::text AS account_id,
+           floor(extract(epoch FROM (now() - sh.changed_at)) / 604800)::int AS weeks_ago,
+           COUNT(*)::int AS moves
+    FROM stage_history sh
+    JOIN opportunity o ON o.id = sh.opportunity_id
+    WHERE o.archived_at IS NULL
+      AND o.account_id IN (${Prisma.join(ids)})
+      AND sh.changed_at > now() - interval '14 weeks'
+    GROUP BY o.account_id, weeks_ago`;
+
+  const map = new Map<string, number[]>();
+  for (const row of rows) {
+    const trend = map.get(row.account_id) ?? new Array<number>(TREND_WEEKS).fill(0);
+    const index = TREND_WEEKS - 1 - row.weeks_ago;
+    if (index >= 0) trend[index] = row.moves;
+    map.set(row.account_id, trend);
+  }
+  return map;
 }
 
 /** Matched leads still in play, per account. */

@@ -1,7 +1,8 @@
+import { Upload } from "lucide-react";
 import Link from "next/link";
 
 import { FilterMenu, type FilterMenuItem } from "@/components/console/FilterMenu";
-import { EmptyState } from "@/components/console/ui";
+import { EmptyState, pillClass } from "@/components/console/ui";
 import { Input } from "@/components/ui/input";
 import {
   defaultDir,
@@ -115,10 +116,20 @@ export default async function AccountsPage({
             </Link>
           )}
         </div>
-        <NewAccountSheet
-          units={units.map((u) => ({ value: u.id.toString(), label: u.name }))}
-          sectors={sectors.map((s) => ({ value: s.id.toString(), label: s.code }))}
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          <a
+            href={hrefWith(search, {}, "/console/accounts/export")}
+            download
+            className={`inline-flex items-center justify-center gap-1.5 ${pillClass}`}
+          >
+            <Upload className="size-3" aria-hidden />
+            Export
+          </a>
+          <NewAccountSheet
+            units={units.map((u) => ({ value: u.id.toString(), label: u.name }))}
+            sectors={sectors.map((s) => ({ value: s.id.toString(), label: s.code }))}
+          />
+        </div>
       </div>
 
       {accounts.length === 0 ? (
@@ -146,6 +157,7 @@ export default async function AccountsPage({
 function hrefWith(
   search: Readonly<Search>,
   overrides: Readonly<Partial<Record<keyof Search, string | undefined>>>,
+  path = "/console/accounts",
 ): string {
   const merged = { ...search, ...overrides };
   const params = new URLSearchParams();
@@ -154,7 +166,7 @@ function hrefWith(
     if (value) params.set(name, value);
   }
   const query = params.toString();
-  return query ? `/console/accounts?${query}` : "/console/accounts";
+  return query ? `${path}?${query}` : path;
 }
 
 function codeFor(

@@ -109,7 +109,7 @@ export function TagPill({
   return (
     <span
       className={cn(
-        "inline-flex h-[22px] shrink-0 items-center justify-center rounded-full border px-2 text-xs leading-none whitespace-nowrap",
+        "inline-flex h-[22px] shrink-0 items-center justify-center rounded-full border px-2 text-sm leading-none whitespace-nowrap",
         TAG_CLASSES[tone],
         className,
       )}

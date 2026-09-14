@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { CalendarDays, Ellipsis } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { TagPill, tagToneFor } from "@/components/console/ui";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { AccountRow, AccountSummary } from "@/lib/account-table";
-import { formatAmount } from "@/lib/format";
+import { TREND_WEEKS, type AccountRow, type AccountSummary } from "@/lib/account-table";
+import { formatAmount, formatShortDate } from "@/lib/format";
 
 export function AccountsTable({
   accounts,
@@ -63,6 +64,7 @@ export function AccountsTable({
               <HeadCell align="right">Open pursuits</HeadCell>
               <HeadCell align="right">Weighted (UGX)</HeadCell>
               <HeadCell align="right">Win probability</HeadCell>
+              <HeadCell align="center">Movement trend</HeadCell>
               <HeadCell>Last movement</HeadCell>
               <HeadCell>Created</HeadCell>
               <HeadCell>
@@ -109,14 +111,16 @@ export function AccountsTable({
   );
 }
 
+const HEAD_ALIGN = { right: "text-right", center: "text-center" } as const;
+
 function HeadCell({
   align,
   children,
-}: Readonly<{ align?: "right"; children: React.ReactNode }>) {
+}: Readonly<{ align?: keyof typeof HEAD_ALIGN; children: React.ReactNode }>) {
   return (
     <TableHead
       className={`text-xs font-normal whitespace-nowrap text-(--subtle) ${
-        align === "right" ? "text-right" : ""
+        align ? HEAD_ALIGN[align] : ""
       }`}
     >
       {children}
@@ -133,10 +137,18 @@ function AccountTableRow({
   selected,
   onToggle,
 }: Readonly<{ account: AccountRow; selected: boolean; onToggle: () => void }>) {
+  const router = useRouter();
+  const openAccount = (event: React.MouseEvent<HTMLTableRowElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("a,button,input,label,[role=checkbox]")) return;
+    router.push(`/console/accounts/${account.id}`);
+  };
+
   return (
     <TableRow
       data-state={selected ? "selected" : undefined}
-      className="transition-colors duration-150 ease-(--ease-out-strong) hover:bg-card/60 data-[state=selected]:bg-card"
+      onClick={openAccount}
+      className="cursor-pointer transition-colors duration-150 ease-(--ease-out-strong) hover:bg-card/60 data-[state=selected]:bg-card"
     >
       <TableCell>
         <span className="flex items-center gap-3">
@@ -187,17 +199,22 @@ function AccountTableRow({
       <TableCell className="text-right tabular-nums">
         <WinProbability account={account} />
       </TableCell>
+      <TableCell className="text-center">
+        <TrendBars trend={account.trend} />
+      </TableCell>
       <TableCell className="tabular-nums">
         {account.lastMovement ? (
           <span className="inline-flex items-center gap-1.5">
             <CalendarDays className="size-3.5 shrink-0 text-(--icon)" aria-hidden />
-            {account.lastMovement}
+            {formatShortDate(account.lastMovement)}
           </span>
         ) : (
           <Empty>No movement</Empty>
         )}
       </TableCell>
-      <TableCell className="tabular-nums text-(--c-muted)">{account.createdAt}</TableCell>
+      <TableCell className="tabular-nums text-(--c-muted)">
+        {formatShortDate(account.createdAt)}
+      </TableCell>
       <TableCell>
         <Link
           href={`/console/accounts/${account.id}`}
@@ -238,6 +255,34 @@ function WinProbability({ account }: Readonly<{ account: AccountRow }>) {
       <span className="w-[4ch] text-right">{value}%</span>
     </span>
   );
+}
+
+function TrendBars({ trend }: Readonly<{ trend: ReadonlyArray<number> }>) {
+  const values =
+    trend.length === TREND_WEEKS ? trend : new Array<number>(TREND_WEEKS).fill(0);
+  const max = Math.max(...values, 1);
+  const total = values.reduce((sum, value) => sum + value, 0);
+
+  return (
+    <span
+      className="inline-flex h-3.5 items-end gap-px"
+      aria-label={`${total} stage movements in the last ${TREND_WEEKS} weeks`}
+    >
+      {values.map((value, index) => (
+        <span
+          key={index}
+          aria-hidden
+          className={`w-1 shrink-0 rounded-[1px] ${barClass(value, max)}`}
+          style={{ height: value === 0 ? 2 : 3 + Math.round((value / max) * 11) }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function barClass(value: number, max: number): string {
+  if (value === 0) return "bg-(--track)";
+  return value >= max / 2 ? "bg-(--trend)" : "bg-(--trend-muted)";
 }
 
 function segmentClass(index: number, filled: number): string {

@@ -1,3 +1,5 @@
+export const TREND_WEEKS = 14;
+
 export type AccountRow = {
   id: string;
   name: string;
@@ -9,6 +11,7 @@ export type AccountRow = {
   openPursuits: number;
   weighted: number;
   openValue: number;
+  trend: number[];
   lastMovement: string | null;
   createdAt: string;
 };

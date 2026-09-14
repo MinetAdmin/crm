@@ -41,21 +41,25 @@ import { navFor, navSectionsFor, type NavItem } from "./nav";
 
 type ConsoleUser = { name: string; email: string; role: string };
 
+type NavCounts = Readonly<Record<string, number>>;
+
 export function ConsoleShell({
   user,
   signOutAction,
   defaultSidebarOpen = true,
+  counts = {},
   children,
 }: Readonly<{
   user: ConsoleUser;
   signOutAction: () => Promise<void>;
   defaultSidebarOpen?: boolean;
+  counts?: NavCounts;
   children: React.ReactNode;
 }>) {
   return (
     <TooltipProvider>
       <SidebarProvider defaultOpen={defaultSidebarOpen}>
-        <ConsoleSidebar user={user} />
+        <ConsoleSidebar user={user} counts={counts} />
         <SidebarInset>
           <ConsoleHeader user={user} signOutAction={signOutAction} />
           <div className="flex-1 p-4 md:px-6">{children}</div>
@@ -65,7 +69,10 @@ export function ConsoleShell({
   );
 }
 
-function ConsoleSidebar({ user }: Readonly<{ user: ConsoleUser }>) {
+function ConsoleSidebar({
+  user,
+  counts,
+}: Readonly<{ user: ConsoleUser; counts: NavCounts }>) {
   const pathname = usePathname();
   const sections = navSectionsFor(user.role);
 
@@ -100,14 +107,19 @@ function ConsoleSidebar({ user }: Readonly<{ user: ConsoleUser }>) {
             className="border-b border-sidebar-border px-3 py-2 last:border-b-0 group-data-[collapsible=icon]:px-2"
           >
             {section.label && (
-              <SidebarGroupLabel className="h-6 px-2 text-xs text-(--subtle)">
+              <SidebarGroupLabel className="h-6 px-2 text-[11px] font-medium tracking-[0.08em] text-(--subtle) uppercase">
                 {section.label}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
               <SidebarMenu className="gap-1">
                 {section.items.map((item) => (
-                  <NavEntry key={item.label} item={item} pathname={pathname} />
+                  <NavEntry
+                    key={item.label}
+                    item={item}
+                    pathname={pathname}
+                    count={item.href ? counts[item.href] : undefined}
+                  />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -132,7 +144,8 @@ function CenteredMenuItem({
 function NavEntry({
   item,
   pathname,
-}: Readonly<{ item: NavItem; pathname: string }>) {
+  count,
+}: Readonly<{ item: NavItem; pathname: string; count?: number }>) {
   if (!item.href) {
     return (
       <CenteredMenuItem>
@@ -159,7 +172,12 @@ function NavEntry({
       >
         <Link href={item.href}>
           <item.icon />
-          <span>{item.label}</span>
+          <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+          {count !== undefined && (
+            <span className="inline-flex h-4 min-w-6 shrink-0 items-center justify-center rounded-full border border-(--faint)/50 bg-muted px-1 text-[11px] leading-none text-(--chip) tabular-nums group-data-[collapsible=icon]:hidden">
+              {count}
+            </span>
+          )}
         </Link>
       </SidebarMenuButton>
     </CenteredMenuItem>
@@ -261,12 +279,17 @@ function ConsoleHeader({
   );
 }
 
+const PAGE_STATUS: Readonly<Record<string, string>> = {
+  "/console/accounts": "Active",
+};
+
 function HeaderTitle() {
   const pathname = usePathname();
   const { crumbs, page } = crumbsFor(pathname);
+  const status = PAGE_STATUS[pathname];
 
   return (
-    <div className="flex min-w-0 items-baseline gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       {crumbs.slice(1).map((crumb) => (
         <React.Fragment key={crumb.href}>
           <Link
@@ -281,6 +304,12 @@ function HeaderTitle() {
         </React.Fragment>
       ))}
       <h1 className="truncate text-[16px] leading-none font-medium">{page}</h1>
+      {status && (
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-(--faint)/50 bg-muted py-[3px] pr-[7px] pl-[6px] text-[11px] leading-none">
+          <span aria-hidden className="size-2 rounded-full bg-(--status)" />
+          {status}
+        </span>
+      )}
     </div>
   );
 }

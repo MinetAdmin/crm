@@ -20,6 +20,7 @@ function row(overrides: Partial<AccountRow>): AccountRow {
     openPursuits: 0,
     weighted: 0,
     openValue: 0,
+    trend: [],
     lastMovement: null,
     createdAt: "2026-01-01",
     ...overrides,
