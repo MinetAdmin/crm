@@ -507,6 +507,63 @@ export async function updateAccount(
   });
 }
 
+/**
+ * Merges one account into a survivor (FR-ACC-04). Every child record moves to
+ * the survivor, the source is archived, and both sides are audited in the
+ * same transaction.
+ */
+export async function mergeAccounts(
+  sourceId: string,
+  survivorId: string,
+  actorId: bigint,
+): Promise<void> {
+  if (sourceId === survivorId) throw new Error("An account cannot merge into itself.");
+  const src = BigInt(sourceId);
+  const dst = BigInt(survivorId);
+
+  await db().$transaction(async (tx) => {
+    const source = await tx.account.findFirstOrThrow({
+      where: { id: src, archived_at: null },
+      select: { name: true },
+    });
+    const survivor = await tx.account.findFirstOrThrow({
+      where: { id: dst, archived_at: null },
+      select: { name: true },
+    });
+
+    await tx.contact.updateMany({ where: { account_id: src }, data: { account_id: dst } });
+    await tx.opportunity.updateMany({ where: { account_id: src }, data: { account_id: dst } });
+    await tx.activity.updateMany({ where: { account_id: src }, data: { account_id: dst } });
+    await tx.lead.updateMany({
+      where: { matched_account_id: src },
+      data: { matched_account_id: dst },
+    });
+    await tx.longlist_entry.updateMany({
+      where: { matched_account_id: src },
+      data: { matched_account_id: dst },
+    });
+    await tx.account.update({ where: { id: src }, data: { archived_at: new Date() } });
+
+    await writeAudit(tx, {
+      entity: "account",
+      entityId: src,
+      changedBy: actorId,
+      changes: [
+        { field: "merged_into", oldValue: null, newValue: `${survivorId} (${survivor.name})` },
+        { field: "archived_at", oldValue: null, newValue: new Date().toISOString() },
+      ],
+    });
+    await writeAudit(tx, {
+      entity: "account",
+      entityId: dst,
+      changedBy: actorId,
+      changes: [
+        { field: "merged_from", oldValue: null, newValue: `${sourceId} (${source.name})` },
+      ],
+    });
+  });
+}
+
 export type NewContact = {
   accountId: string;
   fullName: string;

@@ -7,7 +7,13 @@ import { auth } from "@/auth";
 import type { FormSheetState } from "@/components/console/FormSheet";
 import { Prisma } from "@prisma/client";
 
-import { createAccount, createContact, duplicatesFor, updateAccount } from "@/lib/accounts";
+import {
+  createAccount,
+  createContact,
+  duplicatesFor,
+  mergeAccounts,
+  updateAccount,
+} from "@/lib/accounts";
 
 async function actorId(): Promise<bigint> {
   const session = await auth();
@@ -69,6 +75,24 @@ export async function submitAccountEdit(
   revalidatePath("/console/accounts");
   revalidatePath(`/console/accounts/${accountId}`);
   return { ok: true };
+}
+
+export async function submitAccountMerge(
+  _state: FormSheetState,
+  form: FormData,
+): Promise<FormSheetState> {
+  const accountId = text(form, "accountId");
+  const survivorId = text(form, "survivorId");
+  if (!accountId) return { error: "The account is missing." };
+  if (!survivorId) return { error: "Pick the surviving account." };
+  if (survivorId === accountId) return { error: "An account cannot merge into itself." };
+  if (form.get("confirmed") !== "on") {
+    return { error: "Confirm that this account will be archived." };
+  }
+
+  await mergeAccounts(accountId, survivorId, await actorId());
+  revalidatePath("/console/accounts");
+  redirect(`/console/accounts/${survivorId}`);
 }
 
 export async function submitContact(_state: FormSheetState, form: FormData): Promise<FormSheetState> {

@@ -31,6 +31,7 @@ import { formatAmount, formatShortDate } from "@/lib/format";
 
 import { submitContact } from "../actions";
 import { EditAccountSheet } from "./EditAccountSheet";
+import { MergeAccountSheet } from "./MergeAccountSheet";
 
 export default async function AccountPage({
   params,
@@ -39,15 +40,22 @@ export default async function AccountPage({
   const account = await getAccount(id);
   if (!account) notFound();
 
-  const [stats, pursuits, leads, timeline, engagement, units, sectors] = await Promise.all([
-    accountPanelStats(id),
-    accountPursuits(id),
-    accountLeads(id),
-    accountTimeline(id),
-    accountEngagement(id),
-    db().unit.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
-    db().sector.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
-  ]);
+  const [stats, pursuits, leads, timeline, engagement, units, sectors, others] =
+    await Promise.all([
+      accountPanelStats(id),
+      accountPursuits(id),
+      accountLeads(id),
+      accountTimeline(id),
+      accountEngagement(id),
+      db().unit.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+      db().sector.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+      db().account.findMany({
+        where: { archived_at: null, id: { not: BigInt(id) } },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+        take: 200,
+      }),
+    ]);
   const probability = winProbability(stats.weighted, stats.openValue);
   const movements = stats.trend.reduce((sum, value) => sum + value, 0);
 
@@ -69,16 +77,22 @@ export default async function AccountPage({
             {account.country}
           </p>
         </div>
-        <EditAccountSheet
-          account={{
-            id: account.id.toString(),
-            name: account.name,
-            unitId: account.unit_id?.toString(),
-            sectorId: account.sector_id?.toString(),
-          }}
-          units={units.map((u) => ({ value: u.id.toString(), label: u.name }))}
-          sectors={sectors.map((s) => ({ value: s.id.toString(), label: s.code }))}
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          <MergeAccountSheet
+            account={{ id: account.id.toString(), name: account.name }}
+            survivors={others.map((o) => ({ value: o.id.toString(), label: o.name }))}
+          />
+          <EditAccountSheet
+            account={{
+              id: account.id.toString(),
+              name: account.name,
+              unitId: account.unit_id?.toString(),
+              sectorId: account.sector_id?.toString(),
+            }}
+            units={units.map((u) => ({ value: u.id.toString(), label: u.name }))}
+            sectors={sectors.map((s) => ({ value: s.id.toString(), label: s.code }))}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">

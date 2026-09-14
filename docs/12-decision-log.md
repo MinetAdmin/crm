@@ -205,6 +205,20 @@ loader the default. This warning is outside the landing presentation change.
   flow exists. All figures remain derived at read time.
 - **Status:** Adopted 2026-09-15 under user-delegated design authority.
 
+### D-34: Account merge runs from the duplicate toward a survivor
+
+- **Decision:** Implement FR-ACC-04 as a Merge sheet on the account page: pick the
+  surviving account, confirm archiving, then contacts, opportunities, activities,
+  lead matches, and longlist matches move to the survivor and the source is archived,
+  all in one transaction with audit entries on both accounts.
+- **Reason:** The user asked for the missing merge after reviewing how accounts come
+  about. Running the merge from the duplicate's page matches how duplicates are found.
+- **Assumptions:** Archiving frees the source name under the partial unique index, so
+  no rename is needed. No unmerge is provided; the audit trail records both sides.
+- **Consequences:** Derived figures move with the children automatically. The survivor
+  picker lists the first 200 active accounts alphabetically.
+- **Status:** Adopted 2026-09-15 under user-delegated design authority.
+
 ## Part B — Open-question register
 
 Status: ⛔ **Blocker** (gates migration or scope) · ❗ High (changes design) · ◽ Normal
