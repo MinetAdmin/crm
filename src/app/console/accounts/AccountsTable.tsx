@@ -19,7 +19,7 @@ import {
 import { winProbability, type AccountRow, type AccountSummary } from "@/lib/account-table";
 import { formatAmount, formatShortDate } from "@/lib/format";
 
-import { ProbabilityMeter, TrendBars } from "./viz";
+import { ProbabilityMeter, TrendBars } from "@/components/console/viz";
 
 export function AccountsTable({
   accounts,
@@ -44,9 +44,9 @@ export function AccountsTable({
     });
 
   return (
-    <div>
-      <div className="overflow-x-auto border-y border-border">
-        <Table className="text-sm leading-none [&_td]:h-[42px] [&_td]:px-3 [&_td]:py-0 [&_th]:h-[38px] [&_th]:px-3">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-auto border-y border-border">
+        <Table className="text-sm leading-none [&_td]:h-[42px] [&_td]:px-3 [&_td]:py-0 [&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:h-[38px] [&_th]:border-b [&_th]:border-border [&_th]:bg-background [&_th]:px-3">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <HeadCell>
@@ -60,6 +60,7 @@ export function AccountsTable({
                 </span>
               </HeadCell>
               <HeadCell>Sector &amp; Unit</HeadCell>
+              <HeadCell>Account owner</HeadCell>
               <HeadCell align="right">Contacts</HeadCell>
               <HeadCell>Decision maker</HeadCell>
               <HeadCell align="right">Open leads</HeadCell>
@@ -87,7 +88,7 @@ export function AccountsTable({
         </Table>
       </div>
 
-      <div className="grid grid-cols-2 gap-px border-b border-border bg-background p-px text-xs sm:grid-cols-4">
+      <div className="grid shrink-0 grid-cols-2 gap-px border-b border-border bg-background p-px text-xs sm:grid-cols-4">
         <SummaryCell>
           <span className="text-foreground tabular-nums">
             {selected.size > 0 ? selected.size : summary.accounts}
@@ -174,6 +175,21 @@ function AccountTableRow({
           {!account.sector && !account.unit && <Empty>None</Empty>}
         </span>
       </TableCell>
+      <TableCell>
+        {account.owner ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden
+              className="grid size-5 shrink-0 place-items-center rounded-full bg-muted text-[9px] font-medium text-(--chip) outline-1 -outline-offset-1 outline-white/10"
+            >
+              {initialsOf(account.owner)}
+            </span>
+            {account.owner}
+          </span>
+        ) : (
+          <Empty>None</Empty>
+        )}
+      </TableCell>
       <Count value={account.contacts} />
       <TableCell>
         <span className="inline-flex items-center gap-1.5">
@@ -252,4 +268,11 @@ function Count({ value }: Readonly<{ value: number }>) {
 
 function Empty({ children }: Readonly<{ children: React.ReactNode }>) {
   return <span className="text-(--c-muted)">{children}</span>;
+}
+
+function initialsOf(name: string): string {
+  const words = name.trim().split(/\s+/);
+  const first = words[0]?.[0] ?? "";
+  const second = words.length > 1 ? (words[1][0] ?? "") : "";
+  return (first + second).toUpperCase();
 }

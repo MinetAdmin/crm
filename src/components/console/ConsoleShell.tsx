@@ -2,23 +2,12 @@
 
 import * as React from "react";
 
-import { LogOut, Moon, Search, Sun } from "lucide-react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTheme } from "next-themes";
 
 import { Logo } from "@/components/brand/Logo";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ProfileSheet } from "@/components/console/ProfileSheet";
 import {
   Sidebar,
   SidebarContent,
@@ -60,9 +49,11 @@ export function ConsoleShell({
     <TooltipProvider>
       <SidebarProvider defaultOpen={defaultSidebarOpen}>
         <ConsoleSidebar user={user} counts={counts} />
-        <SidebarInset>
+        <SidebarInset className="h-svh">
           <ConsoleHeader user={user} signOutAction={signOutAction} />
-          <div className="flex-1 p-4 md:px-6">{children}</div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:px-6">
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>
@@ -184,74 +175,6 @@ function NavEntry({
   );
 }
 
-function ThemeItems() {
-  const { theme, setTheme } = useTheme();
-  return (
-    <>
-      <DropdownMenuLabel className="flex items-center gap-2 font-normal text-muted-foreground">
-        <Sun className="size-3.5 dark:hidden" />
-        <Moon className="hidden size-3.5 dark:block" />
-        Theme
-      </DropdownMenuLabel>
-      <DropdownMenuRadioGroup value={theme ?? "dark"} onValueChange={setTheme}>
-        <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
-        <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
-        <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
-      </DropdownMenuRadioGroup>
-    </>
-  );
-}
-
-function UserMenu({
-  user,
-  signOutAction,
-}: Readonly<{ user: ConsoleUser; signOutAction: () => Promise<void> }>) {
-  const initials = user.name
-    .split(/\s+/)
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={`Open profile for ${user.name}`}
-          className="inline-flex h-[30px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-secondary py-[5px] pr-[9px] pl-[5px] text-xs text-secondary-foreground shadow-(--pill-shadow) transition-[background-color,color,box-shadow,scale] duration-150 ease-(--ease-out-strong) outline-none select-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/60 active:scale-[0.96] data-[state=open]:bg-muted"
-        >
-          <Avatar className="size-5">
-            <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
-          </Avatar>
-          <span className="hidden max-w-32 truncate sm:inline">{user.name}</span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="bottom" align="end" className="min-w-56">
-        <DropdownMenuLabel className="font-normal">
-          <span className="block truncate text-sm">{user.name}</span>
-          <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
-          <span className="block truncate text-xs text-muted-foreground">
-            {user.role.replaceAll("_", " ")}
-          </span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <ThemeItems />
-        <DropdownMenuSeparator />
-        <form action={signOutAction}>
-          <DropdownMenuItem asChild>
-            <button type="submit" className="w-full">
-              <LogOut />
-              Sign out
-            </button>
-          </DropdownMenuItem>
-        </form>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 function ConsoleHeader({
   user,
   signOutAction,
@@ -273,7 +196,7 @@ function ConsoleHeader({
         >
           <Search className="size-3.5" aria-hidden />
         </button>
-        <UserMenu user={user} signOutAction={signOutAction} />
+        <ProfileSheet user={user} signOutAction={signOutAction} />
       </div>
     </header>
   );

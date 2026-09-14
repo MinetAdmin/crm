@@ -17,7 +17,7 @@ import { winProbability } from "@/lib/account-table";
 import type { AccountPanelStats } from "@/lib/accounts";
 import { formatAmount, formatShortDate } from "@/lib/format";
 
-import { ProbabilityMeter, TrendBars } from "./viz";
+import { ProbabilityMeter, TrendBars } from "@/components/console/viz";
 
 export type AccountPanel = {
   id: string;

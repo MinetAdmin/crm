@@ -40,10 +40,11 @@ export async function listAccounts(filters: AccountFilters = {}): Promise<Accoun
   if (rows.length === 0) return [];
 
   const ids = rows.map((row) => row.id);
-  const [pipeline, leads, trends] = await Promise.all([
+  const [pipeline, leads, trends, owners] = await Promise.all([
     pipelineByAccountIds(ids),
     openLeadsByAccountIds(ids),
     movementTrendByAccountIds(ids),
+    ownersByAccountIds(ids),
   ]);
 
   return rows.map((row) => {
@@ -61,6 +62,7 @@ export async function listAccounts(filters: AccountFilters = {}): Promise<Accoun
       weighted: agg?.weighted ?? 0,
       openValue: agg?.openValue ?? 0,
       trend: trends.get(id) ?? [],
+      owner: owners.get(id) ?? null,
       lastMovement: agg?.lastMovement?.toISOString().slice(0, 10) ?? null,
       createdAt: row.created_at.toISOString().slice(0, 10),
     };
@@ -112,6 +114,23 @@ async function pipelineByAccountIds(ids: bigint[]): Promise<Map<string, Pipeline
       },
     ]),
   );
+}
+
+/** The BD owner holding the most open pursuits on each account (D-30). */
+async function ownersByAccountIds(ids: bigint[]): Promise<Map<string, string>> {
+  const rows = await db().$queryRaw<{ account_id: string; owner: string }[]>`
+    SELECT DISTINCT ON (o.account_id)
+           o.account_id::text AS account_id,
+           u.full_name AS owner
+    FROM opportunity o
+    JOIN app_user u ON u.id = o.owner_id
+    WHERE o.archived_at IS NULL
+      AND o.outcome = 'open'
+      AND o.account_id IN (${Prisma.join(ids)})
+    GROUP BY o.account_id, u.id, u.full_name
+    ORDER BY o.account_id, COUNT(*) DESC, MAX(o.created_at) DESC`;
+
+  return new Map(rows.map((row) => [row.account_id, row.owner]));
 }
 
 /** Stage movements per week for the trend bars, oldest week first. */

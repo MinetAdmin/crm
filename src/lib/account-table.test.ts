@@ -14,6 +14,7 @@ function row(overrides: Partial<AccountRow>): AccountRow {
     name: "Acme",
     unit: null,
     sector: null,
+    owner: null,
     contacts: 0,
     decisionMaker: false,
     openLeads: 0,
