@@ -76,7 +76,7 @@ function ConsoleSidebar({
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border bg-sidebar-accent p-3 group-data-[collapsible=icon]:p-2">
+      <SidebarHeader className="h-14 shrink-0 justify-center border-b border-sidebar-border bg-sidebar-accent px-3 py-0 group-data-[collapsible=icon]:px-2">
         <SidebarMenu>
           <CenteredMenuItem>
             <SidebarMenuButton
