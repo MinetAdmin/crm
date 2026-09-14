@@ -2,21 +2,13 @@
 
 import * as React from "react";
 
-import { ChevronsUpDown, LogOut, Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Search, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 
 import { Logo } from "@/components/brand/Logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,29 +19,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
-  SidebarInput,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { HEADER_ACTIONS_ID } from "./HeaderActions";
-import { navFor, type NavItem } from "./nav";
+import { navFor, navSectionsFor, type NavItem } from "./nav";
 
 type ConsoleUser = { name: string; email: string; role: string };
 
@@ -67,9 +55,9 @@ export function ConsoleShell({
   return (
     <TooltipProvider>
       <SidebarProvider defaultOpen={defaultSidebarOpen}>
-        <ConsoleSidebar user={user} signOutAction={signOutAction} />
+        <ConsoleSidebar user={user} />
         <SidebarInset>
-          <ConsoleHeader />
+          <ConsoleHeader user={user} signOutAction={signOutAction} />
           <div className="flex-1 p-4 md:px-6">{children}</div>
         </SidebarInset>
       </SidebarProvider>
@@ -77,26 +65,27 @@ export function ConsoleShell({
   );
 }
 
-function ConsoleSidebar({
-  user,
-  signOutAction,
-}: Readonly<{ user: ConsoleUser; signOutAction: () => Promise<void> }>) {
+function ConsoleSidebar({ user }: Readonly<{ user: ConsoleUser }>) {
   const pathname = usePathname();
-  const items = navFor(user.role);
+  const sections = navSectionsFor(user.role);
 
   return (
-    <Sidebar collapsible="icon" className="border-none">
-      <SidebarHeader className="h-14 justify-center">
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="border-b border-sidebar-border bg-sidebar-accent p-3 group-data-[collapsible=icon]:p-2">
         <SidebarMenu>
           <CenteredMenuItem>
             <SidebarMenuButton
               asChild
-              className="hover:bg-transparent active:bg-transparent [&_svg]:size-6 group-data-[collapsible=icon]:p-1!"
+              size="lg"
+              className="hover:bg-transparent active:bg-transparent group-data-[collapsible=icon]:p-0!"
             >
               <Link href="/console">
-                <Logo size={24} />
-                <span className="font-heading text-[15px] font-semibold tracking-tight whitespace-nowrap">
-                  CRM <span className="font-medium text-muted-foreground">· Minet Uganda</span>
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary shadow-(--pill-shadow)">
+                  <Logo size={18} />
+                </span>
+                <span className="grid min-w-0 flex-1 gap-1 leading-none">
+                  <span className="truncate text-sm font-medium">Minet CRM</span>
+                  <span className="truncate text-xs text-(--subtle)">Business development</span>
                 </span>
               </Link>
             </SidebarMenuButton>
@@ -105,25 +94,26 @@ function ConsoleSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup className="pt-4 pb-0 group-data-[collapsible=icon]:hidden">
-          <SidebarGroupContent>
-            <SidebarInput placeholder="Search" disabled title="Not built yet" />
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup className="group-data-[collapsible=icon]:pt-4">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <NavEntry key={item.label} item={item} pathname={pathname} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {sections.map((section) => (
+          <SidebarGroup
+            key={section.label ?? "main"}
+            className="border-b border-sidebar-border px-3 py-2 last:border-b-0 group-data-[collapsible=icon]:px-2"
+          >
+            {section.label && (
+              <SidebarGroupLabel className="h-6 px-2 text-xs text-(--subtle)">
+                {section.label}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                {section.items.map((item) => (
+                  <NavEntry key={item.label} item={item} pathname={pathname} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
-
-      <SidebarFooter>
-        <UserMenu user={user} signOutAction={signOutAction} />
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
@@ -150,7 +140,6 @@ function NavEntry({
           <item.icon />
           <span>{item.label}</span>
         </SidebarMenuButton>
-        <SidebarMenuBadge>soon</SidebarMenuBadge>
       </CenteredMenuItem>
     );
   }
@@ -166,7 +155,7 @@ function NavEntry({
         asChild
         isActive={active}
         tooltip={item.label}
-        className="data-active:bg-card data-active:ring-1 data-active:ring-border [&[data-active=true]_svg]:text-(--c-brand)"
+        className="h-[30px] rounded-lg text-sidebar-foreground transition-[background-color,color,box-shadow] duration-150 ease-(--ease-out-strong) hover:bg-transparent hover:text-foreground data-active:h-8 data-active:bg-sidebar-primary data-active:text-foreground data-active:shadow-(--pill-shadow) [&_svg]:size-3.5 [&_svg]:text-(--subtle) [&[data-active=true]_svg]:text-(--icon)"
       >
         <Link href={item.href}>
           <item.icon />
@@ -186,7 +175,7 @@ function ThemeItems() {
         <Moon className="hidden size-3.5 dark:block" />
         Theme
       </DropdownMenuLabel>
-      <DropdownMenuRadioGroup value={theme ?? "system"} onValueChange={setTheme}>
+      <DropdownMenuRadioGroup value={theme ?? "dark"} onValueChange={setTheme}>
         <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
         <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
         <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
@@ -208,91 +197,91 @@ function UserMenu({
     .toUpperCase();
 
   return (
-    <SidebarMenu>
-      <CenteredMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton size="lg" tooltip={user.name}>
-              <Avatar className="size-8">
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <span className="grid flex-1 text-left leading-tight">
-                <span className="truncate text-sm font-medium">{user.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {user.role.replaceAll("_", " ")}
-                </span>
-              </span>
-              <ChevronsUpDown className="ml-auto" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="min-w-56">
-            <DropdownMenuLabel className="font-normal">
-              <span className="block truncate text-sm">{user.name}</span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {user.email}
-              </span>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <ThemeItems />
-            <DropdownMenuSeparator />
-            <form action={signOutAction}>
-              <DropdownMenuItem asChild>
-                <button type="submit" className="w-full">
-                  <LogOut />
-                  Sign out
-                </button>
-              </DropdownMenuItem>
-            </form>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CenteredMenuItem>
-    </SidebarMenu>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Open profile for ${user.name}`}
+          className="inline-flex h-[30px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-secondary py-[5px] pr-[9px] pl-[5px] text-xs text-secondary-foreground shadow-(--pill-shadow) transition-[background-color,color,box-shadow,scale] duration-150 ease-(--ease-out-strong) outline-none select-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/60 active:scale-[0.96] data-[state=open]:bg-muted"
+        >
+          <Avatar className="size-5">
+            <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
+          </Avatar>
+          <span className="hidden max-w-32 truncate sm:inline">{user.name}</span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="bottom" align="end" className="min-w-56">
+        <DropdownMenuLabel className="font-normal">
+          <span className="block truncate text-sm">{user.name}</span>
+          <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
+          <span className="block truncate text-xs text-muted-foreground">
+            {user.role.replaceAll("_", " ")}
+          </span>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <ThemeItems />
+        <DropdownMenuSeparator />
+        <form action={signOutAction}>
+          <DropdownMenuItem asChild>
+            <button type="submit" className="w-full">
+              <LogOut />
+              Sign out
+            </button>
+          </DropdownMenuItem>
+        </form>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
-function ConsoleHeader() {
-  const { state, isMobile } = useSidebar();
-  const showHeaderSearch = state === "collapsed" && !isMobile;
-
+function ConsoleHeader({
+  user,
+  signOutAction,
+}: Readonly<{ user: ConsoleUser; signOutAction: () => Promise<void> }>) {
   return (
-    <header className="relative flex h-14 shrink-0 items-center gap-3 px-4 md:px-6">
-      <SidebarTrigger className="-ml-1.5" />
-      <HeaderCrumbs />
-      {showHeaderSearch && (
-        <div className="absolute left-1/2 w-full max-w-xs -translate-x-1/2">
-          <Input placeholder="Search" disabled title="Not built yet" className="h-8" />
-        </div>
-      )}
-      <div
-        id={HEADER_ACTIONS_ID}
-        className="ml-auto flex items-center gap-2"
-      />
+    <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-4 md:px-6">
+      <div className="flex min-w-0 items-center gap-2">
+        <SidebarTrigger className="-ml-1.5" />
+        <HeaderTitle />
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <div id={HEADER_ACTIONS_ID} className="flex items-center gap-2" />
+        <button
+          type="button"
+          aria-label="Search (not built yet)"
+          title="Not built yet"
+          disabled
+          className="inline-flex size-[30px] shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground shadow-(--pill-shadow) disabled:opacity-50"
+        >
+          <Search className="size-3.5" aria-hidden />
+        </button>
+        <UserMenu user={user} signOutAction={signOutAction} />
+      </div>
     </header>
   );
 }
 
-function HeaderCrumbs() {
+function HeaderTitle() {
   const pathname = usePathname();
   const { crumbs, page } = crumbsFor(pathname);
 
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        {crumbs.map((crumb) => (
-          <React.Fragment key={crumb.href}>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={crumb.href}>{crumb.label}</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-          </React.Fragment>
-        ))}
-        <BreadcrumbItem>
-          <BreadcrumbPage>{page}</BreadcrumbPage>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
+    <div className="flex min-w-0 items-baseline gap-2">
+      {crumbs.slice(1).map((crumb) => (
+        <React.Fragment key={crumb.href}>
+          <Link
+            href={crumb.href}
+            className="truncate text-xs text-(--subtle) transition-colors duration-150 hover:text-foreground"
+          >
+            {crumb.label}
+          </Link>
+          <span aria-hidden className="text-xs text-(--faint)">
+            /
+          </span>
+        </React.Fragment>
+      ))}
+      <h1 className="truncate text-[16px] leading-none font-medium">{page}</h1>
+    </div>
   );
 }
 

@@ -37,3 +37,20 @@ export const NAV: ReadonlyArray<NavItem> = [
 export function navFor(role: string): ReadonlyArray<NavItem> {
   return NAV.filter((item) => !item.adminOnly || role === "admin");
 }
+
+export type NavSection = { label?: string; items: ReadonlyArray<NavItem> };
+
+const SECTION_SPLITS: ReadonlyArray<{ label?: string; members: ReadonlyArray<string> }> = [
+  { members: ["Dashboard", "Accounts", "Longlist", "Leads", "Opportunities"] },
+  { label: "Planning", members: ["Initiatives", "Tenders", "Targets"] },
+  { label: "Insight", members: ["Reports", "Roadmap"] },
+  { label: "Manage", members: ["Admin"] },
+];
+
+export function navSectionsFor(role: string): ReadonlyArray<NavSection> {
+  const items = navFor(role);
+  return SECTION_SPLITS.map((section) => ({
+    label: section.label,
+    items: items.filter((item) => section.members.includes(item.label)),
+  })).filter((section) => section.items.length > 0);
+}
