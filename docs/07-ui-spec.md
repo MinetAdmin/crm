@@ -34,16 +34,24 @@ Primary sign-in links use a white circular arrow inset at the right edge (D-26).
 On hover or keyboard focus the arrow slides right and re-enters from the left once;
 reduced-motion users see a static arrow.
 
-### 1.2 Signed-in palette (D-27)
+### 1.2 Signed-in palette and console design language (D-27, superseded by D-32)
 
-The shared console tokens in `globals.css` use the same warm white, neutral gray,
-charcoal, and crimson family as the landing page. Dark surfaces step from page/sidebar
-(`#111316`) to cards/fields (`#1b1e22`), popovers (`#23272d`), and hover/selected washes
-(`#262a30`). Muted text is neutral gray (`#a4a8ae`). Buttons use crimson (`#c8102e`)
-with white labels in both themes; links, active navigation icons, and red status text
-use `--c-brand` (`#f0787c` in dark mode). Warning and success colors use muted amber
-and sage in dark mode. Existing blue chart scales retain their meaning. Destructive controls use a 5% tint,
-rising to 10% on hover, to keep red labels readable.
+The console follows the Kargul Studio sales CRM reference (D-32): dark-first with a
+derived light variant, defaulting to dark. Dark surfaces step from page (`#161616`)
+and sidebar (`#171717`) to cards (`#1b1d20`), pills (`#1e1e1e`), and hover/selected
+washes (`#2a2a2a`); borders are `#232323` and muted text `#7f7f7f`. Buttons stay
+crimson (`#c8102e`) with white labels in both themes; links, active navigation icons,
+and red status text use `--c-brand` (`#f0787c` in dark mode).
+
+Console controls are 30px pills with layered shadows (`--pill-shadow`,
+`--pill-shadow-primary`) and a 0.96 press scale. List filters are split label/value
+dropdown pills that apply on click; sorting lives in a Sort by pill, not column
+headers. Tables use 12px muted column captions on 38px header rows, 42px data rows,
+full-bleed borders, colored tag pills (`--tag-*`) for categorical values, tabular
+numerals right-aligned with a muted currency prefix, and a summary strip of outlined
+cells under the table. Semantic accents use `--success`, `--warning`, `--danger`,
+`--track`, and `--status`. Destructive controls use a 5% tint, rising to 10% on
+hover, to keep red labels readable.
 
 ## 2. Screens
 

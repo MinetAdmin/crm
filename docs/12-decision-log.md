@@ -162,6 +162,32 @@ loader the default. This warning is outside the landing presentation change.
   sync with doc 13 when the plan changes; do not imply automatic status tracking.
 - **Status:** Adopted 2026-09-13 under user-delegated design authority.
 
+### D-32: Console restyled after the Kargul Studio sales CRM reference
+
+- **Decision:** Adopt the design language of the supplied reference
+  (sales-crm-kargulstudio.vercel.app) as the console standard, starting with the shell
+  and the accounts page: dark-first token set with a derived light variant, pill-shaped
+  controls with layered shadows, split label/value filter dropdowns applied on click,
+  a 254px sectioned sidebar, flat 12px column captions with 42px data rows, colored tag
+  pills for sector and unit, a segmented win-probability meter, and a summary strip
+  under the table. The primary accent stays Minet crimson; the console default theme
+  becomes dark with the switcher retained.
+- **Reason:** The user supplied the reference and asked that the accounts page and the
+  shell follow it, as the design baseline for subsequent pages. Dark default with a
+  light variant and the crimson accent were confirmed by the user.
+- **Assumptions:** The light variant is a derivation, not a copy, since the reference
+  ships dark only. Sector tags map to tag hues by a stable name hash; units use the
+  neutral tag. Win probability per account is weighted open pipeline divided by
+  expected open pipeline, computed at read time from v_schedule_line_weighted, never
+  stored. Sorting moved from column headers into the Sort by dropdown. Row selection
+  is visual only until bulk actions exist.
+- **Consequences:** Shared shadcn tokens changed, so all console pages inherit the
+  palette immediately and should be brought onto the pill/table patterns as they are
+  touched. The landing page does not use these tokens and is unaffected. Reference
+  elements without a real backing feature (Export, tabs, notifications, avatars) were
+  omitted rather than rendered dead.
+- **Status:** Adopted 2026-09-14 under user-delegated design authority.
+
 ## Part B — Open-question register
 
 Status: ⛔ **Blocker** (gates migration or scope) · ❗ High (changes design) · ◽ Normal
