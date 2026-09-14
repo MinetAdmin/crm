@@ -1,109 +1,233 @@
+import { Upload } from "lucide-react";
 import Link from "next/link";
 
+import { FilterMenu, type FilterMenuItem } from "@/components/console/FilterMenu";
 import { FlowStrip } from "@/components/console/FlowStrip";
-import { EmptyState } from "@/components/console/ui";
-import { formatAmount } from "@/lib/format";
+import { EmptyState, pillClass } from "@/components/console/ui";
+import { Input } from "@/components/ui/input";
+import { winProbability } from "@/lib/account-table";
+import { db } from "@/lib/db";
 import { funnelCounts } from "@/lib/funnel";
-import { listOpportunities } from "@/lib/opportunities";
+import {
+  listOpportunities,
+  OPPORTUNITY_LIST_CAP,
+  type OpportunityRow,
+} from "@/lib/opportunities";
 
-const OUTCOMES = ["open", "won", "lost", "on_hold", "withdrawn"];
+import { OpportunitiesTable, type OpportunitySummary } from "./OpportunitiesTable";
+
+const OUTCOMES = ["open", "won", "lost", "on_hold", "withdrawn"] as const;
+
+type Search = {
+  q?: string;
+  outcome?: string;
+  stage?: string;
+  sort?: string;
+  dir?: string;
+};
+
+const SORT_LABELS = {
+  close: "Close date",
+  name: "Name",
+  account: "Account",
+  stage: "Stage",
+  owner: "Owner",
+  expected: "Expected",
+  weighted: "Weighted",
+} as const;
+
+type SortKey = keyof typeof SORT_LABELS;
+type SortDir = "asc" | "desc";
 
 export default async function OpportunitiesPage({
   searchParams,
-}: Readonly<{ searchParams: Promise<{ outcome?: string }> }>) {
-  const { outcome } = await searchParams;
-  const [opportunities, counts] = await Promise.all([listOpportunities(outcome), funnelCounts()]);
-  const weighted = opportunities.reduce((sum, o) => sum + o.weighted, 0);
+}: Readonly<{ searchParams: Promise<Search> }>) {
+  const { q, outcome, stage, sort, dir } = await searchParams;
+  const key: SortKey = sort && sort in SORT_LABELS ? (sort as SortKey) : "close";
+  const direction: SortDir = dir === "desc" ? "desc" : dir === "asc" ? "asc" : defaultDir(key);
+
+  const [rows, counts, stages] = await Promise.all([
+    listOpportunities({ search: q, outcome, stageId: stage }),
+    funnelCounts(),
+    db().pipeline_stage.findMany({ where: { active: true }, orderBy: { sort_order: "asc" } }),
+  ]);
+  const opportunities = sortOpportunities(rows, key, direction);
+  const summary = summarize(opportunities);
+  const search = { q, outcome, stage, sort, dir };
+  const filtered = Boolean(q || outcome || stage);
+
+  const outcomeItems: FilterMenuItem[] = [
+    { label: "All", href: hrefWith(search, { outcome: undefined }), active: !outcome },
+    ...OUTCOMES.map((value) => ({
+      label: value.replaceAll("_", " "),
+      href: hrefWith(search, { outcome: value }),
+      active: outcome === value,
+    })),
+  ];
+  const stageItems: FilterMenuItem[] = [
+    { label: "All stages", href: hrefWith(search, { stage: undefined }), active: !stage },
+    ...stages.map((s) => ({
+      label: s.name,
+      href: hrefWith(search, { stage: s.id.toString() }),
+      active: stage === s.id.toString(),
+    })),
+  ];
+  const sortItems: FilterMenuItem[] = (
+    Object.entries(SORT_LABELS) as Array<[SortKey, string]>
+  ).map(([k, label]) => {
+    const active = k === key;
+    const nextDir: SortDir = active
+      ? direction === "asc"
+        ? "desc"
+        : "asc"
+      : defaultDir(k);
+    return {
+      label: active ? `${label} (${direction === "asc" ? "ascending" : "descending"})` : label,
+      href: hrefWith(search, { sort: k, dir: nextDir }),
+      active,
+    };
+  });
 
   return (
-    <div className="w-full">
-      <FlowStrip counts={counts} active="pipeline" />
-      <div className="flex flex-wrap items-center gap-3">
-        <nav className="flex min-w-0 flex-1 flex-wrap gap-1" aria-label="Filter by outcome">
-          <Filter label="All" href="/console/opportunities" active={!outcome} />
-          {OUTCOMES.map((value) => (
-            <Filter
-              key={value}
-              label={value.replace("_", " ")}
-              href={`/console/opportunities?outcome=${value}`}
-              active={outcome === value}
+    <div className="-m-4 flex min-h-0 flex-1 flex-col md:-mx-6">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 pt-4 md:px-6">
+        <FlowStrip counts={counts} active="pipeline" />
+      </div>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 pb-4 md:px-6">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <form role="search" className="flex items-center">
+            <Input
+              type="search"
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="Search pursuits"
+              aria-label="Search pursuits by name"
+              className="h-[30px] w-52 rounded-full border-transparent bg-secondary px-3 text-xs shadow-(--pill-shadow) md:text-xs dark:bg-secondary"
             />
-          ))}
-        </nav>
-        <span className="text-sm tabular-nums text-(--c-muted)">
-          {opportunities.length} · weighted {formatAmount(weighted)}
-        </span>
+            {outcome && <input type="hidden" name="outcome" value={outcome} />}
+            {stage && <input type="hidden" name="stage" value={stage} />}
+            {sort && <input type="hidden" name="sort" value={sort} />}
+            {dir && <input type="hidden" name="dir" value={dir} />}
+            <button type="submit" className="sr-only">
+              Apply search
+            </button>
+          </form>
+          <FilterMenu
+            label="Outcome"
+            value={outcome ? outcome.replaceAll("_", " ") : "All"}
+            items={outcomeItems}
+          />
+          <FilterMenu
+            label="Stage"
+            value={stages.find((s) => s.id.toString() === stage)?.code ?? "All"}
+            items={stageItems}
+          />
+          <FilterMenu
+            label="Sort by"
+            value={`${SORT_LABELS[key]} ${direction === "asc" ? "↑" : "↓"}`}
+            items={sortItems}
+          />
+          {filtered && (
+            <Link
+              href="/console/opportunities"
+              className="inline-flex h-[30px] items-center rounded-full px-3 text-xs text-(--subtle) transition-colors duration-150 hover:bg-muted hover:text-foreground"
+            >
+              Clear
+            </Link>
+          )}
+        </div>
+        <a
+          href={hrefWith(search, {}, "/console/opportunities/export")}
+          download
+          className={`inline-flex items-center justify-center gap-1.5 ${pillClass}`}
+        >
+          <Upload className="size-3" aria-hidden />
+          Export
+        </a>
       </div>
 
       {opportunities.length === 0 ? (
-        <div className="mt-4">
-          <EmptyState>No opportunities here. They arrive by converting a lead.</EmptyState>
+        <div className="px-4 md:px-6">
+          <EmptyState>
+            {filtered
+              ? "No pursuit matches these filters."
+              : "No opportunities here. They arrive by converting a lead."}
+          </EmptyState>
         </div>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-md border border-(--c-line) bg-(--c-surface)">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-(--c-line-soft) text-left text-[13px] text-(--c-muted)">
-                <th className="px-4 py-2.5 font-medium">Name</th>
-                <th className="px-4 py-2.5 font-medium">Stage</th>
-                <th className="px-4 py-2.5 font-medium">Owner</th>
-                <th className="px-4 py-2.5 text-right font-medium">Prob.</th>
-                <th className="px-4 py-2.5 text-right font-medium">Weighted</th>
-                <th className="px-4 py-2.5 text-right font-medium">Close</th>
-              </tr>
-            </thead>
-            <tbody>
-              {opportunities.map((o) => (
-                <tr key={o.id} className="border-b border-(--c-line-soft) last:border-b-0">
-                  <td className="px-4 py-2.5">
-                    <Link
-                      href={`/console/opportunities/${o.id}`}
-                      className="font-medium underline-offset-2 hover:underline"
-                    >
-                      {o.name}
-                    </Link>
-                    <span className="block text-[13px] text-(--c-muted)">{o.account}</span>
-                  </td>
-                  <td className="px-4 py-2.5 text-(--c-muted)">
-                    {o.stage}
-                    {o.outcome !== "open" && (
-                      <span className="block text-[13px]">{o.outcome.replace("_", " ")}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5 text-(--c-muted)">{o.owner}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-(--c-muted)">
-                    {o.probability}%
-                  </td>
-                  <td className="px-4 py-2.5 text-right font-medium tabular-nums">
-                    {formatAmount(o.weighted)}
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-(--c-muted)">
-                    {o.expectedCloseDate.toISOString().slice(0, 10)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <OpportunitiesTable opportunities={opportunities} summary={summary} />
+      )}
+
+      {rows.length === OPPORTUNITY_LIST_CAP && (
+        <p className="px-4 py-2 text-xs text-(--c-muted) md:px-6">
+          Showing the first {OPPORTUNITY_LIST_CAP} pursuits. Narrow with search or filters to see
+          the rest.
+        </p>
       )}
     </div>
   );
 }
 
-function Filter({
-  label,
-  href,
-  active,
-}: Readonly<{ label: string; href: string; active: boolean }>) {
-  return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={`rounded-md px-2.5 py-1.5 text-sm ${
-        active ? "bg-(--c-wash) font-medium" : "text-(--c-muted) hover:bg-(--c-wash)"
-      }`}
-    >
-      {label}
-    </Link>
-  );
+function summarize(rows: ReadonlyArray<OpportunityRow>): OpportunitySummary {
+  const expected = rows.reduce((sum, row) => sum + row.expected, 0);
+  const weighted = rows.reduce((sum, row) => sum + row.weighted, 0);
+  return {
+    count: rows.length,
+    expected,
+    weighted,
+    avgWin: winProbability(weighted, expected),
+  };
+}
+
+function defaultDir(key: SortKey): SortDir {
+  return key === "expected" || key === "weighted" ? "desc" : "asc";
+}
+
+function sortValueOf(key: SortKey, row: OpportunityRow): string | number {
+  switch (key) {
+    case "name":
+      return row.name.toLowerCase();
+    case "account":
+      return row.account.name.toLowerCase();
+    case "stage":
+      return row.stage.toLowerCase();
+    case "owner":
+      return row.owner.name.toLowerCase();
+    case "expected":
+      return row.expected;
+    case "weighted":
+      return row.weighted;
+    default:
+      return row.expectedCloseDate;
+  }
+}
+
+function sortOpportunities(
+  rows: ReadonlyArray<OpportunityRow>,
+  key: SortKey,
+  dir: SortDir,
+): OpportunityRow[] {
+  const sign = dir === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    const left = sortValueOf(key, a);
+    const right = sortValueOf(key, b);
+    if (left < right) return -sign;
+    if (left > right) return sign;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function hrefWith(
+  search: Readonly<Search>,
+  overrides: Readonly<Partial<Record<keyof Search, string | undefined>>>,
+  path = "/console/opportunities",
+): string {
+  const merged = { ...search, ...overrides };
+  const params = new URLSearchParams();
+  for (const name of ["q", "outcome", "stage", "sort", "dir"] as const) {
+    const value = merged[name];
+    if (value) params.set(name, value);
+  }
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
 }

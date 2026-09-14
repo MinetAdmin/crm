@@ -12,53 +12,93 @@ export class RuleError extends Error {
 export type OpportunityRow = {
   id: string;
   name: string;
-  account: string;
+  account: { id: string; name: string };
   stage: string;
+  stageCode: string;
   outcome: string;
   probability: number;
-  owner: string;
+  owner: { id: string; name: string };
+  expected: number;
   weighted: number;
-  expectedCloseDate: Date;
+  lastMovement: string | null;
+  expectedCloseDate: string;
 };
 
 type WeightedRow = { opportunity_id: bigint; expected: string; weighted: string };
 
-async function weightedByOpportunity(): Promise<Map<string, number>> {
+async function weightedByOpportunity(): Promise<Map<string, { expected: number; weighted: number }>> {
   const rows = await db().$queryRaw<WeightedRow[]>`
     SELECT opportunity_id,
            COALESCE(SUM(expected_amount), 0)::text AS expected,
            COALESCE(SUM(weighted_amount), 0)::text AS weighted
     FROM v_schedule_line_weighted
     GROUP BY opportunity_id`;
-  return new Map(rows.map((r) => [r.opportunity_id.toString(), Number(r.weighted)]));
+  return new Map(
+    rows.map((r) => [
+      r.opportunity_id.toString(),
+      { expected: Number(r.expected), weighted: Number(r.weighted) },
+    ]),
+  );
 }
 
-export async function listOpportunities(outcome?: string): Promise<OpportunityRow[]> {
-  const [rows, weighted] = await Promise.all([
+async function lastMoveByOpportunity(): Promise<Map<string, Date>> {
+  const rows = await db().$queryRaw<{ opportunity_id: bigint; last_move: Date }[]>`
+    SELECT opportunity_id, MAX(changed_at) AS last_move
+    FROM stage_history
+    GROUP BY opportunity_id`;
+  return new Map(rows.map((r) => [r.opportunity_id.toString(), r.last_move]));
+}
+
+export const OPPORTUNITY_LIST_CAP = 200;
+
+export type OpportunityFilters = { search?: string; outcome?: string; stageId?: string };
+
+export async function listOpportunities(
+  filters: OpportunityFilters = {},
+): Promise<OpportunityRow[]> {
+  const [rows, money, moves] = await Promise.all([
     db().opportunity.findMany({
-      where: { archived_at: null, ...(outcome ? { outcome: outcome as never } : {}) },
+      where: {
+        archived_at: null,
+        ...(filters.outcome ? { outcome: filters.outcome as never } : {}),
+        ...(filters.stageId ? { stage_id: BigInt(filters.stageId) } : {}),
+        ...(filters.search
+          ? { name: { contains: filters.search, mode: "insensitive" as const } }
+          : {}),
+      },
       orderBy: { expected_close_date: "asc" },
-      take: 200,
+      take: OPPORTUNITY_LIST_CAP,
       include: {
-        account: { select: { name: true } },
-        pipeline_stage: { select: { name: true } },
-        app_user_opportunity_owner_idToapp_user: { select: { full_name: true } },
+        account: { select: { id: true, name: true } },
+        pipeline_stage: { select: { code: true, name: true } },
+        app_user_opportunity_owner_idToapp_user: { select: { id: true, full_name: true } },
       },
     }),
     weightedByOpportunity(),
+    lastMoveByOpportunity(),
   ]);
 
-  return rows.map((row) => ({
-    id: row.id.toString(),
-    name: row.name,
-    account: row.account.name,
-    stage: row.pipeline_stage.name,
-    outcome: row.outcome,
-    probability: Number(row.probability),
-    owner: row.app_user_opportunity_owner_idToapp_user.full_name,
-    weighted: weighted.get(row.id.toString()) ?? 0,
-    expectedCloseDate: row.expected_close_date,
-  }));
+  return rows.map((row) => {
+    const id = row.id.toString();
+    const totals = money.get(id);
+    return {
+      id,
+      name: row.name,
+      account: { id: row.account.id.toString(), name: row.account.name },
+      stage: row.pipeline_stage.name,
+      stageCode: row.pipeline_stage.code,
+      outcome: row.outcome,
+      probability: Number(row.probability),
+      owner: {
+        id: row.app_user_opportunity_owner_idToapp_user.id.toString(),
+        name: row.app_user_opportunity_owner_idToapp_user.full_name,
+      },
+      expected: totals?.expected ?? 0,
+      weighted: totals?.weighted ?? 0,
+      lastMovement: moves.get(id)?.toISOString().slice(0, 10) ?? null,
+      expectedCloseDate: row.expected_close_date.toISOString().slice(0, 10),
+    };
+  });
 }
 
 export async function getOpportunity(id: string) {

@@ -10,6 +10,7 @@ import {
   type AccountPanelStats,
 } from "@/lib/accounts";
 import { db } from "@/lib/db";
+import { getOpportunity, opportunityTotals } from "@/lib/opportunities";
 
 export type ProfilePanel = {
   accounts: number;
@@ -142,6 +143,66 @@ export async function getAccountPanel(
       })),
     },
     stats,
+  };
+}
+
+export type OpportunityPanel = {
+  id: string;
+  name: string;
+  account: { id: string; name: string };
+  stage: string;
+  stageCode: string;
+  outcome: string;
+  probability: number;
+  owner: string;
+  expected: number;
+  weighted: number;
+  expectedCloseDate: string;
+  closeConfidence: string;
+  forecastCategory: string | null;
+  keyBlocker: string | null;
+  schedule: Array<{ id: string; month: string; product: string; expected: number }>;
+  history: Array<{ id: string; stage: string; actor: string; changedAt: string }>;
+};
+
+/** Opportunity summary for the detail drawer. */
+export async function getOpportunityPanel(id: string): Promise<OpportunityPanel | null> {
+  const session = await auth();
+  if (!session?.user) throw new Error("Not signed in");
+
+  const [opportunity, totals] = await Promise.all([getOpportunity(id), opportunityTotals(id)]);
+  if (!opportunity) return null;
+
+  return {
+    id: opportunity.id.toString(),
+    name: opportunity.name,
+    account: {
+      id: opportunity.account.id.toString(),
+      name: opportunity.account.name,
+    },
+    stage: opportunity.pipeline_stage.name,
+    stageCode: opportunity.pipeline_stage.code,
+    outcome: opportunity.outcome,
+    probability: Number(opportunity.probability),
+    owner: opportunity.app_user_opportunity_owner_idToapp_user.full_name,
+    expected: totals.expected,
+    weighted: totals.weighted,
+    expectedCloseDate: opportunity.expected_close_date.toISOString().slice(0, 10),
+    closeConfidence: opportunity.close_confidence,
+    forecastCategory: opportunity.forecast_category,
+    keyBlocker: opportunity.key_blocker,
+    schedule: opportunity.revenue_schedule_line.map((line) => ({
+      id: line.id.toString(),
+      month: line.effective_month.toISOString().slice(0, 7),
+      product: line.product.name,
+      expected: Number(line.expected_amount),
+    })),
+    history: opportunity.stage_history.slice(0, 8).map((move) => ({
+      id: move.id.toString(),
+      stage: move.pipeline_stage_stage_history_to_stage_idTopipeline_stage.name,
+      actor: move.app_user.full_name,
+      changedAt: move.changed_at.toISOString().slice(0, 10),
+    })),
   };
 }
 
