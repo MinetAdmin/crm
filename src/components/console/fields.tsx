@@ -16,6 +16,20 @@ import { Textarea } from "@/components/ui/textarea";
 
 const NONE = "__none";
 
+export function FormSection({
+  title,
+  children,
+}: Readonly<{ title: string; children: React.ReactNode }>) {
+  return (
+    <section className="grid content-start gap-3 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-border [&:not(:first-child)]:pt-4">
+      <h3 className="text-[11px] font-medium tracking-[0.08em] text-(--subtle) uppercase">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
 export function TextField({
   label,
   name,

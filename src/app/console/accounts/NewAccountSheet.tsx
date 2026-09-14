@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 
 import { FormSheet } from "@/components/console/FormSheet";
-import { SelectField, TextField } from "@/components/console/fields";
+import { FormSection, SelectField, TextField } from "@/components/console/fields";
 import { Notice, pillPrimaryClass } from "@/components/console/ui";
 import { Button } from "@/components/ui/button";
 import { submitAccount } from "./actions";
@@ -23,6 +23,7 @@ export function NewAccountSheet({
         </Button>
       }
       title="New account"
+      description="Add an account. It appears in the list right away."
       action={submitAccount}
       submitLabel={(state) => (state?.duplicates?.length ? "Create anyway" : "Create account")}
     >
@@ -51,11 +52,15 @@ export function NewAccountSheet({
               <input type="hidden" name="confirmed" value="yes" />
             </>
           )}
-          <TextField label="Name" name="name" required />
-          <div className="grid grid-cols-2 gap-3">
-            <SelectField label="Unit" name="unitId" options={units} />
-            <SelectField label="Sector" name="sectorId" options={sectors} />
-          </div>
+          <FormSection title="Account">
+            <TextField label="Name" name="name" placeholder="Company name" required />
+          </FormSection>
+          <FormSection title="Classification">
+            <div className="grid grid-cols-2 gap-3">
+              <SelectField label="Unit" name="unitId" options={units} />
+              <SelectField label="Sector" name="sectorId" options={sectors} />
+            </div>
+          </FormSection>
         </>
       )}
     </FormSheet>

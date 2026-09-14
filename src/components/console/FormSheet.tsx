@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useFormStatus } from "react-dom";
 
-import { Notice } from "@/components/console/ui";
+import { Notice, pillClass, pillPrimaryClass } from "@/components/console/ui";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -87,6 +87,7 @@ export function FormSheet({
           action={action}
           submitLabel={submitLabel}
           onSaved={() => handleOpenChange(false)}
+          onCancel={() => handleOpenChange(false)}
         >
           {children}
         </SheetForm>
@@ -101,6 +102,7 @@ function SheetForm({
   action,
   submitLabel,
   onSaved,
+  onCancel,
   children,
 }: Readonly<{
   title: string;
@@ -108,6 +110,7 @@ function SheetForm({
   action: FormSheetAction;
   submitLabel: StateRender<string>;
   onSaved: () => void;
+  onCancel: () => void;
   children: StateRender<React.ReactNode>;
 }>) {
   const [state, formAction] = React.useActionState(action, null);
@@ -119,19 +122,32 @@ function SheetForm({
 
   return (
     <form action={formAction} className="flex min-h-0 flex-1 flex-col">
-      <SheetHeader className="pr-12">
-        <SheetTitle>{title}</SheetTitle>
-        {description && <SheetDescription>{description}</SheetDescription>}
+      <SheetHeader className="gap-1 border-b border-border pr-12">
+        <SheetTitle className="text-[16px] leading-none font-medium">{title}</SheetTitle>
+        {description && (
+          <SheetDescription className="text-xs">{description}</SheetDescription>
+        )}
       </SheetHeader>
-      <div key={fieldsKey} className="grid flex-1 content-start gap-3 overflow-y-auto px-4 pb-4">
+      <div key={fieldsKey} className="grid flex-1 content-start gap-3 overflow-y-auto p-4">
         {state?.error && <Notice>{state.error}</Notice>}
         {resolve(children, state)}
       </div>
-      <SheetFooter className="flex-row border-t border-(--c-line-soft)">
-        <SubmitButton>{resolve(submitLabel, state)}</SubmitButton>
-        <Button type="button" variant="ghost" size="sm" onClick={() => setFieldsKey((n) => n + 1)}>
+      <SheetFooter className="flex-row items-center border-t border-border">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="rounded-full text-(--subtle) hover:text-foreground"
+          onClick={() => setFieldsKey((n) => n + 1)}
+        >
           Reset
         </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button type="button" size="sm" variant="secondary" className={pillClass} onClick={onCancel}>
+            Cancel
+          </Button>
+          <SubmitButton>{resolve(submitLabel, state)}</SubmitButton>
+        </div>
       </SheetFooter>
     </form>
   );
@@ -140,7 +156,7 @@ function SheetForm({
 function SubmitButton({ children }: Readonly<{ children: React.ReactNode }>) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="sm" disabled={pending}>
+    <Button type="submit" size="sm" className={pillPrimaryClass} disabled={pending}>
       {pending ? "Saving…" : children}
     </Button>
   );
