@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Logo } from "@/components/brand/Logo";
+import { NotificationsMenu } from "@/components/console/NotificationsMenu";
 import { ProfileSheet } from "@/components/console/ProfileSheet";
 import {
   Sidebar,
@@ -37,12 +38,14 @@ export function ConsoleShell({
   signOutAction,
   defaultSidebarOpen = true,
   counts = {},
+  freshActivity = false,
   children,
 }: Readonly<{
   user: ConsoleUser;
   signOutAction: () => Promise<void>;
   defaultSidebarOpen?: boolean;
   counts?: NavCounts;
+  freshActivity?: boolean;
   children: React.ReactNode;
 }>) {
   return (
@@ -50,7 +53,11 @@ export function ConsoleShell({
       <SidebarProvider defaultOpen={defaultSidebarOpen}>
         <ConsoleSidebar user={user} counts={counts} />
         <SidebarInset className="h-svh">
-          <ConsoleHeader user={user} signOutAction={signOutAction} />
+          <ConsoleHeader
+            user={user}
+            signOutAction={signOutAction}
+            freshActivity={freshActivity}
+          />
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:px-6">
             {children}
           </div>
@@ -178,7 +185,12 @@ function NavEntry({
 function ConsoleHeader({
   user,
   signOutAction,
-}: Readonly<{ user: ConsoleUser; signOutAction: () => Promise<void> }>) {
+  freshActivity,
+}: Readonly<{
+  user: ConsoleUser;
+  signOutAction: () => Promise<void>;
+  freshActivity: boolean;
+}>) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-4 md:px-6">
       <div className="flex min-w-0 items-center gap-2">
@@ -196,6 +208,7 @@ function ConsoleHeader({
         >
           <Search className="size-3.5" aria-hidden />
         </button>
+        <NotificationsMenu unread={freshActivity} />
         <ProfileSheet user={user} signOutAction={signOutAction} />
       </div>
     </header>
